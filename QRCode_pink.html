@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRCode 產生器(From 翎緋)</title>
+
+<!-- qrcode.js：用來產生 QRCode（需要網路才能載入） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+    /* ===== 全局樣式（灰白＋乾燥玫瑰粉） ===== */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: #F2F2F2;          /* 柔霧灰 */
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 460px;
+        background: #FFFFFF;          /* 白色卡片 */
+        padding: 24px;
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+        margin: 0 0 8px;
+        text-align: center;
+        font-size: 24px;
+        color: #333333;
+        letter-spacing: 1px;
+    }
+
+    .subtitle {
+        margin: 0 0 18px;
+        text-align: center;
+        font-size: 14px;
+        color: #777777;
+    }
+
+    label {
+        display: block;
+        margin: 10px 0 6px;
+        font-size: 14px;
+        color: #444444;
+    }
+
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #DCC3CD;     /* 淡霧粉邊框 */
+        font-size: 15px;
+        box-sizing: border-box;
+        background: #FAF7F9;           /* 很淡的粉白 */
+        color: #333333;
+    }
+
+    input::placeholder {
+        color: #B39BA7;
+    }
+
+    /* ===== 頁籤按鈕（一般 / Wi-Fi） ===== */
+    .tab-buttons {
+        display: flex;
+        margin-bottom: 14px;
+        border-radius: 999px;
+        background: #F0E5EC;           /* 柔淡粉灰底 */
+        padding: 3px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 8px 0;
+        border: none;
+        border-radius: 999px;
+        background: transparent;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s;
+        color: #665A63;                /* 柔和深灰粉 */
+    }
+
+    .tab-btn.active {
+        background: #C9A6B4;           /* 乾燥玫瑰粉主色 */
+        color: #FFFFFF;
+        box-shadow: 0 0 6px rgba(150, 110, 132, 0.5);
+    }
+
+    /* ===== 主要功能按鈕 ===== */
+    .btn {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-main {
+        background: #C9A6B4;          /* 主按鈕：乾燥玫瑰粉 */
+        color: #FFFFFF;
+    }
+
+    .btn-main:hover {
+        background: #B88C9F;
+    }
+
+    .btn-red {
+        background: #CC7A88;          /* 和諧霧面玫瑰紅 */
+        color: #FFFFFF;
+    }
+
+    .btn-red:hover {
+        background: #B46372;
+    }
+
+    /* ===== 模式區塊（一般 / Wi-Fi） ===== */
+    .mode {
+        display: none;
+    }
+    .mode.active {
+        display: block;
+    }
+
+    /* ===== QRCode 顯示區 ===== */
+    #qrcode {
+        margin-top: 18px;
+        text-align: center;
+    }
+
+    /* ===== iPhone 的一些小修正 ===== */
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    input, select {
+        font-size: 16px; /* 防止 iPhone 自動放大 */
+    }
+
+    button {
+        -webkit-appearance: none;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>QRCode 產生器(from翎緋)</h1>
+    <p class="subtitle">一般 QRCode/Wi-Fi 連線(可切換)</p>
+
+    <!-- 頁籤：一般 / Wi-Fi -->
+    <div class="tab-buttons">
+        <button class="tab-btn active" id="tab-text" onclick="showMode('text')">一般 QRCode</button>
+        <button class="tab-btn" id="tab-wifi" onclick="showMode('wifi')">Wi-Fi QRCode</button>
+    </div>
+
+    <!-- 一般 QRCode 模式 -->
+    <div id="mode-text" class="mode active">
+        <label>輸入內容（網址 或 任意文字）</label>
+        <input type="text" id="textInput" placeholder="例如：https://google.com">
+
+        <label>QR Code 尺寸</label>
+        <select id="textSize">
+            <option value="80">80</option>
+            <option value="120">120</option>
+            <option value="150">150</option>
+            <option value="180" selected>180</option>
+            <option value="200">200</option>
+            <option value="250">250</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+        </select>
+
+        <button class="btn btn-main" onclick="generateTextQR()">產生 QRCode</button>
+    </div>
+
+    <!-- Wi-Fi QRCode 模式 -->
+    <div id="mode-wifi" class="mode">
+        <label>Wi-Fi 名稱（SSID）</label>
+        <input type="text" id="wifiSsid" placeholder="輸入 Wi-Fi 名稱">
+
+        <label>Wi-Fi 密碼</label>
+        <input type="text" id="wifiPw" placeholder="輸入 Wi-Fi 密碼（若無密碼可留空）">
+
+        <label>加密方式</label>
+        <select id="wifiType">
+            <option value="WPA">WPA / WPA2</option>
+            <option value="WEP">WEP</option>
+            <option value="nopass">無密碼（開放網路）</option>
+        </select>
+
+        <label>QR Code 尺寸</label>
+        <select id="wifiSize">
+            <option value="80">80</option>
+            <option value="120">120</option>
+            <option value="150">150</option>
+            <option value="180" selected>180</option>
+            <option value="200">200</option>
+            <option value="250">250</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+        </select>
+
+        <button class="btn btn-main" onclick="generateWifiQR()">產生 Wi-Fi QRCode</button>
+    </div>
+
+    <!-- 共同按鈕：下載 / 清除（兩個模式共用同一個 QR） -->
+    <button class="btn btn-main" id="downloadBtn" style="display:none;" onclick="downloadQR()">下載 QRCode</button>
+    <button class="btn btn-red" onclick="clearAll()">清除</button>
+
+    <!-- QRCode 顯示區 -->
+    <div id="qrcode"></div>
+
+</div>
+
+<script>
+/* =====================================
+   切換模式：一般 / Wi-Fi
+   ===================================== */
+function showMode(mode) {
+    const textMode = document.getElementById('mode-text');
+    const wifiMode = document.getElementById('mode-wifi');
+
+    const tabText = document.getElementById('tab-text');
+    const tabWifi = document.getElementById('tab-wifi');
+
+    if (mode === 'text') {
+        textMode.classList.add('active');
+        wifiMode.classList.remove('active');
+        tabText.classList.add('active');
+        tabWifi.classList.remove('active');
+    } else {
+        wifiMode.classList.add('active');
+        textMode.classList.remove('active');
+        tabWifi.classList.add('active');
+        tabText.classList.remove('active');
+    }
+}
+
+/* =====================================
+   一般 QRCode：文字 / 網址
+   ===================================== */
+function generateTextQR() {
+    const text = document.getElementById('textInput').value.trim();
+    const size = parseInt(document.getElementById('textSize').value);
+
+    if (!text) {
+        alert('請先輸入內容。');
+        return;
+    }
+
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+
+    new QRCode(qrDiv, {
+        text: text,
+        width: size,
+        height: size
+    });
+
+    document.getElementById('downloadBtn').style.display = 'block';
+}
+
+/* =====================================
+   Wi-Fi QRCode（WIFI:T:WPA;S:SSID;P:PASSWORD;;）
+   ===================================== */
+function generateWifiQR() {
+    const ssid = document.getElementById('wifiSsid').value.trim();
+    const pw = document.getElementById('wifiPw').value.trim();
+    const type = document.getElementById('wifiType').value;
+    const size = parseInt(document.getElementById('wifiSize').value);
+
+    if (!ssid) {
+        alert('請輸入 Wi-Fi 名稱（SSID）。');
+        return;
+    }
+
+    let wifiText = '';
+
+    if (type === 'nopass') {
+        // 無密碼：不需要 P 欄位
+        wifiText = 'WIFI:T:nopass;S:' + escapeWifiText(ssid) + ';;';
+    } else {
+        if (!pw) {
+            alert('請輸入 Wi-Fi 密碼，或選擇「無密碼」。');
+            return;
+        }
+        wifiText =
+            'WIFI:T:' + type +
+            ';S:' + escapeWifiText(ssid) +
+            ';P:' + escapeWifiText(pw) +
+            ';;';
+    }
+
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+
+    new QRCode(qrDiv, {
+        text: wifiText,
+        width: size,
+        height: size
+    });
+
+    document.getElementById('downloadBtn').style.display = 'block';
+}
+
+/* =====================================
+   清除全部
+   ===================================== */
+function clearAll() {
+    document.getElementById('textInput').value = '';
+    document.getElementById('wifiSsid').value = '';
+    document.getElementById('wifiPw').value = '';
+
+    document.getElementById('qrcode').innerHTML = '';
+    document.getElementById('downloadBtn').style.display = 'none';
+}
+
+/* =====================================
+   工具：逃脫 Wi-Fi 內容中的特殊字元
+   （避免 ; , : " \ 等影響格式）
+   ===================================== */
+function escapeWifiText(str) {
+    return str.replace(/([\\;,":])/g, '\\$1');
+}
+
+/* =====================================
+   下載 QRCode（PNG）
+   ===================================== */
+function downloadQR() {
+    const img = document.querySelector('#qrcode img');
+    const canvas = document.querySelector('#qrcode canvas');
+    let url = '';
+
+    if (img) {
+        url = img.src;
+    } else if (canvas) {
+        url = canvas.toDataURL('image/png');
+    }
+
+    if (!url) {
+        alert('目前沒有可下載的 QRCode。');
+        return;
+    }
+
+    const filename = 'qrcode_' + Date.now() + '.png';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+}
+</script>
+
+</body>
+</html>

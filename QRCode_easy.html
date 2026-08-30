@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRCode產生器</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+    :root {
+        --bg-color: #f2f2f7;
+        --card-bg: #ffffff;
+        --text-color: #000;
+        --sub-color: #1c1c1e;
+        --btn-blue: #d1d1d6;
+        --btn-red: #d1d1d6;
+        --theme-btn-bg: #e5e5ea;
+        --theme-btn-active: #D1D1D6;
+        --theme-btn-text: #1C1C1E;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    .container {
+        max-width: 480px;
+        margin: 30px auto;
+        padding: 20px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 26px;
+        text-align: center;
+    }
+
+    .sub {
+        text-align: center;
+        color: var(--sub-color);
+        margin-bottom: 20px;
+    }
+
+    /* 模式切換 */
+    .modeSwitch {
+        display: flex;
+        background: #e5e5ea;
+        padding: 4px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .modeBtn {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--theme-btn-text);
+        font-size: 14px;
+    }
+    .modeActive {
+        background: var(--btn-blue);
+        color: white !important;
+        box-shadow: 0 2px 8px rgba(0,122,255,0.4);
+    }
+
+    /* 輸入區 */
+    label { margin-top: 12px; display: block; }
+    input, select {
+        width: 100%; padding: 12px; border-radius: 10px;
+        border: 1px solid #ccc; margin-top: 6px; box-sizing: border-box;
+    }
+
+    /* 按鈕 */
+    .btn {
+        width: 100%; padding: 14px; border-radius: 12px;
+        font-size: 18px; border: none; color: white; margin-top: 18px;
+    }
+    .btnBlue { background: var(--btn-blue); }
+    .btnRed  { background: var(--btn-red); }
+    .downloadArea {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* 主題切換 - 新 UI */
+    .themeArea {
+        margin-top: 30px;
+        padding: 12px;
+        background: #e5e5ea;
+        border-radius: 16px;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .themeBtn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        background: var(--theme-btn-bg);
+        color: var(--theme-btn-text);
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .themeBtn.active {
+        background: var(--theme-btn-active);
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(0,122,255,0.35);
+    }
+
+    #qrcode {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 180px;
+        background: #f4f4f5;
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+    #qrcode img, #qrcode canvas {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>QRCode 產生器</h1>
+<div class="sub">一般模式 / Wi-Fi 模式（主題可切換）</div>
+
+<!-- 模式切換 -->
+<div class="modeSwitch">
+    <div id="tabNormal" class="modeBtn modeActive" onclick="switchMode('normal')">一般 QRCode</div>
+    <div id="tabWifi" class="modeBtn" onclick="switchMode('wifi')">Wi-Fi QRCode</div>
+</div>
+
+<!-- 一般模式 -->
+<div id="normalMode">
+    <label>輸入內容（網址 或 任意文字）</label>
+    <input type="text" id="normalText" placeholder="例如：https://google.com">
+
+    <label>QR Code 尺寸</label>
+    <select id="normalSize">
+        <option>120</option><option>150</option><option>180</option>
+        <option>200</option><option>250</option><option>300</option>
+        <option>400</option><option>500</option><option>600</option>
+    </select>
+
+    <button class="btn btnBlue" onclick="makeNormalQR()">產生 QRCode</button>
+    <button class="btn btnRed" onclick="clearAll()">清除</button>
+</div>
+
+<!-- Wi-Fi 模式 -->
+<div id="wifiMode" style="display:none;">
+    <label>Wi-Fi 名稱（SSID）</label>
+    <input type="text" id="wifiSsid">
+
+    <label>Wi-Fi 密碼</label>
+    <input type="text" id="wifiPw">
+
+    <label>加密方式</label>
+    <select id="wifiType">
+        <option value="WPA">WPA / WPA2</option>
+        <option value="WEP">WEP</option>
+        <option value="">無密碼</option>
+    </select>
+
+    <label>QR Code 尺寸</label>
+    <select id="wifiSize">
+        <option>120</option><option>150</option><option>180</option>
+        <option>200</option><option>250</option><option>300</option>
+        <option>400</option><option>500</option><option>600</option>
+    </select>
+
+    <button class="btn btnBlue" onclick="makeWifiQR()">產生 Wi-Fi QR</button>
+    <button class="btn btnRed" onclick="clearAll()">清除</button>
+</div>
+
+<!-- 主題切換：新版 UI -->
+<div class="themeArea">
+    <button class="themeBtn active" id="theme1" onclick="setTheme(1)">☀ 白色</button>
+    <button class="themeBtn" id="theme2" onclick="setTheme(2)">🌙 深色</button>
+    <button class="themeBtn" id="theme3" onclick="setTheme(3)">🌫 霧灰</button>
+    <button class="themeBtn" id="theme4" onclick="setTheme(4)">🖤 OLED</button>
+</div>
+
+<div id="qrcode"></div>
+<div class="downloadArea">
+    <button class="btn btnBlue" onclick="downloadQR()">下載 QR 圖片</button>
+    <button class="btn btnRed" onclick="shareQR()">分享 QR 圖片</button>
+</div>
+
+</div>
+
+<script>
+function switchMode(mode){
+    document.getElementById("tabNormal").classList.remove("modeActive");
+    document.getElementById("tabWifi").classList.remove("modeActive");
+
+    if(mode === "normal"){
+        document.getElementById("tabNormal").classList.add("modeActive");
+        document.getElementById("normalMode").style.display = "block";
+        document.getElementById("wifiMode").style.display = "none";
+    } else {
+        document.getElementById("tabWifi").classList.add("modeActive");
+        document.getElementById("normalMode").style.display = "none";
+        document.getElementById("wifiMode").style.display = "block";
+    }
+}
+
+function clearAll(){
+    document.getElementById("normalText").value = "";
+    document.getElementById("wifiSsid").value = "";
+    document.getElementById("wifiPw").value = "";
+    document.getElementById("qrcode").innerHTML = "";
+}
+
+function makeNormalQR(){
+    let t = document.getElementById("normalText").value.trim();
+    if(!t){ alert("請輸入內容！"); return; }
+    let s = parseInt(document.getElementById("normalSize").value);
+
+    document.getElementById("qrcode").innerHTML = "";
+    new QRCode(document.getElementById("qrcode"), {
+        text: t, width: s, height: s, correctLevel: QRCode.CorrectLevel.H
+    });
+}
+
+function makeWifiQR(){
+    let ssid = document.getElementById("wifiSsid").value.trim();
+    if(!ssid){ alert("請輸入 Wi-Fi 名稱"); return; }
+    let pw   = document.getElementById("wifiPw").value.trim();
+    let type = document.getElementById("wifiType").value;
+    let s    = parseInt(document.getElementById("wifiSize").value);
+
+    let txt = `WIFI:T:${type};S:${ssid};P:${pw};;`;
+
+    document.getElementById("qrcode").innerHTML = "";
+    new QRCode(document.getElementById("qrcode"), {
+        text: txt, width: s, height: s, correctLevel: QRCode.CorrectLevel.H
+    });
+}
+
+function getQRDataUrl(){
+    const box = document.getElementById("qrcode");
+    if(!box){ return null; }
+    const img = box.querySelector("img");
+    if(img && img.src){ return img.src; }
+    const canvas = box.querySelector("canvas");
+    if(canvas && canvas.toDataURL){ return canvas.toDataURL("image/png"); }
+    return null;
+}
+
+function downloadQR(){
+    const dataUrl = getQRDataUrl();
+    if(!dataUrl){
+        alert("請先產生 QR Code");
+        return;
+    }
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = "qrcode.png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function shareQR(){
+    const dataUrl = getQRDataUrl();
+    if(!dataUrl){
+        alert("請先產生 QR Code");
+        return;
+    }
+    if(navigator.share){
+        navigator.share({
+            title: "QRCode",
+            text: "這是產生的 QR Code 圖片",
+            url: dataUrl
+        }).catch(() => {});
+    } else {
+        alert("此裝置不支援系統分享，請改用下載圖片功能");
+    }
+}
+
+/* 主題切換 */
+function setTheme(t){
+    document.querySelectorAll(".themeBtn").forEach(b => b.classList.remove("active"));
+    document.getElementById("theme"+t).classList.add("active");
+
+    const r = document.documentElement;
+
+    if(t===1){  /* 白色 */
+        r.style.setProperty("--bg-color","#e5e5e7");
+        r.style.setProperty("--card-bg","#e5e5e7");
+        r.style.setProperty("--text-color","#1c1c1e");
+        r.style.setProperty("--sub-color","#1c1c1e");
+    }
+    if(t===2){  /* 深色 */
+        r.style.setProperty("--bg-color","#1c1c1e");
+        r.style.setProperty("--card-bg","#2c2c2e");
+        r.style.setProperty("--text-color","#fff");
+        r.style.setProperty("--sub-color","#ccc");
+    }
+    if(t===3){  /* 霧灰 */
+        r.style.setProperty("--bg-color","#121212");
+        r.style.setProperty("--card-bg","#1e1e1e");
+        r.style.setProperty("--text-color","#f0f0f0");
+        r.style.setProperty("--sub-color","#bbb");
+    }
+    if(t===4){  /* OLED 黑 */
+        r.style.setProperty("--bg-color","#000");
+        r.style.setProperty("--card-bg","#111");
+        r.style.setProperty("--text-color","#fff");
+        r.style.setProperty("--sub-color","#888");
+    }
+}
+</script>
+
+</body>
+</html>
