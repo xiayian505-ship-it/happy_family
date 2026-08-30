@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>鹿雨森 UI Demo v5（外部 JS 版本）</title>
+
+<style>
+:root {
+  --bg-fog: #f4f4f4;
+  --line: #222;
+  --text: #222;
+  --card-bg: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-fog);
+  color: var(--text);
+}
+
+/* ========= 通用視圖框架 ========= */
+
+.view {
+  display: none;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.view.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.frame {
+  width: 100%;
+  max-width: 900px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 16px;
+}
+
+/* ========= 敘事視圖 ========= */
+
+#storyView {
+  background: radial-gradient(circle at 50% 0%, #ffffff, #f0f0f0 55%, #e5e5e5 100%);
+}
+
+#storyView .topRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.portraitBox {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0, #dcdcdc 40%, #c0c0c0 100%);
+  border: 1px solid var(--line);
+  position: relative;
+}
+.portraitBox::after {
+  content: "立繪";
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 10px;
+  color: #555;
+  background: rgba(255,255,255,0.8);
+  padding: 1px 3px;
+}
+
+.nameBox {
+  flex: 1;
+}
+
+.nameBox .name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.nameBox .tagLine {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* 敘事框 */
+.storyFrame {
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 10% 0%, #ffffff 0, #eeeeee 55%, #e0e0e0 100%);
+  border: 1px solid #444;
+  position: relative;
+}
+.storyFrame::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 8px;
+  border: 1px dashed rgba(0,0,0,0.25);
+  pointer-events: none;
+}
+
+.storyBox {
+  padding: 10px 12px;
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* 選項 */
+.choiceList {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choiceBtn {
+  position: relative;
+  border: none;
+  background: radial-gradient(circle at 50% 0%, #ffffff 0, #f0f0f0 45%, #e2e2e2 100%);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+}
+.choiceBtn:hover {
+  background: radial-gradient(circle at 50% 0%, #ffffff 0, #f5f5f5 50%, #e7e7e7 100%);
+}
+
+.storyFooter {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.simpleBtn {
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: linear-gradient(to bottom, #ffffff, #f3f3f3);
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ========= 地圖視圖 ========= */
+
+#mapView {
+  background: radial-gradient(circle at 50% 0%, #f8f8f8, #ececec 60%, #e0e0e0 100%);
+}
+
+#mapView .frameHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+#mapView .locationName {
+  font-weight: bold;
+}
+
+#mapView .stats {
+  font-size: 13px;
+}
+
+#path {
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 110px;
+  margin-bottom: 12px;
+  background: radial-gradient(circle at 50% 0%, #ffffff 0, #f4f4f4 50%, #e8e8e8 100%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+#path span {
+  position: relative;
+  min-width: 34px;
+  min-height: 24px;
+  padding: 2px 4px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.4);
+  background: #fdfdfd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#path span.here {
+  box-shadow: 0 0 0 2px #000 inset;
+}
+
+.tile-forest { background: radial-gradient(circle at 30% 30%, #fdfdfd 0, #e2e2e2 40%, #d4d4d4 100%); }
+.tile-battle { background: repeating-linear-gradient(-45deg, #eeeeee 0, #eeeeee 4px, #dcdcdc 4px, #dcdcdc 8px); }
+.tile-event  { background: radial-gradient(circle at 50% 40%, #fdfdfd 0, #e8e8e8 40%, #d9d9d9 100%); }
+.tile-shop   { background: linear-gradient(to top, #e0e0e0, #f7f7f7); }
+.tile-boss   { background: radial-gradient(circle at 50% 40%, #d0d0d0 0, #b8b8b8 60%, #a0a0a0 100%); }
+
+/* 下方說明框 */
+#mapLog {
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.4);
+  padding: 8px;
+  min-height: 40px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* 事件 / 商店框 */
+#eventBox, #shopBox {
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.5);
+  padding: 10px;
+  font-size: 14px;
+  background: radial-gradient(circle at 50% 0%, #ffffff, #f2f2f2 60%, #e5e5e5 100%);
+}
+
+.mapButtons {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+
+/* ========= 章節開場畫面 ========= */
+#chapterScreen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  z-index: 9999;
+  text-align: center;
+  padding-top: 18vh;
+}
+
+#chapterScreen h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+}
+
+#chapterScreen p {
+  margin: 8px 0;
+}
+
+#chapterScreen img {
+  max-width: 80%;
+  max-height: 40vh;
+  margin-top: 20px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #333; /* 之後沒放圖時就黑底 */
+}
+
+#chapterScreen .hint {
+  margin-top: 32px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* 卡片外觀 */
+.battle-card {
+  width: 90px;
+  height: 130px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.battle-card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.battle-card-header {
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  background: #fafafa;
+}
+
+.battle-card-value {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.battle-card-label {
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 不同類型的底色 */
+.battle-card-attack { background:#ffe5e5; }
+.battle-card-guard  { background:#e5f0ff; }
+.battle-card-energy { background:#fff7d9; }
+.battle-card-heal   { background:#e7ffe7; }
+
+/* 小螢幕排版優化 */
+@media (max-width: 480px) {
+  .battle-card {
+    width: 80px;
+    height: 115px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ========= 敘事視圖 ========= -->
+<div id="storyView" class="view active">
+  <div class="frame">
+    <div class="topRow">
+      <div class="portraitBox"></div>
+      <div class="nameBox">
+        <div class="name" id="storyName">璐瑤</div>
+        <div class="tagLine">鹿雨森 · 敘事</div>
+      </div>
+    </div>
+
+    <div class="storyFrame">
+      <div class="storyBox" id="storyText">（初始化中……）</div>
+    </div>
+
+    <div class="choiceList" id="choiceList"></div>
+
+    <div class="storyFooter">
+      <button class="simpleBtn" id="btnNext" onclick="Game.nextLine()">下一句</button>
+<button class="simpleBtn" onclick="Game.startChapter1()">
+  ▶ 前往第一章
+</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========= 戰鬥面板：正確位置 ========= -->
+<div id="battlePanel" class="view" style="display:none; padding:16px;">
+
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>戰鬥</h2>
+    <button id="btnLeaveBattle">離開戰鬥</button>
+  </div>
+
+  <div style="margin-top:8px; font-size:14px;">
+    <div>
+      HP：<span id="battlePlayerHP"></span>
+      ／ 能量：<span id="battleEnergy"></span>
+      護盾：<span id="battleShield"></span>
+    </div>
+    <div style="margin-top:4px;">
+      敵人 HP：<span id="battleEnemyHPText"></span>
+    </div>
+  </div>
+
+  <div id="battleEnemyHPBar"
+       style="margin-top:8px; width:100%; height:40px; border:1px solid #ccc; border-radius:6px; overflow:hidden;">
+    <div id="battleEnemyHPFill"
+         style="height:100%; width:100%; background:repeating-linear-gradient(
+           45deg, #ddd, #ddd 10px, #eee 10px, #eee 20px
+         );"></div>
+  </div>
+
+  <div style="margin-top:16px; font-size:14px;">手牌：</div>
+  <div id="battleCards"
+       style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+  </div>
+
+  <div style="margin-top:16px;">
+    <button id="btnEndTurn">結束回合</button>
+  </div>
+
+  <div style="margin-top:8px;">
+    <div id="battleLog"
+         style="min-height:50px; border:1px solid #ccc; border-radius:4px; padding:4px; font-size:13px; white-space:pre-line;">
+    </div>
+  </div>
+
+</div>
+
+<!-- ========= 地圖視圖 ========= -->
+<div id="mapView" class="view">
+  <div class="frame">
+    <div class="frameHeader">
+      <div class="locationName" id="mapTitle">鹿雨森 · 小路</div>
+      <div class="stats">
+        HP：<span id="hpDisplay"></span>/<span id="maxHpDisplay"></span>　
+        體力：<span id="staminaDisplay"></span>/20　
+        金幣：<span id="gold"></span>
+      </div>
+    </div>
+
+    <div id="path"></div>
+    <div id="mapLog"></div>
+
+    <div id="eventBox" style="display:none;">
+      <div><strong>事件</strong></div>
+      <p id="eventText"></p>
+      <button class="simpleBtn" onclick="Game.closeEvent()">繼續</button>
+    </div>
+
+    <div id="shopBox" style="display:none;">
+      <div><strong>商店</strong></div>
+      <p id="shopCardText"></p>
+      <button class="simpleBtn" id="btnBuyCard"></button>
+      <hr>
+      <p id="shopItemText"></p>
+      <button class="simpleBtn" id="btnBuyItem"></button>
+      <hr>
+      <p id="shopHealText"></p>
+      <button class="simpleBtn" id="btnBuyHeal"></button>
+      <hr>
+      <button class="simpleBtn" onclick="Game.closeShop()">離開商店</button>
+    </div>
+
+    <div class="mapButtons">
+      <button class="simpleBtn" onclick="Game.backToStory()">⏎ 返回敘事</button>
+      <button class="simpleBtn" onclick="Game.roll()">🎲 前進</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ========= 引入外部 JS ========= -->
+<!-- data -->
+<script src="enemies.js"></script>
+
+<!-- engine 基礎 -->
+<script src="state.js"></script>
+<script src="stamina.js"></script>
+<script src="map.js"></script>
+
+<!-- UI 層（⚠ 必須在 story-engine.js 之前！） -->
+<script src="ui.js"></script>
+<script src="battle-ui.js"></script>
+
+<!-- 故事引擎 -->
+<script src="story-engine.js"></script>
+
+
+
+<script>
+BattleUI.init();
+</script>
+
+
+
+
+<!-- story content -->
+<script src="prologue.js"></script>
+<script src="chapter1.js"></script>
+
+<script>
+window.onload = () => {
+  Game.startStory(Story.lines);
+};
+</script>
+
+
+
+
+<!-- ========= 章節開場畫面 ========= -->
+<div id="chapterScreen">
+  <h2 id="chTitle">Chapter 1</h2>
+  <p id="chSub">有些相遇，從來都不是巧合</p>
+  <img id="chImg" src="" alt="Chapter Image">
+  <p class="hint">點擊畫面繼續</p>
+</div>
+
+</body>
+</html>
