@@ -8,9 +8,25 @@
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
 <style>
+:root {
+    --bg: #f4f5f5;
+    --surface: #ffffff;
+    --text: #202426;
+    --muted: #687176;
+    --line: #d9dddf;
+    --accent: #536d78;
+    --content: 980px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, "Microsoft JhengHei", sans-serif;
-    margin: 20px;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
 }
 
 button, input, select {
@@ -18,12 +34,102 @@ button, input, select {
 }
 
 button {
-    margin: 3px;
+    cursor: pointer;
 }
 
 input, select {
-    padding: 4px;
-    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+}
+
+.page {
+    width: min(calc(100% - 32px), var(--content));
+    margin: 0 auto;
+    padding-bottom: 48px;
+}
+
+.topbar {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.topbar-inner {
+    width: min(calc(100% - 32px), var(--content));
+    margin: 0 auto;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.brand {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.main-nav,
+.sub-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.main-nav button,
+.sub-nav button {
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 8px 12px;
+}
+
+.main-nav button.active,
+.sub-nav button.active {
+    background: var(--text);
+    color: #fff;
+    border-color: var(--text);
+}
+
+.hero {
+    padding: 40px 0 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.hero-kicker {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.hero h1 {
+    margin: 0 0 8px;
+    font-size: clamp(28px, 5vw, 42px);
+}
+
+.hero p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin: 28px 0 18px;
+}
+
+.section-head h2 {
+    margin: 0 0 5px;
+}
+
+.section-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
 }
 
 .main-section,
@@ -42,7 +148,7 @@ input, select {
 }
 
 .field {
-    margin: 8px 0;
+    margin: 10px 0;
 }
 
 .field label {
@@ -55,10 +161,27 @@ input, select {
     min-width: 220px;
 }
 
+.action-row {
+    margin: 14px 0;
+}
+
+.action-row button,
+.edit-panel button,
+.manage-row button {
+    margin: 3px 3px 3px 0;
+    padding: 7px 11px;
+}
+
+.content-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 18px;
+}
+
 .wifi-row,
 .manage-row {
-    border-top: 1px solid #ccc;
-    padding: 10px 0;
+    border-top: 1px solid var(--line);
+    padding: 12px 0;
 }
 
 .wifi-row:first-child,
@@ -137,6 +260,33 @@ input, select {
     color: #777;
 }
 
+@media (max-width: 700px) {
+    .topbar-inner,
+    .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .topbar-inner {
+        padding: 14px 0;
+    }
+
+    .field label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .field input,
+    .field select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .print-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @page {
     size: A4 portrait;
     margin: 12mm;
@@ -191,137 +341,149 @@ input, select {
 
 <body>
 
-<h1>Wi-Fi QRCode 工具</h1>
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">Wi-Fi QRCode 工具</div>
+        <nav class="main-nav">
+            <button id="navHotel" class="active" onclick="showMain('hotel')">飯店 Wi-Fi</button>
+            <button id="navGenerator" onclick="showMain('generator')">QRCode 產生器</button>
+            <button id="navManage" onclick="showMain('manage')">Wi-Fi 管理</button>
+        </nav>
+    </div>
+</header>
 
-<div class="toolbar">
-    <button onclick="showMain('hotel')">飯店 Wi-Fi</button>
-    <button onclick="showMain('generator')">QRCode 產生器</button>
-    <button onclick="showMain('manage')">Wi-Fi 管理</button>
-</div>
+<main class="page">
 
 <section id="sectionHotel" class="main-section">
-    <h2>飯店 Wi-Fi</h2>
-
-    <div class="toolbar">
-        <button onclick="showHotelMode('rooms')">客房</button>
-        <button onclick="showHotelMode('public')">其他</button>
+    <div class="hero">
+        <div class="hero-kicker">Hotel Wi-Fi</div>
+        <h1>飯店 Wi-Fi</h1>
+        <p>查看客房與其他區域的 Wi-Fi，預覽後直接列印 QRCode。</p>
     </div>
 
-    <div id="hotelRooms" class="hotel-section">
+    <div class="section-head">
+        <div>
+            <h2>Wi-Fi 清單</h2>
+            <p>依使用位置切換。</p>
+        </div>
+        <div class="sub-nav">
+            <button id="hotelNavRooms" class="active" onclick="showHotelMode('rooms')">客房</button>
+            <button id="hotelNavPublic" onclick="showHotelMode('public')">其他</button>
+        </div>
+    </div>
+
+    <div id="hotelRooms" class="hotel-section content-box">
         <h3>客房</h3>
-        <button onclick="showRoomList()">顯示 Wi-Fi 清單</button>
-        <button onclick="showRoomPrintPreview()">預覽列印</button>
-        <button onclick="printCurrent()">列印</button>
+        <div class="action-row">
+            <button onclick="showRoomList()">顯示 Wi-Fi 清單</button>
+            <button onclick="showRoomPrintPreview()">預覽列印</button>
+            <button onclick="printCurrent()">列印</button>
+        </div>
+        <div id="roomFloorTabs" class="sub-nav hidden"></div>
         <div id="hotelList"></div>
     </div>
 
-    <div id="hotelPublic" class="hotel-section hidden">
+    <div id="hotelPublic" class="hotel-section content-box hidden">
         <h3>其他</h3>
 
-        <div class="field">
-            <label for="publicSelect">選擇：</label>
-            <select id="publicSelect" onchange="showPublicDetail()"></select>
+        <div class="action-row">
+            <button onclick="showPublicList()">顯示 Wi-Fi 清單</button>
+            <button onclick="showPublicPrintPreview()">預覽列印</button>
+            <button onclick="printCurrent()">列印</button>
         </div>
 
-        <button onclick="showPublicDetail()">顯示資料</button>
-        <button onclick="showPublicPrintPreview()">預覽列印</button>
-        <button onclick="printCurrent()">列印</button>
-
-        <div id="publicDetail"></div>
+        <div id="publicList"></div>
     </div>
 </section>
 
 <section id="sectionGenerator" class="main-section hidden">
-    <h2>QRCode 產生器</h2>
-
-    <div class="toolbar">
-        <button onclick="showQrMode('normal')">一般 QRCode</button>
-        <button onclick="showQrMode('wifi')">Wi-Fi QRCode</button>
+    <div class="hero">
+        <div class="hero-kicker">QRCode Generator</div>
+        <h1>QRCode 產生器</h1>
+        <p>產生一般文字、網址或 Wi-Fi QRCode。</p>
     </div>
 
-    <div id="qrNormalMode" class="qr-mode">
-        <div class="field">
-            <label for="normalText">內容：</label>
-            <input type="text" id="normalText" placeholder="網址或任意文字">
+    <div class="section-head">
+        <div>
+            <h2>產生 QRCode</h2>
+            <p>選擇要建立的 QRCode 類型。</p>
         </div>
-
-        <div class="field">
-            <label for="normalSize">尺寸：</label>
-            <select id="normalSize">
-                <option value="120">120</option>
-                <option value="150">150</option>
-                <option value="180">180</option>
-                <option value="200">200</option>
-                <option value="250">250</option>
-                <option value="300">300</option>
-                <option value="400">400</option>
-                <option value="500">500</option>
-                <option value="600">600</option>
-            </select>
+        <div class="sub-nav">
+            <button id="qrNavNormal" class="active" onclick="showQrMode('normal')">一般 QRCode</button>
+            <button id="qrNavWifi" onclick="showQrMode('wifi')">Wi-Fi QRCode</button>
         </div>
-
-        <button onclick="makeNormalQR()">產生 QRCode</button>
     </div>
 
-    <div id="qrWifiMode" class="qr-mode hidden">
-        <div class="field">
-            <label for="genericWifiSsid">Wi-Fi 名稱：</label>
-            <input type="text" id="genericWifiSsid">
+    <div class="content-box">
+        <div id="qrNormalMode" class="qr-mode">
+            <div class="field">
+                <label for="normalText">內容：</label>
+                <input type="text" id="normalText" placeholder="網址或任意文字">
+            </div>
+
+            <div class="field">
+                <label for="normalSize">尺寸：</label>
+                <select id="normalSize">
+                    <option value="120">120</option><option value="150">150</option><option value="180">180</option>
+                    <option value="200">200</option><option value="250">250</option><option value="300">300</option>
+                    <option value="400">400</option><option value="500">500</option><option value="600">600</option>
+                </select>
+            </div>
+
+            <div class="action-row"><button onclick="makeNormalQR()">產生 QRCode</button></div>
         </div>
 
-        <div class="field">
-            <label for="genericWifiPw">Wi-Fi 密碼：</label>
-            <input type="text" id="genericWifiPw">
+        <div id="qrWifiMode" class="qr-mode hidden">
+            <div class="field"><label for="genericWifiSsid">Wi-Fi 名稱：</label><input type="text" id="genericWifiSsid"></div>
+            <div class="field"><label for="genericWifiPw">Wi-Fi 密碼：</label><input type="text" id="genericWifiPw"></div>
+            <div class="field">
+                <label for="genericWifiType">加密方式：</label>
+                <select id="genericWifiType">
+                    <option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="">無密碼</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="genericWifiSize">尺寸：</label>
+                <select id="genericWifiSize">
+                    <option value="120">120</option><option value="150">150</option><option value="180">180</option>
+                    <option value="200">200</option><option value="250">250</option><option value="300">300</option>
+                    <option value="400">400</option><option value="500">500</option><option value="600">600</option>
+                </select>
+            </div>
+            <div class="action-row"><button onclick="makeGenericWifiQR()">產生 Wi-Fi QRCode</button></div>
         </div>
 
-        <div class="field">
-            <label for="genericWifiType">加密方式：</label>
-            <select id="genericWifiType">
-                <option value="WPA">WPA / WPA2</option>
-                <option value="WEP">WEP</option>
-                <option value="">無密碼</option>
-            </select>
+        <div id="genericQrPreview"></div>
+        <div class="action-row">
+            <button onclick="downloadGenericQR()">下載 QR 圖片</button>
+            <button onclick="shareGenericQR()">分享 QR 圖片</button>
+            <button onclick="clearGenericQR()">清除</button>
         </div>
-
-        <div class="field">
-            <label for="genericWifiSize">尺寸：</label>
-            <select id="genericWifiSize">
-                <option value="120">120</option>
-                <option value="150">150</option>
-                <option value="180">180</option>
-                <option value="200">200</option>
-                <option value="250">250</option>
-                <option value="300">300</option>
-                <option value="400">400</option>
-                <option value="500">500</option>
-                <option value="600">600</option>
-            </select>
-        </div>
-
-        <button onclick="makeGenericWifiQR()">產生 Wi-Fi QRCode</button>
-    </div>
-
-    <div id="genericQrPreview"></div>
-
-    <div>
-        <button onclick="downloadGenericQR()">下載 QR 圖片</button>
-        <button onclick="shareGenericQR()">分享 QR 圖片</button>
-        <button onclick="clearGenericQR()">清除</button>
     </div>
 </section>
 
 <section id="sectionManage" class="main-section hidden">
-    <h2>Wi-Fi 管理</h2>
-
-    <div class="toolbar">
-        <button onclick="showManageMode('rooms')">客房</button>
-        <button onclick="showManageMode('public')">其他</button>
+    <div class="hero">
+        <div class="hero-kicker">Wi-Fi Management</div>
+        <h1>Wi-Fi 管理</h1>
+        <p>設定客房與其他區域的 SSID、密碼。</p>
     </div>
 
-    <div id="manageRooms">
+    <div class="section-head">
+        <div>
+            <h2>資料管理</h2>
+            <p>選擇要管理的 Wi-Fi 類型。</p>
+        </div>
+        <div class="sub-nav">
+            <button id="manageNavRooms" class="active" onclick="showManageMode('rooms')">客房</button>
+            <button id="manageNavPublic" onclick="showManageMode('public')">其他</button>
+        </div>
+    </div>
+
+    <div id="manageRooms" class="content-box">
         <h3>客房 Wi-Fi</h3>
 
-        <button onclick="openBatchRoomPanel()">設定全部客房</button>
+        <div class="action-row"><button onclick="openBatchRoomPanel()">設定全部客房</button></div>
 
         <div class="field">
             <label for="roomSearch">搜尋房號：</label>
@@ -333,17 +495,8 @@ input, select {
         <div id="batchRoomPanel" class="edit-panel hidden">
             <h3>設定全部客房</h3>
             <p class="notice">會依「SSID 前綴 + 房號」產生各房 SSID。儲存後每間仍可單獨修改。</p>
-
-            <div class="field">
-                <label for="batchSsidPrefix">SSID 前綴：</label>
-                <input type="text" id="batchSsidPrefix">
-            </div>
-
-            <div class="field">
-                <label for="batchPassword">共同密碼：</label>
-                <input type="text" id="batchPassword">
-            </div>
-
+            <div class="field"><label for="batchSsidPrefix">SSID 前綴：</label><input type="text" id="batchSsidPrefix"></div>
+            <div class="field"><label for="batchPassword">共同密碼：</label><input type="text" id="batchPassword"></div>
             <button onclick="saveAllRooms()">套用全部客房</button>
             <button onclick="closeBatchRoomPanel()">取消</button>
         </div>
@@ -351,72 +504,37 @@ input, select {
         <div id="roomEditPanel" class="edit-panel hidden">
             <h3 id="roomEditTitle">設定客房</h3>
             <input type="hidden" id="roomEditRoom">
-
-            <div class="field">
-                <label>房號：</label>
-                <span id="roomEditRoomLabel"></span>
-            </div>
-
-            <div class="field">
-                <label for="roomEditSsid">SSID：</label>
-                <input type="text" id="roomEditSsid">
-            </div>
-
-            <div class="field">
-                <label for="roomEditPassword">密碼：</label>
-                <input type="text" id="roomEditPassword">
-            </div>
-
+            <div class="field"><label>房號：</label><span id="roomEditRoomLabel"></span></div>
+            <div class="field"><label for="roomEditSsid">SSID：</label><input type="text" id="roomEditSsid"></div>
+            <div class="field"><label for="roomEditPassword">密碼：</label><input type="text" id="roomEditPassword"></div>
             <button onclick="saveSingleRoom()">儲存</button>
             <button onclick="closeRoomEditPanel()">取消</button>
         </div>
     </div>
 
-    <div id="managePublic" class="hidden">
+    <div id="managePublic" class="content-box hidden">
         <h3>其他 Wi-Fi</h3>
-
-        <button onclick="openPublicAddPanel()">新增</button>
-        <button onclick="openPublicBatchPanel()">批次新增</button>
-
+        <div class="action-row">
+            <button onclick="openPublicAddPanel()">新增</button>
+            <button onclick="openPublicBatchPanel()">批次新增</button>
+        </div>
         <div id="publicManageList"></div>
 
         <div id="publicBatchPanel" class="edit-panel hidden">
             <h3>批次新增其他 Wi-Fi</h3>
             <p class="notice">每列一筆。名稱最多 4 個字，空白列會自動忽略。</p>
-
             <div id="publicBatchRows"></div>
-
-            <div>
-                <button onclick="addPublicBatchRow()">＋新增一列</button>
-            </div>
-
-            <div>
-                <button onclick="savePublicBatch()">批次新增</button>
-                <button onclick="closePublicBatchPanel()">取消</button>
-            </div>
+            <div><button onclick="addPublicBatchRow()">＋新增一列</button></div>
+            <div><button onclick="savePublicBatch()">批次新增</button><button onclick="closePublicBatchPanel()">取消</button></div>
         </div>
 
         <div id="publicEditPanel" class="edit-panel hidden">
             <h3 id="publicEditTitle">新增其他 Wi-Fi</h3>
             <input type="hidden" id="publicEditId">
-
-            <div class="field">
-                <label for="publicEditName">名稱：</label>
-                <input type="text" id="publicEditName" maxlength="4" placeholder="例如 大廳、餐廳">
-            </div>
-
+            <div class="field"><label for="publicEditName">名稱：</label><input type="text" id="publicEditName" maxlength="4" placeholder="例如 大廳、餐廳"></div>
             <p class="notice">名稱最多 4 個字，列印時固定顯示「名稱 | Wi-Fi」。</p>
-
-            <div class="field">
-                <label for="publicEditSsid">SSID：</label>
-                <input type="text" id="publicEditSsid">
-            </div>
-
-            <div class="field">
-                <label for="publicEditPassword">密碼：</label>
-                <input type="text" id="publicEditPassword">
-            </div>
-
+            <div class="field"><label for="publicEditSsid">SSID：</label><input type="text" id="publicEditSsid"></div>
+            <div class="field"><label for="publicEditPassword">密碼：</label><input type="text" id="publicEditPassword"></div>
             <button onclick="savePublicItem()">儲存</button>
             <button onclick="closePublicEditPanel()">取消</button>
         </div>
@@ -424,6 +542,7 @@ input, select {
 </section>
 
 <section id="printArea" class="print-preview hidden"></section>
+</main>
 
 <script>
 const ROOM_STORAGE_KEY = "hotel_wifi_room";
@@ -431,7 +550,6 @@ const OTHER_STORAGE_KEY = "hotel_wifi_other";
 const HOTEL_QR_SIZE = 120;
 const OTHER_NAME_MAX = 4;
 
-// 房號不是機密，保留在程式裡；SSID / 密碼不寫死。
 const ROOM_NUMBERS = [
     202,
     203,205,206,207,208,210,211,212,215,
@@ -450,13 +568,9 @@ function loadRoomWifi() {
         const saved = localStorage.getItem(ROOM_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-                return parsed;
-            }
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
         }
-    } catch (error) {
-        console.warn("客房 Wi-Fi 資料讀取失敗。", error);
-    }
+    } catch (error) { console.warn("客房 Wi-Fi 資料讀取失敗。", error); }
     return {};
 }
 
@@ -465,23 +579,14 @@ function loadOtherWifi() {
         const saved = localStorage.getItem(OTHER_STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed)) {
-                return parsed;
-            }
+            if (Array.isArray(parsed)) return parsed;
         }
-    } catch (error) {
-        console.warn("其他 Wi-Fi 資料讀取失敗。", error);
-    }
+    } catch (error) { console.warn("其他 Wi-Fi 資料讀取失敗。", error); }
     return [];
 }
 
-function saveRoomWifi() {
-    localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(roomWifi));
-}
-
-function saveOtherWifi() {
-    localStorage.setItem(OTHER_STORAGE_KEY, JSON.stringify(otherWifi));
-}
+function saveRoomWifi() { localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(roomWifi)); }
+function saveOtherWifi() { localStorage.setItem(OTHER_STORAGE_KEY, JSON.stringify(otherWifi)); }
 
 function wifiPayload(ssid, password, type = "WPA") {
     const wifiType = type || "nopass";
@@ -489,12 +594,11 @@ function wifiPayload(ssid, password, type = "WPA") {
 }
 
 function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+function setActive(ids, activeId) {
+    ids.forEach(id => document.getElementById(id)?.classList.toggle("active", id === activeId));
 }
 
 function clearPrintArea() {
@@ -508,12 +612,11 @@ function showMain(target) {
     document.getElementById("sectionGenerator").classList.add("hidden");
     document.getElementById("sectionManage").classList.add("hidden");
     clearPrintArea();
+    setActive(["navHotel","navGenerator","navManage"], target === "hotel" ? "navHotel" : target === "generator" ? "navGenerator" : "navManage");
 
-    if (target === "hotel") {
-        document.getElementById("sectionHotel").classList.remove("hidden");
-    } else if (target === "generator") {
-        document.getElementById("sectionGenerator").classList.remove("hidden");
-    } else if (target === "manage") {
+    if (target === "hotel") document.getElementById("sectionHotel").classList.remove("hidden");
+    else if (target === "generator") document.getElementById("sectionGenerator").classList.remove("hidden");
+    else if (target === "manage") {
         document.getElementById("sectionManage").classList.remove("hidden");
         showManageMode("rooms");
     }
@@ -522,70 +625,128 @@ function showMain(target) {
 function showHotelMode(target) {
     document.getElementById("hotelRooms").classList.toggle("hidden", target !== "rooms");
     document.getElementById("hotelPublic").classList.toggle("hidden", target !== "public");
+    setActive(["hotelNavRooms","hotelNavPublic"], target === "rooms" ? "hotelNavRooms" : "hotelNavPublic");
     clearPrintArea();
-
-    if (target === "rooms") {
-        showRoomList();
-    } else {
-        refreshPublicSelect();
-        showPublicDetail();
-    }
+    if (target === "rooms") resetRoomListView();
+    else resetPublicListView();
 }
 
 function showManageMode(target) {
     document.getElementById("manageRooms").classList.toggle("hidden", target !== "rooms");
     document.getElementById("managePublic").classList.toggle("hidden", target !== "public");
-
+    setActive(["manageNavRooms","manageNavPublic"], target === "rooms" ? "manageNavRooms" : "manageNavPublic");
     if (target === "rooms") {
+        document.getElementById("roomSearch").value = "";
         renderRoomManageList();
-    } else {
-        renderPublicManageList();
-    }
+    } else renderPublicManageList();
+}
+
+function showQrMode(mode) {
+    document.getElementById("qrNormalMode").classList.toggle("hidden", mode !== "normal");
+    document.getElementById("qrWifiMode").classList.toggle("hidden", mode !== "wifi");
+    setActive(["qrNavNormal","qrNavWifi"], mode === "normal" ? "qrNavNormal" : "qrNavWifi");
+    clearGenericQR();
 }
 
 /* ==================== 客房顯示 / 列印 ==================== */
+function getConfiguredRoom(room) { return roomWifi[String(room)] || null; }
 
-function getConfiguredRoom(room) {
-    return roomWifi[String(room)] || null;
+function resetRoomListView() {
+    const tabs = document.getElementById("roomFloorTabs");
+    tabs.innerHTML = "";
+    tabs.classList.add("hidden");
+    document.getElementById("hotelList").innerHTML = "";
 }
 
 function showRoomList() {
     clearPrintArea();
 
-    const box = document.getElementById("hotelList");
-    let currentFloor = "";
-    let html = "";
+    const floors = [...new Set(ROOM_NUMBERS.map(room => String(room).charAt(0)))];
+    const tabs = document.getElementById("roomFloorTabs");
 
-    ROOM_NUMBERS.forEach(room => {
-        const floor = String(room).charAt(0) + "F";
-        const data = getConfiguredRoom(room);
+    tabs.innerHTML = "";
 
-        if (floor !== currentFloor) {
-            currentFloor = floor;
-            html += `<h4>${escapeHtml(currentFloor)}</h4>`;
+    floors.forEach((floor, index) => {
+        const button = document.createElement("button");
+        button.textContent = `${floor}F`;
+        button.onclick = () => showRoomFloor(floor, button);
+        tabs.appendChild(button);
+
+        if (index === 0) {
+            button.classList.add("active");
         }
-
-        html += `
-            <div class="wifi-row">
-                <strong>R${room}</strong>
-                ${data
-                    ? `${escapeHtml(data.ssid)}`
-                    : `<span class="status-unset">尚未設定</span>`
-                }
-            </div>
-        `;
     });
 
-    box.innerHTML = html;
+    tabs.classList.remove("hidden");
+
+    if (floors.length) {
+        showRoomFloor(floors[0], tabs.querySelector("button"));
+    }
+}
+
+function showRoomFloor(floor, activeButton) {
+    const tabs = document.getElementById("roomFloorTabs");
+    [...tabs.querySelectorAll("button")].forEach(button => button.classList.remove("active"));
+    if (activeButton) activeButton.classList.add("active");
+
+    const box = document.getElementById("hotelList");
+    const rows = ROOM_NUMBERS
+        .filter(room => String(room).charAt(0) === String(floor))
+        .map(room => {
+            const data = getConfiguredRoom(room);
+            return `<div class="wifi-row"><strong>R${room}</strong>${data ? `${escapeHtml(data.ssid)}` : `<span class="status-unset">尚未設定</span>`}</div>`;
+        })
+        .join("");
+
+    box.innerHTML = `<h4>${escapeHtml(floor)}F</h4>${rows}`;
 }
 
 function showRoomPrintPreview() {
-    const configured = ROOM_NUMBERS
-        .map(room => ({ room, data: getConfiguredRoom(room) }))
-        .filter(entry => entry.data && entry.data.ssid);
+    const configured = ROOM_NUMBERS.map(room => ({ room, data: getConfiguredRoom(room) })).filter(entry => entry.data && entry.data.ssid);
+    if (!configured.length) { alert("目前沒有已設定的客房 Wi-Fi"); return; }
+    const printArea = document.getElementById("printArea");
+    printArea.innerHTML = "";
+    const grid = document.createElement("div"); grid.className = "print-grid";
+    configured.forEach(({ room, data }) => {
+        const card = document.createElement("div"); card.className = "print-card";
+        const title = document.createElement("div"); title.className = "print-title"; title.textContent = `R${room} | Wi-Fi`;
+        const canvas = document.createElement("canvas");
+        new QRious({ element: canvas, value: wifiPayload(data.ssid, data.password || ""), size: HOTEL_QR_SIZE, level: "H" });
+        card.appendChild(title); card.appendChild(canvas); grid.appendChild(card);
+    });
+    printArea.appendChild(grid); printArea.classList.remove("hidden");
+    printArea.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ==================== 其他顯示 / 列印 ==================== */
+function resetPublicListView() {
+    document.getElementById("publicList").innerHTML = "";
+}
+
+function showPublicList() {
+    clearPrintArea();
+
+    const box = document.getElementById("publicList");
+
+    if (!otherWifi.length) {
+        box.innerHTML = "<p>目前沒有其他 Wi-Fi。</p>";
+        return;
+    }
+
+    box.innerHTML = otherWifi.map(item => `
+        <div class="wifi-row">
+            <strong>${escapeHtml(item.name)}</strong>
+            <div>SSID：${escapeHtml(item.ssid)}</div>
+            <div>密碼：${escapeHtml(item.password || "")}</div>
+        </div>
+    `).join("");
+}
+
+function showPublicPrintPreview() {
+    const configured = otherWifi.filter(item => item && item.ssid);
 
     if (!configured.length) {
-        alert("目前沒有已設定的客房 Wi-Fi");
+        alert("目前沒有已設定的其他 Wi-Fi");
         return;
     }
 
@@ -595,19 +756,19 @@ function showRoomPrintPreview() {
     const grid = document.createElement("div");
     grid.className = "print-grid";
 
-    configured.forEach(({ room, data }) => {
+    configured.forEach(item => {
         const card = document.createElement("div");
         card.className = "print-card";
 
         const title = document.createElement("div");
         title.className = "print-title";
-        title.textContent = `R${room} | Wi-Fi`;
+        title.textContent = `${item.name} | Wi-Fi`;
 
         const canvas = document.createElement("canvas");
 
         new QRious({
             element: canvas,
-            value: wifiPayload(data.ssid, data.password || ""),
+            value: wifiPayload(item.ssid, item.password || ""),
             size: HOTEL_QR_SIZE,
             level: "H"
         });
@@ -621,531 +782,156 @@ function showRoomPrintPreview() {
     printArea.classList.remove("hidden");
     printArea.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-/* ==================== 其他顯示 / 列印 ==================== */
-
-function refreshPublicSelect() {
-    const select = document.getElementById("publicSelect");
-    const current = select.value;
-    select.innerHTML = "";
-
-    otherWifi.forEach(item => {
-        const option = document.createElement("option");
-        option.value = item.id;
-        option.textContent = item.name;
-        select.appendChild(option);
-    });
-
-    if (current && [...select.options].some(option => option.value === current)) {
-        select.value = current;
-    }
-}
-
-function getSelectedPublicItem() {
-    const id = document.getElementById("publicSelect").value;
-    return otherWifi.find(item => item.id === id) || null;
-}
-
-function showPublicDetail() {
-    clearPrintArea();
-
-    const box = document.getElementById("publicDetail");
-    const item = getSelectedPublicItem();
-
-    if (!item) {
-        box.innerHTML = "<p>目前沒有其他 Wi-Fi。</p>";
-        return;
-    }
-
-    box.innerHTML = `
-        <p><strong>${escapeHtml(item.name)}</strong></p>
-        <p>SSID：${escapeHtml(item.ssid)}</p>
-        <p>密碼：${escapeHtml(item.password)}</p>
-    `;
-}
-
-function showPublicPrintPreview() {
-    const item = getSelectedPublicItem();
-
-    if (!item) {
-        alert("請先選擇其他 Wi-Fi");
-        return;
-    }
-
-    const printArea = document.getElementById("printArea");
-    printArea.innerHTML = "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "public-print";
-
-    const title = document.createElement("div");
-    title.className = "print-title";
-    title.textContent = `${item.name} | Wi-Fi`;
-
-    const canvas = document.createElement("canvas");
-
-    new QRious({
-        element: canvas,
-        value: wifiPayload(item.ssid, item.password || ""),
-        size: HOTEL_QR_SIZE,
-        level: "H"
-    });
-
-    const info = document.createElement("div");
-    info.className = "public-info";
-    info.innerHTML = `
-        <div>Wi-Fi Name：${escapeHtml(item.ssid)}</div>
-        <div>Wi-Fi Password：${escapeHtml(item.password || "")}</div>
-    `;
-
-    wrapper.appendChild(title);
-    wrapper.appendChild(canvas);
-    wrapper.appendChild(info);
-
-    printArea.appendChild(wrapper);
-    printArea.classList.remove("hidden");
-    printArea.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 function printCurrent() {
     const printArea = document.getElementById("printArea");
-
-    if (printArea.classList.contains("hidden") || !printArea.children.length) {
-        alert("請先預覽列印");
-        return;
-    }
-
+    if (printArea.classList.contains("hidden") || !printArea.children.length) { alert("請先預覽列印"); return; }
     window.print();
 }
 
 /* ==================== 通用 QRCode ==================== */
-
-function showQrMode(mode) {
-    document.getElementById("qrNormalMode").classList.toggle("hidden", mode !== "normal");
-    document.getElementById("qrWifiMode").classList.toggle("hidden", mode !== "wifi");
-    clearGenericQR();
-}
-
 function renderGenericQR(text, size) {
-    const preview = document.getElementById("genericQrPreview");
-    preview.innerHTML = "";
-
-    const canvas = document.createElement("canvas");
-    canvas.id = "genericQrCanvas";
-
-    new QRious({
-        element: canvas,
-        value: text,
-        size,
-        level: "H"
-    });
-
-    preview.appendChild(canvas);
+    const preview = document.getElementById("genericQrPreview"); preview.innerHTML = "";
+    const canvas = document.createElement("canvas"); canvas.id = "genericQrCanvas";
+    new QRious({ element: canvas, value: text, size, level: "H" }); preview.appendChild(canvas);
 }
-
 function makeNormalQR() {
     const text = document.getElementById("normalText").value.trim();
-    if (!text) {
-        alert("請輸入內容");
-        return;
-    }
-
+    if (!text) { alert("請輸入內容"); return; }
     renderGenericQR(text, parseInt(document.getElementById("normalSize").value, 10));
 }
-
 function makeGenericWifiQR() {
-    const ssid = document.getElementById("genericWifiSsid").value.trim();
-    const password = document.getElementById("genericWifiPw").value;
-    const type = document.getElementById("genericWifiType").value;
-
-    if (!ssid) {
-        alert("請輸入 Wi-Fi 名稱");
-        return;
-    }
-
-    renderGenericQR(
-        wifiPayload(ssid, password, type),
-        parseInt(document.getElementById("genericWifiSize").value, 10)
-    );
+    const ssid = document.getElementById("genericWifiSsid").value.trim(), password = document.getElementById("genericWifiPw").value, type = document.getElementById("genericWifiType").value;
+    if (!ssid) { alert("請輸入 Wi-Fi 名稱"); return; }
+    renderGenericQR(wifiPayload(ssid, password, type), parseInt(document.getElementById("genericWifiSize").value, 10));
 }
-
-function getGenericQrDataUrl() {
-    const canvas = document.getElementById("genericQrCanvas");
-    return canvas ? canvas.toDataURL("image/png") : null;
-}
-
+function getGenericQrDataUrl() { const canvas = document.getElementById("genericQrCanvas"); return canvas ? canvas.toDataURL("image/png") : null; }
 function downloadGenericQR() {
-    const dataUrl = getGenericQrDataUrl();
-
-    if (!dataUrl) {
-        alert("請先產生 QRCode");
-        return;
-    }
-
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = "qrcode.png";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    const dataUrl = getGenericQrDataUrl(); if (!dataUrl) { alert("請先產生 QRCode"); return; }
+    const link = document.createElement("a"); link.href = dataUrl; link.download = "qrcode.png"; document.body.appendChild(link); link.click(); link.remove();
 }
-
 async function shareGenericQR() {
-    const dataUrl = getGenericQrDataUrl();
-
-    if (!dataUrl) {
-        alert("請先產生 QRCode");
-        return;
-    }
-
-    if (!navigator.share) {
-        alert("此裝置不支援系統分享，請改用下載圖片");
-        return;
-    }
-
+    const dataUrl = getGenericQrDataUrl(); if (!dataUrl) { alert("請先產生 QRCode"); return; }
+    if (!navigator.share) { alert("此裝置不支援系統分享，請改用下載圖片"); return; }
     try {
-        const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], "qrcode.png", { type: "image/png" });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ title: "QRCode", files: [file] });
-        } else {
-            await navigator.share({ title: "QRCode" });
-        }
-    } catch (error) {
-        console.warn("分享取消或失敗", error);
-    }
+        const blob = await (await fetch(dataUrl)).blob(), file = new File([blob], "qrcode.png", { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ title: "QRCode", files: [file] });
+        else await navigator.share({ title: "QRCode" });
+    } catch (error) { console.warn("分享取消或失敗", error); }
 }
-
-function clearGenericQR() {
-    document.getElementById("genericQrPreview").innerHTML = "";
-}
+function clearGenericQR() { document.getElementById("genericQrPreview").innerHTML = ""; }
 
 /* ==================== 客房管理 ==================== */
-
 function renderRoomManageList() {
-    const keyword = document.getElementById("roomSearch").value.trim();
-    const box = document.getElementById("roomManageList");
+    const keyword = document.getElementById("roomSearch").value.trim(), box = document.getElementById("roomManageList");
 
-    const rows = ROOM_NUMBERS
-        .filter(room => !keyword || String(room).includes(keyword))
-        .map(room => {
-            const data = getConfiguredRoom(room);
-            return `
-                <div class="manage-row">
-                    <div><strong>R${room}</strong></div>
-                    <div>${data ? `SSID：${escapeHtml(data.ssid)}` : `<span class="status-unset">尚未設定</span>`}</div>
-                    <button onclick="openRoomEditPanel(${room})">${data ? "修改" : "設定"}</button>
-                </div>
-            `;
-        })
-        .join("");
+    if (!keyword) {
+        box.innerHTML = "";
+        return;
+    }
 
+    const rows = ROOM_NUMBERS.filter(room => String(room).includes(keyword)).map(room => {
+        const data = getConfiguredRoom(room);
+        return `<div class="manage-row"><div><strong>R${room}</strong></div><div>${data ? `SSID：${escapeHtml(data.ssid)}` : `<span class="status-unset">尚未設定</span>`}</div><button onclick="openRoomEditPanel(${room})">${data ? "修改" : "設定"}</button></div>`;
+    }).join("");
     box.innerHTML = rows || "<p>找不到房號。</p>";
 }
-
-function openBatchRoomPanel() {
-    document.getElementById("batchRoomPanel").classList.remove("hidden");
-    document.getElementById("batchRoomPanel").scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function closeBatchRoomPanel() {
-    document.getElementById("batchRoomPanel").classList.add("hidden");
-}
-
+function openBatchRoomPanel() { document.getElementById("batchRoomPanel").classList.remove("hidden"); document.getElementById("batchRoomPanel").scrollIntoView({ behavior: "smooth", block: "start" }); }
+function closeBatchRoomPanel() { document.getElementById("batchRoomPanel").classList.add("hidden"); }
 function saveAllRooms() {
-    const prefix = document.getElementById("batchSsidPrefix").value;
-    const password = document.getElementById("batchPassword").value;
-
-    if (!prefix.trim()) {
-        alert("請輸入 SSID 前綴");
-        return;
-    }
-
+    const prefix = document.getElementById("batchSsidPrefix").value, password = document.getElementById("batchPassword").value;
+    if (!prefix.trim()) { alert("請輸入 SSID 前綴"); return; }
     const existingCount = ROOM_NUMBERS.filter(room => getConfiguredRoom(room)).length;
-
-    if (existingCount > 0) {
-        const ok = confirm(
-            `目前已有 ${existingCount} 間客房設定過 Wi-Fi。\n套用全部會覆蓋現有客房的 SSID 與密碼。\n是否繼續？`
-        );
-        if (!ok) return;
-    }
-
-    ROOM_NUMBERS.forEach(room => {
-        roomWifi[String(room)] = {
-            ssid: prefix + room,
-            password
-        };
-    });
-
-    saveRoomWifi();
-    closeBatchRoomPanel();
-    renderRoomManageList();
-    showRoomList();
-    alert("已套用全部客房。");
+    if (existingCount > 0 && !confirm(`目前已有 ${existingCount} 間客房設定過 Wi-Fi。\n套用全部會覆蓋現有客房的 SSID 與密碼。\n是否繼續？`)) return;
+    ROOM_NUMBERS.forEach(room => { roomWifi[String(room)] = { ssid: prefix + room, password }; });
+    saveRoomWifi(); closeBatchRoomPanel(); renderRoomManageList(); alert("已套用全部客房。");
 }
-
 function openRoomEditPanel(room) {
     const data = getConfiguredRoom(room);
-
     document.getElementById("roomEditTitle").textContent = data ? "修改客房 Wi-Fi" : "設定客房 Wi-Fi";
-    document.getElementById("roomEditRoom").value = room;
-    document.getElementById("roomEditRoomLabel").textContent = `R${room}`;
-    document.getElementById("roomEditSsid").value = data ? data.ssid : "";
-    document.getElementById("roomEditPassword").value = data ? data.password : "";
-
-    document.getElementById("roomEditPanel").classList.remove("hidden");
-    document.getElementById("roomEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("roomEditRoom").value = room; document.getElementById("roomEditRoomLabel").textContent = `R${room}`;
+    document.getElementById("roomEditSsid").value = data ? data.ssid : ""; document.getElementById("roomEditPassword").value = data ? data.password : "";
+    document.getElementById("roomEditPanel").classList.remove("hidden"); document.getElementById("roomEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-function closeRoomEditPanel() {
-    document.getElementById("roomEditPanel").classList.add("hidden");
-}
-
+function closeRoomEditPanel() { document.getElementById("roomEditPanel").classList.add("hidden"); }
 function saveSingleRoom() {
-    const room = document.getElementById("roomEditRoom").value;
-    const ssid = document.getElementById("roomEditSsid").value.trim();
-    const password = document.getElementById("roomEditPassword").value;
-
-    if (!ssid) {
-        alert("請輸入 SSID");
-        return;
-    }
-
-    roomWifi[String(room)] = { ssid, password };
-    saveRoomWifi();
-    closeRoomEditPanel();
-    renderRoomManageList();
-    showRoomList();
+    const room = document.getElementById("roomEditRoom").value, ssid = document.getElementById("roomEditSsid").value.trim(), password = document.getElementById("roomEditPassword").value;
+    if (!ssid) { alert("請輸入 SSID"); return; }
+    roomWifi[String(room)] = { ssid, password }; saveRoomWifi(); closeRoomEditPanel(); renderRoomManageList();
 }
 
 /* ==================== 其他管理 ==================== */
-
 function renderPublicManageList() {
     const box = document.getElementById("publicManageList");
-
-    if (!otherWifi.length) {
-        box.innerHTML = "<p>目前沒有其他 Wi-Fi。</p>";
-        return;
-    }
-
-    box.innerHTML = otherWifi.map(item => `
-        <div class="manage-row">
-            <div><strong>${escapeHtml(item.name)}</strong></div>
-            <div>SSID：${escapeHtml(item.ssid)}</div>
-            <button onclick="openPublicEditPanel('${item.id}')">修改</button>
-            <button onclick="deletePublicItem('${item.id}')">刪除</button>
-        </div>
-    `).join("");
+    if (!otherWifi.length) { box.innerHTML = "<p>目前沒有其他 Wi-Fi。</p>"; return; }
+    box.innerHTML = otherWifi.map(item => `<div class="manage-row"><div><strong>${escapeHtml(item.name)}</strong></div><div>SSID：${escapeHtml(item.ssid)}</div><button onclick="openPublicEditPanel('${item.id}')">修改</button><button onclick="deletePublicItem('${item.id}')">刪除</button></div>`).join("");
 }
-
 function makePublicBatchRow() {
-    const row = document.createElement("div");
-    row.className = "manage-row public-batch-row";
-
-    row.innerHTML = `
-        <div class="field">
-            <label>名稱：</label>
-            <input type="text" class="batch-public-name" maxlength="4" placeholder="最多 4 個字">
-        </div>
-
-        <div class="field">
-            <label>SSID：</label>
-            <input type="text" class="batch-public-ssid">
-        </div>
-
-        <div class="field">
-            <label>密碼：</label>
-            <input type="text" class="batch-public-password">
-        </div>
-
-        <button type="button" onclick="removePublicBatchRow(this)">刪除此列</button>
-    `;
-
+    const row = document.createElement("div"); row.className = "manage-row public-batch-row";
+    row.innerHTML = `<div class="field"><label>名稱：</label><input type="text" class="batch-public-name" maxlength="4" placeholder="最多 4 個字"></div><div class="field"><label>SSID：</label><input type="text" class="batch-public-ssid"></div><div class="field"><label>密碼：</label><input type="text" class="batch-public-password"></div><button type="button" onclick="removePublicBatchRow(this)">刪除此列</button>`;
     return row;
 }
-
-function addPublicBatchRow() {
-    document.getElementById("publicBatchRows").appendChild(makePublicBatchRow());
-}
-
+function addPublicBatchRow() { document.getElementById("publicBatchRows").appendChild(makePublicBatchRow()); }
 function removePublicBatchRow(button) {
     const rows = document.querySelectorAll("#publicBatchRows .public-batch-row");
-
     if (rows.length <= 1) {
         const row = button.closest(".public-batch-row");
-        row.querySelector(".batch-public-name").value = "";
-        row.querySelector(".batch-public-ssid").value = "";
-        row.querySelector(".batch-public-password").value = "";
-        return;
+        row.querySelector(".batch-public-name").value = ""; row.querySelector(".batch-public-ssid").value = ""; row.querySelector(".batch-public-password").value = ""; return;
     }
-
     button.closest(".public-batch-row").remove();
 }
-
 function openPublicBatchPanel() {
-    const box = document.getElementById("publicBatchRows");
-    box.innerHTML = "";
-
-    addPublicBatchRow();
-    addPublicBatchRow();
-    addPublicBatchRow();
-
-    document.getElementById("publicBatchPanel").classList.remove("hidden");
-    document.getElementById("publicBatchPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    const box = document.getElementById("publicBatchRows"); box.innerHTML = "";
+    addPublicBatchRow(); addPublicBatchRow(); addPublicBatchRow();
+    document.getElementById("publicBatchPanel").classList.remove("hidden"); document.getElementById("publicBatchPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-function closePublicBatchPanel() {
-    document.getElementById("publicBatchPanel").classList.add("hidden");
-}
-
+function closePublicBatchPanel() { document.getElementById("publicBatchPanel").classList.add("hidden"); }
 function savePublicBatch() {
-    const rows = [...document.querySelectorAll("#publicBatchRows .public-batch-row")];
-    const parsed = [];
-    const errors = [];
-
+    const rows = [...document.querySelectorAll("#publicBatchRows .public-batch-row")], parsed = [], errors = [];
     rows.forEach((row, index) => {
-        const name = row.querySelector(".batch-public-name").value.trim();
-        const ssid = row.querySelector(".batch-public-ssid").value.trim();
-        const password = row.querySelector(".batch-public-password").value;
-
-        const isBlank = !name && !ssid && !password;
-        if (isBlank) return;
-
-        if (!name) {
-            errors.push(`第 ${index + 1} 列：請輸入名稱`);
-            return;
-        }
-
-        if ([...name].length > OTHER_NAME_MAX) {
-            errors.push(`第 ${index + 1} 列：名稱最多 ${OTHER_NAME_MAX} 個字`);
-            return;
-        }
-
-        if (!ssid) {
-            errors.push(`第 ${index + 1} 列：請輸入 SSID`);
-            return;
-        }
-
+        const name = row.querySelector(".batch-public-name").value.trim(), ssid = row.querySelector(".batch-public-ssid").value.trim(), password = row.querySelector(".batch-public-password").value;
+        if (!name && !ssid && !password) return;
+        if (!name) { errors.push(`第 ${index + 1} 列：請輸入名稱`); return; }
+        if ([...name].length > OTHER_NAME_MAX) { errors.push(`第 ${index + 1} 列：名稱最多 ${OTHER_NAME_MAX} 個字`); return; }
+        if (!ssid) { errors.push(`第 ${index + 1} 列：請輸入 SSID`); return; }
         parsed.push({ name, ssid, password });
     });
-
-    if (errors.length) {
-        alert("以下資料未新增：\n\n" + errors.join("\n"));
-        return;
-    }
-
-    if (!parsed.length) {
-        alert("請至少輸入一筆 Wi-Fi 資料");
-        return;
-    }
-
-    parsed.forEach(item => {
-        otherWifi.push({
-            id: "other_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-            name: item.name,
-            ssid: item.ssid,
-            password: item.password
-        });
-    });
-
-    saveOtherWifi();
-    closePublicBatchPanel();
-    renderPublicManageList();
-    refreshPublicSelect();
-    alert(`已新增 ${parsed.length} 筆其他 Wi-Fi。`);
+    if (errors.length) { alert("以下資料未新增：\n\n" + errors.join("\n")); return; }
+    if (!parsed.length) { alert("請至少輸入一筆 Wi-Fi 資料"); return; }
+    parsed.forEach(item => otherWifi.push({ id: "other_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8), name: item.name, ssid: item.ssid, password: item.password }));
+    saveOtherWifi(); closePublicBatchPanel(); renderPublicManageList(); resetPublicListView(); alert(`已新增 ${parsed.length} 筆其他 Wi-Fi。`);
 }
-
 function openPublicAddPanel() {
-    document.getElementById("publicEditTitle").textContent = "新增其他 Wi-Fi";
-    document.getElementById("publicEditId").value = "";
-    document.getElementById("publicEditName").value = "";
-    document.getElementById("publicEditSsid").value = "";
-    document.getElementById("publicEditPassword").value = "";
-    document.getElementById("publicEditPanel").classList.remove("hidden");
-    document.getElementById("publicEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("publicEditTitle").textContent = "新增其他 Wi-Fi"; document.getElementById("publicEditId").value = "";
+    document.getElementById("publicEditName").value = ""; document.getElementById("publicEditSsid").value = ""; document.getElementById("publicEditPassword").value = "";
+    document.getElementById("publicEditPanel").classList.remove("hidden"); document.getElementById("publicEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
 function openPublicEditPanel(id) {
-    const item = otherWifi.find(entry => entry.id === id);
-    if (!item) return;
-
-    document.getElementById("publicEditTitle").textContent = "修改其他 Wi-Fi";
-    document.getElementById("publicEditId").value = item.id;
-    document.getElementById("publicEditName").value = item.name;
-    document.getElementById("publicEditSsid").value = item.ssid;
-    document.getElementById("publicEditPassword").value = item.password;
-    document.getElementById("publicEditPanel").classList.remove("hidden");
-    document.getElementById("publicEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    const item = otherWifi.find(entry => entry.id === id); if (!item) return;
+    document.getElementById("publicEditTitle").textContent = "修改其他 Wi-Fi"; document.getElementById("publicEditId").value = item.id;
+    document.getElementById("publicEditName").value = item.name; document.getElementById("publicEditSsid").value = item.ssid; document.getElementById("publicEditPassword").value = item.password;
+    document.getElementById("publicEditPanel").classList.remove("hidden"); document.getElementById("publicEditPanel").scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-function closePublicEditPanel() {
-    document.getElementById("publicEditPanel").classList.add("hidden");
-}
-
+function closePublicEditPanel() { document.getElementById("publicEditPanel").classList.add("hidden"); }
 function savePublicItem() {
-    const id = document.getElementById("publicEditId").value;
-    const name = document.getElementById("publicEditName").value.trim();
-    const ssid = document.getElementById("publicEditSsid").value.trim();
-    const password = document.getElementById("publicEditPassword").value;
-
-    if (!name) {
-        alert("請輸入名稱");
-        return;
-    }
-
-    if ([...name].length > OTHER_NAME_MAX) {
-        alert(`名稱最多 ${OTHER_NAME_MAX} 個字`);
-        return;
-    }
-
-    if (!ssid) {
-        alert("請輸入 SSID");
-        return;
-    }
-
+    const id = document.getElementById("publicEditId").value, name = document.getElementById("publicEditName").value.trim(), ssid = document.getElementById("publicEditSsid").value.trim(), password = document.getElementById("publicEditPassword").value;
+    if (!name) { alert("請輸入名稱"); return; }
+    if ([...name].length > OTHER_NAME_MAX) { alert(`名稱最多 ${OTHER_NAME_MAX} 個字`); return; }
+    if (!ssid) { alert("請輸入 SSID"); return; }
     if (id) {
-        const index = otherWifi.findIndex(item => item.id === id);
-        if (index === -1) return;
-
+        const index = otherWifi.findIndex(item => item.id === id); if (index === -1) return;
         otherWifi[index] = { ...otherWifi[index], name, ssid, password };
-    } else {
-        otherWifi.push({
-            id: "other_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-            name,
-            ssid,
-            password
-        });
-    }
-
-    saveOtherWifi();
-    closePublicEditPanel();
-    renderPublicManageList();
-    refreshPublicSelect();
+    } else otherWifi.push({ id: "other_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8), name, ssid, password });
+    saveOtherWifi(); closePublicEditPanel(); renderPublicManageList(); resetPublicListView();
 }
-
 function deletePublicItem(id) {
-    const item = otherWifi.find(entry => entry.id === id);
-    if (!item) return;
-
+    const item = otherWifi.find(entry => entry.id === id); if (!item) return;
     if (!confirm(`確定刪除「${item.name}」？`)) return;
-
-    otherWifi = otherWifi.filter(entry => entry.id !== id);
-    saveOtherWifi();
-    renderPublicManageList();
-    refreshPublicSelect();
-    showPublicDetail();
+    otherWifi = otherWifi.filter(entry => entry.id !== id); saveOtherWifi(); renderPublicManageList(); resetPublicListView();
 }
-
-/* ==================== 起始狀態 ==================== */
 
 window.addEventListener("load", () => {
-    showMain("hotel");
-    showHotelMode("rooms");
-    showRoomList();
-    refreshPublicSelect();
+    showMain("hotel"); showHotelMode("rooms");
 });
 </script>
-
 </body>
 </html>
