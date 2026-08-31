@@ -466,7 +466,7 @@ input, select {
     <div class="hero">
         <div class="hero-kicker">Wi-Fi Management</div>
         <h1>Wi-Fi 管理</h1>
-        <p>設定客房與其他區域的 SSID、密碼。</p>
+        <p>設定客房與其他區域的 Wi-Fi 名稱（SSID）、密碼。</p>
     </div>
 
     <div class="section-head">
@@ -494,8 +494,8 @@ input, select {
 
         <div id="batchRoomPanel" class="edit-panel hidden">
             <h3>設定全部客房</h3>
-            <p class="notice">會依「SSID 前綴 + 房號」產生各房 SSID。儲存後每間仍可單獨修改。</p>
-            <div class="field"><label for="batchSsidPrefix">SSID 前綴：</label><input type="text" id="batchSsidPrefix"></div>
+            <p class="notice">會依「前綴 + 房號」產生各房 Wi-Fi 名稱（SSID）。儲存後每間仍可單獨修改。</p>
+            <div class="field"><label for="batchSsidPrefix">Wi-Fi 名稱（SSID）前綴：</label><input type="text" id="batchSsidPrefix"></div>
             <div class="field"><label for="batchPassword">共同密碼：</label><input type="text" id="batchPassword"></div>
             <button onclick="saveAllRooms()">套用全部客房</button>
             <button onclick="closeBatchRoomPanel()">取消</button>
