@@ -260,6 +260,70 @@ input, select {
     color: #777;
 }
 
+
+/* ==================== A4 多份列印 ==================== */
+.a4-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.a4-tabs button {
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 8px 12px;
+}
+
+.a4-tabs button.active {
+    background: var(--text);
+    color: #fff;
+    border-color: var(--text);
+}
+
+.a4-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.a4-checkbox input {
+    min-width: auto;
+}
+
+.a4-data-row {
+    border-top: 1px solid var(--line);
+    padding: 14px 0;
+}
+
+.a4-data-row:first-child {
+    border-top: none;
+}
+
+.a4-data-row-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.a4-row-preview {
+    margin-top: 10px;
+}
+
+.a4-row-status {
+    margin-top: 8px;
+    color: #8a5a00;
+    font-size: 14px;
+}
+
+#a4QrPreviewArea {
+    margin-top: 18px;
+}
+
+#a4QrPreviewArea .print-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
 @media (max-width: 700px) {
     .topbar-inner,
     .section-head {
@@ -347,6 +411,7 @@ input, select {
         <nav class="main-nav">
             <button id="navHotel" class="active" onclick="showMain('hotel')">飯店 Wi-Fi</button>
             <button id="navGenerator" onclick="showMain('generator')">QRCode 產生器</button>
+            <button id="navA4" onclick="showMain('a4')">A4 多份列印</button>
             <button id="navManage" onclick="showMain('manage')">Wi-Fi 管理</button>
         </nav>
     </div>
@@ -462,11 +527,94 @@ input, select {
     </div>
 </section>
 
+
+<section id="sectionA4" class="main-section hidden">
+    <div class="hero">
+        <div class="hero-kicker">A4 QRCode Print</div>
+        <h1>A4 多份列印</h1>
+        <p>固定 120 尺寸，A4 最多列印 18 張 QRCode。</p>
+    </div>
+
+    <div class="section-head">
+        <div>
+            <h2>QRCode 多份列印</h2>
+            <p>可使用同一筆資料重複列印，或設定多筆不同資料。</p>
+        </div>
+    </div>
+
+    <div class="content-box">
+        <div class="a4-tabs">
+            <button id="a4TypeNormal" class="active" onclick="a4ShowType('normal')">一般 QRCode</button>
+            <button id="a4TypeWifi" onclick="a4ShowType('wifi')">Wi-Fi QRCode</button>
+        </div>
+
+        <div class="a4-tabs">
+            <button id="a4ModeSame" class="active" onclick="a4ShowMode('same')">同資料多份</button>
+            <button id="a4ModeDifferent" onclick="a4ShowMode('different')">不同資料多份</button>
+        </div>
+
+        <div id="a4SameMode">
+            <div class="a4-checkbox">
+                <input type="checkbox" id="a4SamePrintLabel" checked onchange="a4SyncSameLabel()">
+                <label for="a4SamePrintLabel">列印標籤</label>
+            </div>
+            <div id="a4SameLabelField" class="field">
+                <label for="a4SameLabel">標籤：</label>
+                <input type="text" id="a4SameLabel">
+            </div>
+
+            <div id="a4SameNormal">
+                <div class="field"><label for="a4SameText">內容：</label><input type="text" id="a4SameText" placeholder="網址或任意文字"></div>
+            </div>
+
+            <div id="a4SameWifi" class="hidden">
+                <div class="field"><label for="a4SameSsid">Wi-Fi 名稱：</label><input type="text" id="a4SameSsid"></div>
+                <div class="field"><label for="a4SamePassword">Wi-Fi 密碼：</label><input type="text" id="a4SamePassword"></div>
+                <div class="field">
+                    <label for="a4SameWifiType">加密方式：</label>
+                    <select id="a4SameWifiType">
+                        <option value="WPA">WPA / WPA2</option>
+                        <option value="WEP">WEP</option>
+                        <option value="">無密碼</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field"><label for="a4SameCount">列印份數：</label><input type="number" id="a4SameCount" min="1" max="18" value="1"></div>
+            <div class="action-row">
+                <button onclick="a4GenerateSame()">產生 QRCode</button>
+                <button onclick="a4PreviewSamePrint()">預覽列印</button>
+                <button onclick="printCurrent()">列印</button>
+            </div>
+        </div>
+
+        <div id="a4DifferentMode" class="hidden">
+            <p class="notice">每一筆可獨立設定標籤、列印份數與產生 QRCode；全部加總最多 18 張。</p>
+            <div id="a4DifferentRows"></div>
+            <div class="action-row">
+                <button id="a4AddRowButton" onclick="a4AddRow()">新增一筆</button>
+                <button onclick="a4PreviewDifferentPrint()">預覽列印</button>
+                <button onclick="printCurrent()">列印</button>
+            </div>
+        </div>
+    </div>
+
+    <section id="a4QrPreviewArea" class="hidden">
+        <div class="section-head">
+            <div>
+                <h2>QRCode 預覽</h2>
+                <p>確認 QRCode 已產生，再進入 A4 列印預覽。</p>
+            </div>
+        </div>
+        <div id="a4QrPreviewGrid" class="print-grid"></div>
+    </section>
+</section>
+
 <section id="sectionManage" class="main-section hidden">
     <div class="hero">
         <div class="hero-kicker">Wi-Fi Management</div>
         <h1>Wi-Fi 管理</h1>
-        <p>設定客房與其他區域的 Wi-Fi 名稱（SSID）、密碼。</p>
+        <p>設定客房與其他區域的 SSID、密碼。</p>
     </div>
 
     <div class="section-head">
@@ -610,12 +758,14 @@ function clearPrintArea() {
 function showMain(target) {
     document.getElementById("sectionHotel").classList.add("hidden");
     document.getElementById("sectionGenerator").classList.add("hidden");
+    document.getElementById("sectionA4").classList.add("hidden");
     document.getElementById("sectionManage").classList.add("hidden");
     clearPrintArea();
-    setActive(["navHotel","navGenerator","navManage"], target === "hotel" ? "navHotel" : target === "generator" ? "navGenerator" : "navManage");
+    setActive(["navHotel","navGenerator","navA4","navManage"], target === "hotel" ? "navHotel" : target === "generator" ? "navGenerator" : target === "a4" ? "navA4" : "navManage");
 
     if (target === "hotel") document.getElementById("sectionHotel").classList.remove("hidden");
     else if (target === "generator") document.getElementById("sectionGenerator").classList.remove("hidden");
+    else if (target === "a4") document.getElementById("sectionA4").classList.remove("hidden");
     else if (target === "manage") {
         document.getElementById("sectionManage").classList.remove("hidden");
         showManageMode("rooms");
@@ -820,6 +970,346 @@ async function shareGenericQR() {
 }
 function clearGenericQR() { document.getElementById("genericQrPreview").innerHTML = ""; }
 
+
+/* ==================== A4 多份列印 ==================== */
+const A4_QR_SIZE = 120;
+const A4_MAX_PRINT_COUNT = 18;
+
+let a4QrType = "normal";
+let a4PrintMode = "same";
+let a4SameGeneratedItems = [];
+
+function a4ClearPrintOnly() {
+    clearPrintArea();
+}
+
+function a4MakeCard(label, payload, printLabel) {
+    const card = document.createElement("div");
+    card.className = "print-card";
+
+    if (printLabel) {
+        const title = document.createElement("div");
+        title.className = "print-title";
+        title.textContent = label;
+        card.appendChild(title);
+    }
+
+    const canvas = document.createElement("canvas");
+    new QRious({
+        element: canvas,
+        value: payload,
+        size: A4_QR_SIZE,
+        level: "H"
+    });
+    card.appendChild(canvas);
+    return card;
+}
+
+function a4ShowType(type) {
+    a4QrType = type;
+    setActive(["a4TypeNormal","a4TypeWifi"], type === "normal" ? "a4TypeNormal" : "a4TypeWifi");
+    document.getElementById("a4SameNormal").classList.toggle("hidden", type !== "normal");
+    document.getElementById("a4SameWifi").classList.toggle("hidden", type !== "wifi");
+    a4ResetGenerated();
+    a4ResetRows();
+}
+
+function a4ShowMode(mode) {
+    a4PrintMode = mode;
+    setActive(["a4ModeSame","a4ModeDifferent"], mode === "same" ? "a4ModeSame" : "a4ModeDifferent");
+    document.getElementById("a4SameMode").classList.toggle("hidden", mode !== "same");
+    document.getElementById("a4DifferentMode").classList.toggle("hidden", mode !== "different");
+    a4ResetGenerated();
+    if (mode === "different" && !document.querySelector("#a4DifferentRows .a4-data-row")) a4ResetRows();
+}
+
+function a4SyncSameLabel() {
+    document.getElementById("a4SameLabelField").classList.toggle("hidden", !document.getElementById("a4SamePrintLabel").checked);
+    a4ResetGenerated();
+}
+
+function a4ResetGenerated() {
+    a4SameGeneratedItems = [];
+    const area = document.getElementById("a4QrPreviewArea");
+    const grid = document.getElementById("a4QrPreviewGrid");
+    if (grid) grid.innerHTML = "";
+    if (area) area.classList.add("hidden");
+    a4ClearPrintOnly();
+}
+
+function a4ShowSameGenerated(items) {
+    a4SameGeneratedItems = items;
+    const area = document.getElementById("a4QrPreviewArea");
+    const grid = document.getElementById("a4QrPreviewGrid");
+    grid.innerHTML = "";
+    items.forEach(item => grid.appendChild(a4MakeCard(item.label, item.payload, item.printLabel)));
+    area.classList.remove("hidden");
+    a4ClearPrintOnly();
+    area.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function a4GenerateSame() {
+    const count = Number(document.getElementById("a4SameCount").value);
+    const printLabel = document.getElementById("a4SamePrintLabel").checked;
+    const label = document.getElementById("a4SameLabel").value.trim();
+
+    if (!Number.isInteger(count) || count < 1 || count > A4_MAX_PRINT_COUNT) {
+        alert("列印份數只能是 1～18");
+        return;
+    }
+
+    if (printLabel && !label) {
+        alert("請輸入標籤，或取消「列印標籤」");
+        return;
+    }
+
+    let payload = "";
+
+    if (a4QrType === "normal") {
+        const text = document.getElementById("a4SameText").value.trim();
+        if (!text) {
+            alert("請輸入內容");
+            return;
+        }
+        payload = text;
+    } else {
+        const ssid = document.getElementById("a4SameSsid").value.trim();
+        const password = document.getElementById("a4SamePassword").value;
+        const type = document.getElementById("a4SameWifiType").value;
+        if (!ssid) {
+            alert("請輸入 Wi-Fi 名稱");
+            return;
+        }
+        payload = wifiPayload(ssid, password, type);
+    }
+
+    a4ShowSameGenerated(Array.from({ length: count }, () => ({ label, payload, printLabel })));
+}
+
+function a4PreviewSamePrint() {
+    if (!a4SameGeneratedItems.length) {
+        alert("請先產生 QRCode");
+        return;
+    }
+    a4RenderPrint(a4SameGeneratedItems);
+}
+
+function a4MakeRow(index) {
+    const row = document.createElement("div");
+    row.className = "a4-data-row";
+    row.dataset.generated = "0";
+
+    row.innerHTML = a4QrType === "normal"
+        ? `<div class="a4-data-row-title">第 ${index} 筆</div>
+           <div class="a4-checkbox"><input type="checkbox" class="a4-row-print-label" checked><label>列印標籤</label></div>
+           <div class="field a4-row-label-field"><label>標籤：</label><input type="text" class="a4-row-label"></div>
+           <div class="field"><label>內容：</label><input type="text" class="a4-row-text" placeholder="網址或任意文字"></div>
+           <div class="field"><label>列印份數：</label><input type="number" class="a4-row-count" min="1" max="18" value="1"></div>
+           <div class="action-row"><button type="button" class="a4-row-generate">產生 QRCode</button><button type="button" class="a4-row-delete">刪除此筆</button></div>
+           <div class="a4-row-preview hidden"></div><div class="a4-row-status hidden">資料已變更，請重新產生 QRCode</div>`
+        : `<div class="a4-data-row-title">第 ${index} 筆</div>
+           <div class="a4-checkbox"><input type="checkbox" class="a4-row-print-label" checked><label>列印標籤</label></div>
+           <div class="field a4-row-label-field"><label>標籤：</label><input type="text" class="a4-row-label"></div>
+           <div class="field"><label>Wi-Fi 名稱：</label><input type="text" class="a4-row-ssid"></div>
+           <div class="field"><label>Wi-Fi 密碼：</label><input type="text" class="a4-row-password"></div>
+           <div class="field"><label>加密方式：</label><select class="a4-row-wifi-type"><option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="">無密碼</option></select></div>
+           <div class="field"><label>列印份數：</label><input type="number" class="a4-row-count" min="1" max="18" value="1"></div>
+           <div class="action-row"><button type="button" class="a4-row-generate">產生 QRCode</button><button type="button" class="a4-row-delete">刪除此筆</button></div>
+           <div class="a4-row-preview hidden"></div><div class="a4-row-status hidden">資料已變更，請重新產生 QRCode</div>`;
+
+    const labelToggle = row.querySelector(".a4-row-print-label");
+    labelToggle.addEventListener("change", () => {
+        row.querySelector(".a4-row-label-field").classList.toggle("hidden", !labelToggle.checked);
+        a4InvalidateRow(row);
+    });
+
+    row.querySelectorAll("input:not(.a4-row-print-label), select").forEach(element => {
+        element.addEventListener("input", () => a4InvalidateRow(row));
+        element.addEventListener("change", () => a4InvalidateRow(row));
+    });
+
+    row.querySelector(".a4-row-generate").addEventListener("click", () => a4GenerateRow(row));
+    row.querySelector(".a4-row-delete").addEventListener("click", () => a4RemoveRow(row));
+
+    return row;
+}
+
+function a4ResetRows() {
+    const box = document.getElementById("a4DifferentRows");
+    if (!box) return;
+    box.innerHTML = "";
+    box.appendChild(a4MakeRow(1));
+    box.appendChild(a4MakeRow(2));
+    box.appendChild(a4MakeRow(3));
+    a4RenumberRows();
+}
+
+function a4AddRow() {
+    const box = document.getElementById("a4DifferentRows");
+    const rows = box.querySelectorAll(".a4-data-row");
+    if (rows.length >= A4_MAX_PRINT_COUNT) {
+        alert("最多 18 筆資料");
+        return;
+    }
+    box.appendChild(a4MakeRow(rows.length + 1));
+    a4RenumberRows();
+    a4ClearPrintOnly();
+}
+
+function a4RemoveRow(row) {
+    const box = document.getElementById("a4DifferentRows");
+    const rows = box.querySelectorAll(".a4-data-row");
+
+    if (rows.length <= 1) {
+        row.replaceWith(a4MakeRow(1));
+    } else {
+        row.remove();
+    }
+
+    a4RenumberRows();
+    a4ClearPrintOnly();
+}
+
+function a4RenumberRows() {
+    [...document.querySelectorAll("#a4DifferentRows .a4-data-row")].forEach((row, index) => {
+        row.querySelector(".a4-data-row-title").textContent = `第 ${index + 1} 筆`;
+    });
+}
+
+function a4InvalidateRow(row) {
+    if (row.dataset.generated !== "1") return;
+
+    row.dataset.generated = "0";
+    row.dataset.generatedCount = "0";
+    row.dataset.generatedLabel = "";
+    row.dataset.generatedPayload = "";
+    row.dataset.generatedPrintLabel = "0";
+
+    const preview = row.querySelector(".a4-row-preview");
+    preview.innerHTML = "";
+    preview.classList.add("hidden");
+    row.querySelector(".a4-row-status").classList.remove("hidden");
+    a4ClearPrintOnly();
+}
+
+function a4GetRowItem(row) {
+    const rows = [...document.querySelectorAll("#a4DifferentRows .a4-data-row")];
+    const index = rows.indexOf(row) + 1;
+    const printLabel = row.querySelector(".a4-row-print-label").checked;
+    const label = row.querySelector(".a4-row-label").value.trim();
+    const count = Number(row.querySelector(".a4-row-count").value);
+
+    if (!Number.isInteger(count) || count < 1 || count > A4_MAX_PRINT_COUNT) {
+        alert(`第 ${index} 筆：列印份數只能是 1～18`);
+        return null;
+    }
+
+    if (printLabel && !label) {
+        alert(`第 ${index} 筆：請輸入標籤，或取消「列印標籤」`);
+        return null;
+    }
+
+    if (a4QrType === "normal") {
+        const text = row.querySelector(".a4-row-text").value.trim();
+        if (!text) {
+            alert(`第 ${index} 筆：請輸入內容`);
+            return null;
+        }
+        return { label, payload: text, printLabel, count };
+    }
+
+    const ssid = row.querySelector(".a4-row-ssid").value.trim();
+    const password = row.querySelector(".a4-row-password").value;
+    const type = row.querySelector(".a4-row-wifi-type").value;
+
+    if (!ssid) {
+        alert(`第 ${index} 筆：請輸入 Wi-Fi 名稱`);
+        return null;
+    }
+
+    return { label, payload: wifiPayload(ssid, password, type), printLabel, count };
+}
+
+function a4GeneratedTotal(excludeRow, replacementCount) {
+    let total = replacementCount;
+    document.querySelectorAll("#a4DifferentRows .a4-data-row").forEach(row => {
+        if (row === excludeRow) return;
+        if (row.dataset.generated === "1") total += Number(row.dataset.generatedCount || 0);
+    });
+    return total;
+}
+
+function a4GenerateRow(row) {
+    const item = a4GetRowItem(row);
+    if (!item) return;
+
+    const total = a4GeneratedTotal(row, item.count);
+    if (total > A4_MAX_PRINT_COUNT) {
+        alert(`全部列印份數加總最多 ${A4_MAX_PRINT_COUNT} 張，目前會變成 ${total} 張`);
+        return;
+    }
+
+    row.dataset.generated = "1";
+    row.dataset.generatedCount = String(item.count);
+    row.dataset.generatedLabel = item.label;
+    row.dataset.generatedPayload = item.payload;
+    row.dataset.generatedPrintLabel = item.printLabel ? "1" : "0";
+
+    const preview = row.querySelector(".a4-row-preview");
+    preview.innerHTML = "";
+    preview.appendChild(a4MakeCard(item.label, item.payload, item.printLabel));
+    preview.classList.remove("hidden");
+    row.querySelector(".a4-row-status").classList.add("hidden");
+    a4ClearPrintOnly();
+}
+
+function a4CollectDifferentItems() {
+    const rows = [...document.querySelectorAll("#a4DifferentRows .a4-data-row")];
+    const generated = rows.filter(row => row.dataset.generated === "1");
+
+    if (!generated.length) {
+        alert("請先至少產生一筆 QRCode");
+        return null;
+    }
+
+    const items = [];
+    generated.forEach(row => {
+        const count = Number(row.dataset.generatedCount || 0);
+        const item = {
+            label: row.dataset.generatedLabel || "",
+            payload: row.dataset.generatedPayload || "",
+            printLabel: row.dataset.generatedPrintLabel === "1"
+        };
+        for (let i = 0; i < count; i++) items.push({ ...item });
+    });
+
+    if (items.length > A4_MAX_PRINT_COUNT) {
+        alert(`全部列印份數加總最多 ${A4_MAX_PRINT_COUNT} 張`);
+        return null;
+    }
+
+    return items;
+}
+
+function a4PreviewDifferentPrint() {
+    const items = a4CollectDifferentItems();
+    if (items) a4RenderPrint(items);
+}
+
+function a4RenderPrint(items) {
+    const printArea = document.getElementById("printArea");
+    printArea.innerHTML = "";
+
+    const grid = document.createElement("div");
+    grid.className = "print-grid";
+    items.forEach(item => grid.appendChild(a4MakeCard(item.label, item.payload, item.printLabel)));
+
+    printArea.appendChild(grid);
+    printArea.classList.remove("hidden");
+    printArea.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
 /* ==================== 客房管理 ==================== */
 function renderRoomManageList() {
     const keyword = document.getElementById("roomSearch").value.trim(), box = document.getElementById("roomManageList");
@@ -930,7 +1420,7 @@ function deletePublicItem(id) {
 }
 
 window.addEventListener("load", () => {
-    showMain("hotel"); showHotelMode("rooms");
+    showMain("hotel"); showHotelMode("rooms"); a4ResetRows();
 });
 </script>
 </body>
