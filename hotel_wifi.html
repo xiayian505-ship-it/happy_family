@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wi-Fi QRCode 工具</title>
+<title>Wi-Fi QRCode 工具｜A4排版列印</title>
 
 <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
@@ -324,6 +324,27 @@ input, select {
     grid-template-columns: repeat(3, 1fr);
 }
 
+
+.a4-size-preview-set {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.a4-size-preview-item {
+    text-align: center;
+}
+
+.a4-size-preview-label {
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.print-sheet {
+    width: 100%;
+}
+
 @media (max-width: 700px) {
     .topbar-inner,
     .section-head {
@@ -409,10 +430,10 @@ input, select {
     <div class="topbar-inner">
         <div class="brand">Wi-Fi QRCode 工具</div>
         <nav class="main-nav">
-            <button id="navHotel" class="active" onclick="showMain('hotel')">飯店 Wi-Fi</button>
-            <button id="navGenerator" onclick="showMain('generator')">QRCode 產生器</button>
-            <button id="navA4" onclick="showMain('a4')">A4 多份列印</button>
-            <button id="navManage" onclick="showMain('manage')">Wi-Fi 管理</button>
+            <button id="navHotel" class="active" onclick="showMain('hotel')">飯店 Wi-Fi QRCode</button>
+            <button id="navGenerator" onclick="showMain('generator')">單張 QRCode 產生器</button>
+            <button id="navA4" onclick="showMain('a4')">多份列印 | A4排版</button>
+            <button id="navManage" onclick="showMain('manage')">飯店Wi-Fi QRCode管理</button>
         </nav>
     </div>
 </header>
@@ -423,7 +444,7 @@ input, select {
     <div class="hero">
         <div class="hero-kicker">Hotel Wi-Fi</div>
         <h1>飯店 Wi-Fi</h1>
-        <p>查看客房與其他區域的 Wi-Fi，預覽後直接列印 QRCode。</p>
+        <p>可查看已建立Wi-Fi名稱（SSID）密碼，先預覽再將Wi-Fi QRCode 印出</p>
     </div>
 
     <div class="section-head">
@@ -532,7 +553,7 @@ input, select {
     <div class="hero">
         <div class="hero-kicker">A4 QRCode Print</div>
         <h1>A4 多份列印</h1>
-        <p>固定 120 尺寸，A4 最多列印 18 張 QRCode。</p>
+        <p>同時產生80px、120px、150px、200px 四種尺寸，預覽後再列印。 </p><p>80、120 為 18 張 </p> <p>150 為 12 張 </p> <p>200 為 9 張</p>
     </div>
 
     <div class="section-head">
@@ -582,19 +603,29 @@ input, select {
 
             <div class="field"><label for="a4SameCount">列印份數：</label><input type="number" id="a4SameCount" min="1" max="18" value="1"></div>
             <div class="action-row">
-                <button onclick="a4GenerateSame()">產生 QRCode</button>
-                <button onclick="a4PreviewSamePrint()">預覽列印</button>
-                <button onclick="printCurrent()">列印</button>
+                <button onclick="a4GenerateSame()">產生四種尺寸 QRCode</button>
+            </div>
+            <div id="a4SamePrintButtons" class="action-row hidden">
+                <button onclick="a4PreviewSamePrint(80)">預覽 80 px 列印（A4最多18張）</button>
+                <button onclick="a4PreviewSamePrint(120)">預覽 120 px 列印（A4最多18張）</button>
+                <button onclick="a4PreviewSamePrint(150)">預覽 150 px 列印（A4最多12張）</button>
+                <button onclick="a4PreviewSamePrint(200)">預覽 200 px 列印（A4最多9張）</button>
+                <button onclick="printCurrent()">列印目前預覽</button>
             </div>
         </div>
 
         <div id="a4DifferentMode" class="hidden">
-            <p class="notice">每一筆可獨立設定標籤、列印份數與產生 QRCode；全部加總最多 18 張。</p>
+            <p class="notice"><p>每一筆可獨立設定標籤、列印份數，資料只需輸入一次</p><p>同時產生80px、120px、150px、200px 四種尺寸，預覽後再列印。 </p><p>80、120 為 18 張 </p> <p>150 為 12 張 </p> <p>200 為 9 張</p>
             <div id="a4DifferentRows"></div>
             <div class="action-row">
                 <button id="a4AddRowButton" onclick="a4AddRow()">新增一筆</button>
-                <button onclick="a4PreviewDifferentPrint()">預覽列印</button>
-                <button onclick="printCurrent()">列印</button>
+            </div>
+            <div id="a4DifferentPrintButtons" class="action-row hidden">
+                <button onclick="a4PreviewDifferentPrint(80)">預覽 80px 列印（A4最多18張）</button>
+                <button onclick="a4PreviewDifferentPrint(120)">預覽 120px 列印（A4最多18張）</button>
+                <button onclick="a4PreviewDifferentPrint(150)">預覽 150px 列印（A4最多12張）</button>
+                <button onclick="a4PreviewDifferentPrint(200)">預覽 200px 列印（A4最多9張）</button>
+                <button onclick="printCurrent()">列印目前預覽</button>
             </div>
         </div>
     </div>
@@ -603,7 +634,7 @@ input, select {
         <div class="section-head">
             <div>
                 <h2>QRCode 預覽</h2>
-                <p>確認 QRCode 已產生，再進入 A4 列印預覽。</p>
+                <p>同一份資料同時顯示 80px、120px、150px、200px，先預覽再列印</p>
             </div>
         </div>
         <div id="a4QrPreviewGrid" class="print-grid"></div>
@@ -614,7 +645,7 @@ input, select {
     <div class="hero">
         <div class="hero-kicker">Wi-Fi Management</div>
         <h1>Wi-Fi 管理</h1>
-        <p>設定客房與其他區域的 SSID、密碼。</p>
+        <p>設定客房與其他區域的Wi-Fi名稱（SSID）、密碼。</p>
     </div>
 
     <div class="section-head">
@@ -634,7 +665,7 @@ input, select {
         <div class="action-row"><button onclick="openBatchRoomPanel()">設定全部客房</button></div>
 
         <div class="field">
-            <label for="roomSearch">搜尋房號（只修改這間）：</label>
+            <label for="roomSearch">搜尋房號：</label>
             <input type="text" id="roomSearch" placeholder="例如 203" oninput="renderRoomManageList()">
         </div>
 
@@ -642,8 +673,8 @@ input, select {
 
         <div id="batchRoomPanel" class="edit-panel hidden">
             <h3>設定全部客房</h3>
-            <p class="notice">會依「前綴 + 房號」產生各房 Wi-Fi 名稱（SSID）。儲存後每間仍可單獨修改。</p>
-            <div class="field"><label for="batchSsidPrefix">Wi-Fi 名稱（SSID）前綴：</label><input type="text" id="batchSsidPrefix"></div>
+            <p class="notice">會依 Wi-Fi名稱+ 房號產生各房間 SSID 前綴。儲存後每間仍可單獨修改。</p>
+            <div class="field"><label for="batchSsidPrefix">Wi-Fi名稱（SSID） 前綴：</label><input type="text" id="batchSsidPrefix"></div>
             <div class="field"><label for="batchPassword">共同密碼：</label><input type="text" id="batchPassword"></div>
             <button onclick="saveAllRooms()">套用全部客房</button>
             <button onclick="closeBatchRoomPanel()">取消</button>
@@ -972,8 +1003,9 @@ function clearGenericQR() { document.getElementById("genericQrPreview").innerHTM
 
 
 /* ==================== A4 多份列印 ==================== */
-const A4_QR_SIZE = 120;
+const A4_QR_SIZES = [80, 120, 150, 200];
 const A4_MAX_PRINT_COUNT = 18;
+const A4_PAGE_CAPACITY = { 80: 18, 120: 18, 150: 12, 200: 9 };
 
 let a4QrType = "normal";
 let a4PrintMode = "same";
@@ -983,7 +1015,7 @@ function a4ClearPrintOnly() {
     clearPrintArea();
 }
 
-function a4MakeCard(label, payload, printLabel) {
+function a4MakeCard(label, payload, printLabel, size = 120) {
     const card = document.createElement("div");
     card.className = "print-card";
 
@@ -998,7 +1030,7 @@ function a4MakeCard(label, payload, printLabel) {
     new QRious({
         element: canvas,
         value: payload,
-        size: A4_QR_SIZE,
+        size: size,
         level: "H"
     });
     card.appendChild(canvas);
@@ -1032,9 +1064,31 @@ function a4ResetGenerated() {
     a4SameGeneratedItems = [];
     const area = document.getElementById("a4QrPreviewArea");
     const grid = document.getElementById("a4QrPreviewGrid");
-    if (grid) grid.innerHTML = "";
+    if (grid) { grid.innerHTML = ""; grid.style.display = ""; }
     if (area) area.classList.add("hidden");
+    document.getElementById("a4SamePrintButtons")?.classList.add("hidden");
+    document.getElementById("a4DifferentPrintButtons")?.classList.add("hidden");
     a4ClearPrintOnly();
+}
+
+function a4MakeSizePreview(label, payload, printLabel) {
+    const set = document.createElement("div");
+    set.className = "a4-size-preview-set";
+
+    A4_QR_SIZES.forEach(size => {
+        const item = document.createElement("div");
+        item.className = "a4-size-preview-item";
+
+        const sizeLabel = document.createElement("div");
+        sizeLabel.className = "a4-size-preview-label";
+        sizeLabel.textContent = `${size}`;
+
+        item.appendChild(sizeLabel);
+        item.appendChild(a4MakeCard(label, payload, printLabel, size));
+        set.appendChild(item);
+    });
+
+    return set;
 }
 
 function a4ShowSameGenerated(items) {
@@ -1042,8 +1096,15 @@ function a4ShowSameGenerated(items) {
     const area = document.getElementById("a4QrPreviewArea");
     const grid = document.getElementById("a4QrPreviewGrid");
     grid.innerHTML = "";
-    items.forEach(item => grid.appendChild(a4MakeCard(item.label, item.payload, item.printLabel)));
+    grid.style.display = "block";
+
+    if (items.length) {
+        const sample = items[0];
+        grid.appendChild(a4MakeSizePreview(sample.label, sample.payload, sample.printLabel));
+    }
+
     area.classList.remove("hidden");
+    document.getElementById("a4SamePrintButtons").classList.remove("hidden");
     a4ClearPrintOnly();
     area.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -1086,12 +1147,12 @@ function a4GenerateSame() {
     a4ShowSameGenerated(Array.from({ length: count }, () => ({ label, payload, printLabel })));
 }
 
-function a4PreviewSamePrint() {
+function a4PreviewSamePrint(size) {
     if (!a4SameGeneratedItems.length) {
         alert("請先產生 QRCode");
         return;
     }
-    a4RenderPrint(a4SameGeneratedItems);
+    a4RenderPrint(a4SameGeneratedItems, size);
 }
 
 function a4MakeRow(index) {
@@ -1189,6 +1250,9 @@ function a4InvalidateRow(row) {
     preview.innerHTML = "";
     preview.classList.add("hidden");
     row.querySelector(".a4-row-status").classList.remove("hidden");
+    if (![...document.querySelectorAll("#a4DifferentRows .a4-data-row")].some(item => item.dataset.generated === "1")) {
+        document.getElementById("a4DifferentPrintButtons")?.classList.add("hidden");
+    }
     a4ClearPrintOnly();
 }
 
@@ -1257,8 +1321,9 @@ function a4GenerateRow(row) {
 
     const preview = row.querySelector(".a4-row-preview");
     preview.innerHTML = "";
-    preview.appendChild(a4MakeCard(item.label, item.payload, item.printLabel));
+    preview.appendChild(a4MakeSizePreview(item.label, item.payload, item.printLabel));
     preview.classList.remove("hidden");
+    document.getElementById("a4DifferentPrintButtons").classList.remove("hidden");
     row.querySelector(".a4-row-status").classList.add("hidden");
     a4ClearPrintOnly();
 }
@@ -1291,18 +1356,29 @@ function a4CollectDifferentItems() {
     return items;
 }
 
-function a4PreviewDifferentPrint() {
+function a4PreviewDifferentPrint(size) {
     const items = a4CollectDifferentItems();
-    if (items) a4RenderPrint(items);
+    if (items) a4RenderPrint(items, size);
 }
 
-function a4RenderPrint(items) {
+function a4RenderPrint(items, size) {
+    if (!A4_QR_SIZES.includes(size)) return;
+
+    const capacity = A4_PAGE_CAPACITY[size];
+    if (items.length > capacity) {
+        alert(`${size} 尺寸一張 A4 最多 ${capacity} 張，目前共 ${items.length} 張。請減少列印份數。`);
+        return;
+    }
+
     const printArea = document.getElementById("printArea");
     printArea.innerHTML = "";
 
     const grid = document.createElement("div");
-    grid.className = "print-grid";
-    items.forEach(item => grid.appendChild(a4MakeCard(item.label, item.payload, item.printLabel)));
+    grid.className = `print-grid size-${size}`;
+
+    items.forEach(item => {
+        grid.appendChild(a4MakeCard(item.label, item.payload, item.printLabel, size));
+    });
 
     printArea.appendChild(grid);
     printArea.classList.remove("hidden");
