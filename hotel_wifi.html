@@ -18,9 +18,7 @@
     --content: 980px;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     font-family: Arial, "Microsoft JhengHei", sans-serif;
@@ -29,13 +27,8 @@ body {
     color: var(--text);
 }
 
-button, input, select {
-    font: inherit;
-}
-
-button {
-    cursor: pointer;
-}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
 
 input, select {
     padding: 8px 10px;
@@ -122,9 +115,7 @@ input, select {
     margin: 28px 0 18px;
 }
 
-.section-head h2 {
-    margin: 0 0 5px;
-}
+.section-head h2 { margin: 0 0 5px; }
 
 .section-head p {
     margin: 0;
@@ -135,21 +126,11 @@ input, select {
 .main-section,
 .hotel-section,
 .qr-mode,
-.edit-panel {
-    margin-top: 18px;
-}
+.edit-panel { margin-top: 18px; }
 
-.hidden {
-    display: none !important;
-}
-
-.toolbar {
-    margin-bottom: 14px;
-}
-
-.field {
-    margin: 10px 0;
-}
+.hidden { display: none !important; }
+.toolbar { margin-bottom: 14px; }
+.field { margin: 10px 0; }
 
 .field label {
     display: inline-block;
@@ -157,13 +138,9 @@ input, select {
 }
 
 .field input,
-.field select {
-    min-width: 220px;
-}
+.field select { min-width: 220px; }
 
-.action-row {
-    margin: 14px 0;
-}
+.action-row { margin: 14px 0; }
 
 .action-row button,
 .edit-panel button,
@@ -185,18 +162,14 @@ input, select {
 }
 
 .wifi-row:first-child,
-.manage-row:first-child {
-    border-top: none;
-}
+.manage-row:first-child { border-top: none; }
 
 .wifi-row strong {
     display: inline-block;
     min-width: 90px;
 }
 
-.print-preview {
-    margin-top: 18px;
-}
+.print-preview { margin-top: 18px; }
 
 .print-grid {
     display: grid;
@@ -228,18 +201,14 @@ input, select {
     margin-top: 20px;
 }
 
-.public-print .print-title {
-    font-size: 20px;
-}
+.public-print .print-title { font-size: 20px; }
 
 .public-info {
     margin-top: 8px;
     line-height: 1.6;
 }
 
-#genericQrPreview {
-    margin-top: 16px;
-}
+#genericQrPreview { margin-top: 16px; }
 
 #genericQrPreview canvas {
     display: block;
@@ -256,9 +225,7 @@ input, select {
     font-size: 14px;
 }
 
-.status-unset {
-    color: #777;
-}
+.status-unset { color: #777; }
 
 
 /* ==================== A4 多份列印 ==================== */
@@ -288,27 +255,21 @@ input, select {
     margin: 10px 0;
 }
 
-.a4-checkbox input {
-    min-width: auto;
-}
+.a4-checkbox input { min-width: auto; }
 
 .a4-data-row {
     border-top: 1px solid var(--line);
     padding: 14px 0;
 }
 
-.a4-data-row:first-child {
-    border-top: none;
-}
+.a4-data-row:first-child { border-top: none; }
 
 .a4-data-row-title {
     font-weight: bold;
     margin-bottom: 8px;
 }
 
-.a4-row-preview {
-    margin-top: 10px;
-}
+.a4-row-preview { margin-top: 10px; }
 
 .a4-row-status {
     margin-top: 8px;
@@ -316,14 +277,9 @@ input, select {
     font-size: 14px;
 }
 
-#a4QrPreviewArea {
-    margin-top: 18px;
-}
+#a4QrPreviewArea { margin-top: 18px; }
 
-#a4QrPreviewArea .print-grid {
-    grid-template-columns: repeat(3, 1fr);
-}
-
+#a4QrPreviewArea .print-grid { grid-template-columns: repeat(3, 1fr); }
 
 .a4-size-preview-set {
     display: flex;
@@ -332,18 +288,105 @@ input, select {
     align-items: flex-start;
 }
 
-.a4-size-preview-item {
-    text-align: center;
-}
+.a4-size-preview-item { text-align: center; }
 
 .a4-size-preview-label {
     font-weight: bold;
     margin-bottom: 6px;
 }
 
-.print-sheet {
-    width: 100%;
+.print-sheet { width: 100%; }
+
+/* ==================== A4 四尺寸實體樣張 ==================== */
+.a4-physical-sample {
+    width: 172mm;
+    margin: 0 auto;
 }
+
+.a4-physical-sample-warning {
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1.6;
+    margin-bottom: 3mm;
+}
+
+.a4-physical-sample-stage {
+    position: relative;
+    width: 172mm;
+    height: 245mm;
+}
+
+.a4-physical-ruler-horizontal {
+    position: absolute;
+    left: 12mm;
+    top: 0;
+    width: 160mm;
+    height: 10mm;
+    border-bottom: 0.2mm solid #000;
+}
+
+.a4-physical-ruler-vertical {
+    position: absolute;
+    left: 0;
+    top: 12mm;
+    width: 10mm;
+    height: 220mm;
+    border-right: 0.2mm solid #000;
+}
+
+.a4-physical-ruler-tick { position: absolute; background: #000; }
+
+.a4-physical-ruler-horizontal .a4-physical-ruler-tick {
+    bottom: 0;
+    width: 0.2mm;
+}
+
+.a4-physical-ruler-vertical .a4-physical-ruler-tick {
+    right: 0;
+    height: 0.2mm;
+}
+
+.a4-physical-ruler-label {
+    position: absolute;
+    font-size: 8pt;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.a4-physical-ruler-horizontal .a4-physical-ruler-label {
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.a4-physical-ruler-vertical .a4-physical-ruler-label {
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.a4-physical-stack {
+    position: absolute;
+    left: 20mm;
+    top: 18mm;
+    width: 140mm;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4mm;
+}
+
+.a4-physical-size-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.a4-physical-size-label {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-bottom: 1mm;
+}
+
+.a4-physical-size-item canvas { display: block; }
 
 @media (max-width: 700px) {
     .topbar-inner,
@@ -352,9 +395,7 @@ input, select {
         flex-direction: column;
     }
 
-    .topbar-inner {
-        padding: 14px 0;
-    }
+    .topbar-inner { padding: 14px 0; }
 
     .field label {
         display: block;
@@ -367,9 +408,7 @@ input, select {
         min-width: 0;
     }
 
-    .print-grid {
-        grid-template-columns: 1fr;
-    }
+    .print-grid { grid-template-columns: 1fr; }
 }
 
 @page {
@@ -378,14 +417,10 @@ input, select {
 }
 
 @media print {
-    body * {
-        visibility: hidden !important;
-    }
+    body * { visibility: hidden !important; }
 
     #printArea,
-    #printArea * {
-        visibility: visible !important;
-    }
+    #printArea * { visibility: visible !important; }
 
     #printArea {
         position: absolute;
@@ -413,12 +448,17 @@ input, select {
         margin-bottom: 2mm;
     }
 
-    #printArea .public-print .print-title {
-        font-size: 14pt;
+    #printArea .public-print .print-title { font-size: 14pt; }
+    #printArea .public-info { font-size: 11pt; }
+
+    #printArea .a4-physical-sample {
+        width: 172mm;
+        margin: 0 auto;
     }
 
-    #printArea .public-info {
-        font-size: 11pt;
+    #printArea .a4-physical-sample-warning {
+        font-size: 9pt;
+        margin-bottom: 3mm;
     }
 }
 </style>
@@ -471,13 +511,11 @@ input, select {
 
     <div id="hotelPublic" class="hotel-section content-box hidden">
         <h3>其他</h3>
-
         <div class="action-row">
             <button onclick="showPublicList()">顯示 Wi-Fi 清單</button>
             <button onclick="showPublicPrintPreview()">預覽列印</button>
             <button onclick="printCurrent()">列印</button>
         </div>
-
         <div id="publicList"></div>
     </div>
 </section>
@@ -502,11 +540,7 @@ input, select {
 
     <div class="content-box">
         <div id="qrNormalMode" class="qr-mode">
-            <div class="field">
-                <label for="normalText">內容：</label>
-                <input type="text" id="normalText" placeholder="網址或任意文字">
-            </div>
-
+            <div class="field"><label for="normalText">內容：</label><input type="text" id="normalText" placeholder="網址或任意文字"></div>
             <div class="field">
                 <label for="normalSize">尺寸：</label>
                 <select id="normalSize">
@@ -515,19 +549,13 @@ input, select {
                     <option value="400">400</option><option value="500">500</option><option value="600">600</option>
                 </select>
             </div>
-
             <div class="action-row"><button onclick="makeNormalQR()">產生 QRCode</button></div>
         </div>
 
         <div id="qrWifiMode" class="qr-mode hidden">
             <div class="field"><label for="genericWifiSsid">Wi-Fi 名稱：</label><input type="text" id="genericWifiSsid"></div>
             <div class="field"><label for="genericWifiPw">Wi-Fi 密碼：</label><input type="text" id="genericWifiPw"></div>
-            <div class="field">
-                <label for="genericWifiType">加密方式：</label>
-                <select id="genericWifiType">
-                    <option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="">無密碼</option>
-                </select>
-            </div>
+            <div class="field"><label for="genericWifiType">加密方式：</label><select id="genericWifiType"><option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="">無密碼</option></select></div>
             <div class="field">
                 <label for="genericWifiSize">尺寸：</label>
                 <select id="genericWifiSize">
@@ -547,7 +575,6 @@ input, select {
         </div>
     </div>
 </section>
-
 
 <section id="sectionA4" class="main-section hidden">
     <div class="hero">
@@ -574,6 +601,11 @@ input, select {
             <button id="a4ModeDifferent" onclick="a4ShowMode('different')">不同資料多份</button>
         </div>
 
+        <div class="a4-checkbox">
+            <input type="checkbox" id="a4PhysicalRuler" checked>
+            <label for="a4PhysicalRuler">列印尺寸尺</label>
+        </div>
+
         <div id="a4SameMode">
             <div class="a4-checkbox">
                 <input type="checkbox" id="a4SamePrintLabel" checked onchange="a4SyncSameLabel()">
@@ -591,14 +623,7 @@ input, select {
             <div id="a4SameWifi" class="hidden">
                 <div class="field"><label for="a4SameSsid">Wi-Fi 名稱：</label><input type="text" id="a4SameSsid"></div>
                 <div class="field"><label for="a4SamePassword">Wi-Fi 密碼：</label><input type="text" id="a4SamePassword"></div>
-                <div class="field">
-                    <label for="a4SameWifiType">加密方式：</label>
-                    <select id="a4SameWifiType">
-                        <option value="WPA">WPA / WPA2</option>
-                        <option value="WEP">WEP</option>
-                        <option value="">無密碼</option>
-                    </select>
-                </div>
+                <div class="field"><label for="a4SameWifiType">加密方式：</label><select id="a4SameWifiType"><option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="">無密碼</option></select></div>
             </div>
 
             <div class="field"><label for="a4SameCount">列印份數：</label><input type="number" id="a4SameCount" min="1" max="18" value="1"></div>
@@ -610,6 +635,7 @@ input, select {
                 <button onclick="a4PreviewSamePrint(120)">預覽 120 px 列印（A4最多18張）</button>
                 <button onclick="a4PreviewSamePrint(150)">預覽 150 px 列印（A4最多12張）</button>
                 <button onclick="a4PreviewSamePrint(200)">預覽 200 px 列印（A4最多9張）</button>
+                <button onclick="a4PreviewPhysicalSample(a4SameGeneratedItems[0])">預覽四尺寸實體樣張（列印請用 100%／實際大小）</button>
                 <button onclick="printCurrent()">列印目前預覽</button>
             </div>
         </div>
@@ -661,16 +687,9 @@ input, select {
 
     <div id="manageRooms" class="content-box">
         <h3>客房 Wi-Fi</h3>
-
         <div class="action-row"><button onclick="openBatchRoomPanel()">設定全部客房</button></div>
-
-        <div class="field">
-            <label for="roomSearch">搜尋房號：</label>
-            <input type="text" id="roomSearch" placeholder="例如 203" oninput="renderRoomManageList()">
-        </div>
-
+        <div class="field"><label for="roomSearch">搜尋房號：</label><input type="text" id="roomSearch" placeholder="例如 203" oninput="renderRoomManageList()"></div>
         <div id="roomManageList"></div>
-
         <div id="batchRoomPanel" class="edit-panel hidden">
             <h3>設定全部客房</h3>
             <p class="notice">會依 Wi-Fi名稱+ 房號產生各房間 SSID 前綴。儲存後每間仍可單獨修改。</p>
@@ -853,16 +872,12 @@ function showRoomList() {
         button.onclick = () => showRoomFloor(floor, button);
         tabs.appendChild(button);
 
-        if (index === 0) {
-            button.classList.add("active");
-        }
+        if (index === 0) button.classList.add("active");
     });
 
     tabs.classList.remove("hidden");
 
-    if (floors.length) {
-        showRoomFloor(floors[0], tabs.querySelector("button"));
-    }
+    if (floors.length) showRoomFloor(floors[0], tabs.querySelector("button"));
 }
 
 function showRoomFloor(floor, activeButton) {
@@ -900,9 +915,7 @@ function showRoomPrintPreview() {
 }
 
 /* ==================== 其他顯示 / 列印 ==================== */
-function resetPublicListView() {
-    document.getElementById("publicList").innerHTML = "";
-}
+function resetPublicListView() { document.getElementById("publicList").innerHTML = ""; }
 
 function showPublicList() {
     clearPrintArea();
@@ -963,9 +976,14 @@ function showPublicPrintPreview() {
     printArea.classList.remove("hidden");
     printArea.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
 function printCurrent() {
     const printArea = document.getElementById("printArea");
     if (printArea.classList.contains("hidden") || !printArea.children.length) { alert("請先預覽列印"); return; }
+    if (printArea.querySelector(".a4-physical-sample")) {
+        const ok = confirm("四尺寸實體樣張的尺規必須使用 100%／實際大小列印，請勿使用「符合頁面」或縮放列印。\n是否繼續列印？");
+        if (!ok) return;
+    }
     window.print();
 }
 
@@ -1001,7 +1019,6 @@ async function shareGenericQR() {
 }
 function clearGenericQR() { document.getElementById("genericQrPreview").innerHTML = ""; }
 
-
 /* ==================== A4 多份列印 ==================== */
 const A4_QR_SIZES = [80, 120, 150, 200];
 const A4_MAX_PRINT_COUNT = 18;
@@ -1011,9 +1028,7 @@ let a4QrType = "normal";
 let a4PrintMode = "same";
 let a4SameGeneratedItems = [];
 
-function a4ClearPrintOnly() {
-    clearPrintArea();
-}
+function a4ClearPrintOnly() { clearPrintArea(); }
 
 function a4MakeCard(label, payload, printLabel, size = 120) {
     const card = document.createElement("div");
@@ -1027,12 +1042,7 @@ function a4MakeCard(label, payload, printLabel, size = 120) {
     }
 
     const canvas = document.createElement("canvas");
-    new QRious({
-        element: canvas,
-        value: payload,
-        size: size,
-        level: "H"
-    });
+    new QRious({ element: canvas, value: payload, size: size, level: "H" });
     card.appendChild(canvas);
     return card;
 }
@@ -1322,6 +1332,16 @@ function a4GenerateRow(row) {
     const preview = row.querySelector(".a4-row-preview");
     preview.innerHTML = "";
     preview.appendChild(a4MakeSizePreview(item.label, item.payload, item.printLabel));
+
+    const sampleActions = document.createElement("div");
+    sampleActions.className = "action-row";
+    const sampleButton = document.createElement("button");
+    sampleButton.type = "button";
+    sampleButton.textContent = "預覽四尺寸實體樣張（列印請用 100%／實際大小）";
+    sampleButton.onclick = () => a4PreviewPhysicalSample(item);
+    sampleActions.appendChild(sampleButton);
+    preview.appendChild(sampleActions);
+
     preview.classList.remove("hidden");
     document.getElementById("a4DifferentPrintButtons").classList.remove("hidden");
     row.querySelector(".a4-row-status").classList.add("hidden");
@@ -1385,6 +1405,106 @@ function a4RenderPrint(items, size) {
     printArea.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* ==================== A4 四尺寸實體樣張 ==================== */
+function a4PxToMm(size) {
+    return size * 25.4 / 96;
+}
+
+function a4MakePhysicalRuler(orientation, lengthMm) {
+    const ruler = document.createElement("div");
+    ruler.className = orientation === "horizontal" ? "a4-physical-ruler-horizontal" : "a4-physical-ruler-vertical";
+
+    for (let mm = 0; mm <= lengthMm; mm++) {
+        const tick = document.createElement("div");
+        tick.className = "a4-physical-ruler-tick";
+
+        const isCentimeter = mm % 10 === 0;
+        const isHalfCentimeter = mm % 5 === 0;
+
+        if (orientation === "horizontal") {
+            tick.style.left = `${mm}mm`;
+            tick.style.height = isCentimeter ? "5mm" : isHalfCentimeter ? "3.5mm" : "2mm";
+        } else {
+            tick.style.top = `${mm}mm`;
+            tick.style.width = isCentimeter ? "5mm" : isHalfCentimeter ? "3.5mm" : "2mm";
+        }
+
+        ruler.appendChild(tick);
+
+        if (isCentimeter) {
+            const label = document.createElement("div");
+            label.className = "a4-physical-ruler-label";
+            label.textContent = String(mm / 10);
+
+            if (orientation === "horizontal") label.style.left = `${mm}mm`;
+            else label.style.top = `${mm}mm`;
+
+            ruler.appendChild(label);
+        }
+    }
+
+    return ruler;
+}
+
+function a4PreviewPhysicalSample(item) {
+    if (!item || !item.payload) {
+        alert("請先產生 QRCode");
+        return;
+    }
+
+    const printArea = document.getElementById("printArea");
+    printArea.innerHTML = "";
+
+    const sample = document.createElement("div");
+    sample.className = "a4-physical-sample";
+
+    const warning = document.createElement("div");
+    warning.className = "a4-physical-sample-warning";
+    warning.textContent = "列印提醒：請使用 100%／實際大小，請勿使用「符合頁面」或縮放列印。";
+    sample.appendChild(warning);
+
+    const stage = document.createElement("div");
+    stage.className = "a4-physical-sample-stage";
+
+    if (document.getElementById("a4PhysicalRuler").checked) {
+        stage.appendChild(a4MakePhysicalRuler("horizontal", 160));
+        stage.appendChild(a4MakePhysicalRuler("vertical", 220));
+    }
+
+    const stack = document.createElement("div");
+    stack.className = "a4-physical-stack";
+
+    A4_QR_SIZES.forEach(size => {
+        const sizeItem = document.createElement("div");
+        sizeItem.className = "a4-physical-size-item";
+
+        const sizeLabel = document.createElement("div");
+        sizeLabel.className = "a4-physical-size-label";
+        sizeLabel.textContent = `${size}px`;
+
+        const canvas = document.createElement("canvas");
+        new QRious({
+            element: canvas,
+            value: item.payload,
+            size: size,
+            level: "H"
+        });
+
+        const physicalMm = a4PxToMm(size);
+        canvas.style.width = `${physicalMm}mm`;
+        canvas.style.height = `${physicalMm}mm`;
+
+        sizeItem.appendChild(sizeLabel);
+        sizeItem.appendChild(canvas);
+        stack.appendChild(sizeItem);
+    });
+
+    stage.appendChild(stack);
+    sample.appendChild(stage);
+    printArea.appendChild(sample);
+    printArea.classList.remove("hidden");
+    printArea.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 /* ==================== 客房管理 ==================== */
 function renderRoomManageList() {
