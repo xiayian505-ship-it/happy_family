@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiction Data Storage Test</title>
+</head>
+<body>
+
+<h1>Fiction Data Storage Test</h1>
+
+<button id="add">新增測試資料</button>
+<button id="read">讀取資料</button>
+<button id="clear">清空資料</button>
+
+<pre id="result">等待測試...</pre>
+
+<script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+
+<script>
+const result = document.getElementById("result");
+
+const db = FictionData.create({
+    namespace: "family-fiction-test"
+});
+
+const works = db.collection("works");
+
+document.getElementById("add").onclick = async () => {
+    const work = await works.add({
+        title: "測試作品",
+        author: "慢慢"
+    });
+
+    result.textContent =
+        "新增成功\n\n" +
+        JSON.stringify(work, null, 2);
+};
+
+document.getElementById("read").onclick = async () => {
+    const list = await works.all();
+
+    result.textContent =
+        "目前共 " + list.length + " 筆\n\n" +
+        JSON.stringify(list, null, 2);
+};
+
+document.getElementById("clear").onclick = async () => {
+    await works.clear();
+    result.textContent = "已清空";
+};
+</script>
+
+</body>
+</html>
