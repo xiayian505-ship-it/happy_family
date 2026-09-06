@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>本機留言板｜FictionData CMS Test</title>
+  <style>
+    :root {
+      --bg: #f4f6f6;
+      --surface: #ffffff;
+      --surface-soft: #eef2f2;
+      --text: #1f292d;
+      --muted: #65777d;
+      --line: #d9e0e2;
+      --accent: #547d86;
+      --accent-dark: #3d626a;
+      --danger: #9b5d5d;
+      --shadow: 0 10px 30px rgba(34, 48, 54, 0.08);
+      --radius: 18px;
+      --content: 980px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      line-height: 1.6;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(calc(100% - 32px), var(--content));
+      margin: 0 auto;
+      padding: 36px 0 56px;
+    }
+
+    .hero {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-dark);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      max-width: 680px;
+      margin: 14px 0 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .composer {
+      position: sticky;
+      top: 20px;
+      padding: 22px;
+    }
+
+    .panel-title {
+      margin: 0 0 18px;
+      font-size: 1.15rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 15px;
+    }
+
+    .field label {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea,
+    .toolbar input,
+    .toolbar select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .field input,
+    .toolbar input,
+    .toolbar select {
+      min-height: 44px;
+      padding: 10px 12px;
+    }
+
+    .field textarea {
+      min-height: 140px;
+      padding: 12px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .toolbar input:focus,
+    .toolbar select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(84, 125, 134, 0.12);
+    }
+
+    .hint {
+      margin: -4px 0 18px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 11px;
+      padding: 9px 15px;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .btn-secondary {
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #f4eaea;
+      color: var(--danger);
+    }
+
+    .board {
+      min-width: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 150px;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .board-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .message-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .message {
+      padding: 20px;
+    }
+
+    .message-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .message-name {
+      margin: 0;
+      font-size: 1.02rem;
+      overflow-wrap: anywhere;
+    }
+
+    .message-time {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: right;
+      flex: 0 0 auto;
+    }
+
+    .message-content {
+      margin: 12px 0 16px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .message-actions .btn {
+      min-height: 36px;
+      padding: 6px 11px;
+      font-size: 0.86rem;
+    }
+
+    .empty,
+    .error-box {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .error-box {
+      color: var(--danger);
+    }
+
+    .status-line {
+      margin-top: 14px;
+      min-height: 1.5em;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .storage-note {
+      margin-top: 24px;
+      padding: 15px 18px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      color: var(--accent-dark);
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(calc(100% - 20px), var(--content));
+        padding-top: 24px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .composer {
+        position: static;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .panel,
+      .composer,
+      .message {
+        border-radius: 14px;
+      }
+
+      .composer,
+      .message {
+        padding: 16px;
+      }
+
+      .board-head,
+      .message-top {
+        align-items: flex-start;
+      }
+
+      .message-top {
+        flex-direction: column;
+      }
+
+      .message-time {
+        text-align: left;
+      }
+
+      .button-row,
+      .message-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">FictionData Consumer Test</p>
+      <h1>本機留言板</h1>
+      <p>
+        這不是多人留言系統。所有留言只保存在目前瀏覽器的 localStorage，
+        用來測試外部網頁透過 CDN 使用 FictionData 的實際情境。
+      </p>
+    </section>
+
+    <section class="layout">
+      <aside class="panel composer">
+        <h2 class="panel-title" id="formTitle">新增留言</h2>
+
+        <form id="messageForm">
+          <div class="field">
+            <label for="nameInput">暱稱</label>
+            <input
+              id="nameInput"
+              name="name"
+              type="text"
+              maxlength="40"
+              autocomplete="nickname"
+              placeholder="例如：慢慢"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="contentInput">留言內容</label>
+            <textarea
+              id="contentInput"
+              name="content"
+              maxlength="1000"
+              placeholder="寫點什麼……"
+              required
+            ></textarea>
+          </div>
+
+          <p class="hint">FictionData 會自動處理 id、createdAt、updatedAt。</p>
+
+          <div class="button-row">
+            <button class="btn btn-primary" id="submitButton" type="submit">
+              發布留言
+            </button>
+            <button class="btn btn-secondary" id="cancelEditButton" type="button" hidden>
+              取消編輯
+            </button>
+          </div>
+        </form>
+
+        <div class="status-line" id="statusLine" aria-live="polite"></div>
+      </aside>
+
+      <section class="board">
+        <div class="board-head">
+          <h2 class="panel-title" style="margin:0;">留言</h2>
+          <div class="count" id="messageCount">0 則</div>
+        </div>
+
+        <div class="toolbar">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="搜尋暱稱或留言內容"
+            aria-label="搜尋留言"
+          />
+          <select id="sortSelect" aria-label="排序方式">
+            <option value="newest">最新優先</option>
+            <option value="oldest">最舊優先</option>
+            <option value="name">暱稱排序</option>
+          </select>
+        </div>
+
+        <div class="message-list" id="messageList"></div>
+
+        <div class="storage-note">
+          storage namespace：
+          <code>cms_test20260906</code><br />
+          collection：
+          <code>messages</code><br />
+          實際 localStorage key：
+          <code>cms_test20260906:messages</code>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const els = {
+        form: document.getElementById("messageForm"),
+        formTitle: document.getElementById("formTitle"),
+        name: document.getElementById("nameInput"),
+        content: document.getElementById("contentInput"),
+        submit: document.getElementById("submitButton"),
+        cancelEdit: document.getElementById("cancelEditButton"),
+        status: document.getElementById("statusLine"),
+        list: document.getElementById("messageList"),
+        count: document.getElementById("messageCount"),
+        search: document.getElementById("searchInput"),
+        sort: document.getElementById("sortSelect")
+      };
+
+      if (!window.FictionData) {
+        els.list.innerHTML = `
+          <div class="panel error-box">
+            FictionData 載入失敗。請確認 CDN 路徑與網路連線。
+          </div>
+        `;
+        els.submit.disabled = true;
+        return;
+      }
+
+      const db = FictionData.create({
+        namespace: "cms_test20260906"
+      });
+
+      const messages = db.collection("messages");
+
+      let editingId = null;
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatTime(value) {
+        if (!value) return "";
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+
+        return new Intl.DateTimeFormat("zh-TW", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function setStatus(text) {
+        els.status.textContent = text;
+
+        if (text) {
+          window.setTimeout(() => {
+            if (els.status.textContent === text) {
+              els.status.textContent = "";
+            }
+          }, 2200);
+        }
+      }
+
+      function resetForm() {
+        editingId = null;
+        els.form.reset();
+        els.formTitle.textContent = "新增留言";
+        els.submit.textContent = "發布留言";
+        els.cancelEdit.hidden = true;
+      }
+
+      function getSortConfig() {
+        switch (els.sort.value) {
+          case "oldest":
+            return {
+              field: "createdAt",
+              direction: "asc",
+              type: "date"
+            };
+
+          case "name":
+            return {
+              field: "name",
+              direction: "asc",
+              type: "string"
+            };
+
+          case "newest":
+          default:
+            return {
+              field: "createdAt",
+              direction: "desc",
+              type: "date"
+            };
+        }
+      }
+
+      async function loadMessages() {
+        try {
+          const keyword = els.search.value.trim();
+
+          const result = await messages.query({
+            search: keyword
+              ? {
+                  keyword,
+                  fields: ["name", "content"]
+                }
+              : null,
+            sort: getSortConfig()
+          });
+
+          renderMessages(result);
+        } catch (error) {
+          console.error(error);
+          els.list.innerHTML = `
+            <div class="panel error-box">
+              讀取留言時發生錯誤。
+            </div>
+          `;
+        }
+      }
+
+      function renderMessages(items) {
+        els.count.textContent = `${items.length} 則`;
+
+        if (!items.length) {
+          els.list.innerHTML = `
+            <div class="panel empty">
+              目前沒有符合條件的留言。
+            </div>
+          `;
+          return;
+        }
+
+        els.list.innerHTML = items.map(item => `
+          <article class="panel message" data-id="${escapeHtml(item.id)}">
+            <div class="message-top">
+              <h3 class="message-name">${escapeHtml(item.name || "未命名")}</h3>
+              <div class="message-time">
+                ${escapeHtml(formatTime(item.createdAt))}
+                ${
+                  item.updatedAt && item.updatedAt !== item.createdAt
+                    ? `<br>更新：${escapeHtml(formatTime(item.updatedAt))}`
+                    : ""
+                }
+              </div>
+            </div>
+
+            <div class="message-content">${escapeHtml(item.content)}</div>
+
+            <div class="message-actions">
+              <button class="btn btn-secondary" type="button" data-action="edit">
+                編輯
+              </button>
+              <button class="btn btn-danger" type="button" data-action="delete">
+                刪除
+              </button>
+            </div>
+          </article>
+        `).join("");
+      }
+
+      els.form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const name = els.name.value.trim();
+        const content = els.content.value.trim();
+
+        if (!name || !content) return;
+
+        try {
+          if (editingId) {
+            await messages.update(editingId, {
+              name,
+              content
+            });
+
+            setStatus("留言已更新。");
+          } else {
+            await messages.add({
+              name,
+              content
+            });
+
+            setStatus("留言已新增。");
+          }
+
+          resetForm();
+          await loadMessages();
+        } catch (error) {
+          console.error(error);
+          setStatus("儲存失敗，請查看 console。");
+        }
+      });
+
+      els.cancelEdit.addEventListener("click", () => {
+        resetForm();
+        setStatus("已取消編輯。");
+      });
+
+      els.list.addEventListener("click", async event => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const card = button.closest("[data-id]");
+        if (!card) return;
+
+        const id = card.dataset.id;
+        const action = button.dataset.action;
+
+        if (action === "edit") {
+          const item = await messages.get(id);
+          if (!item) return;
+
+          editingId = id;
+          els.name.value = item.name || "";
+          els.content.value = item.content || "";
+          els.formTitle.textContent = "編輯留言";
+          els.submit.textContent = "儲存修改";
+          els.cancelEdit.hidden = false;
+
+          if (window.innerWidth <= 760) {
+            els.form.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          }
+
+          els.name.focus();
+        }
+
+        if (action === "delete") {
+          const confirmed = window.confirm("確定要刪除這則留言嗎？");
+          if (!confirmed) return;
+
+          const removed = await messages.remove(id);
+
+          if (removed) {
+            if (editingId === id) resetForm();
+            setStatus("留言已刪除。");
+            await loadMessages();
+          }
+        }
+      });
+
+      els.search.addEventListener("input", loadMessages);
+      els.sort.addEventListener("change", loadMessages);
+
+      loadMessages();
+    })();
+  </script>
+</body>
+</html>
