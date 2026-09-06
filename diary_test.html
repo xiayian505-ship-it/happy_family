@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>本機日記｜FictionData Test</title>
+  <style>
+    :root {
+      --bg: #f3f1ec;
+      --surface: #fffdf9;
+      --surface-soft: #f6f2ea;
+      --text: #2a2723;
+      --muted: #756f66;
+      --line: #ddd6cb;
+      --accent: #7a6f5f;
+      --accent-dark: #5f5548;
+      --danger: #9c5f5f;
+      --shadow: 0 12px 30px rgba(48, 42, 34, 0.08);
+      --radius: 18px;
+      --content: 1040px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      line-height: 1.7;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(calc(100% - 32px), var(--content));
+      margin: 0 auto;
+      padding: 36px 0 56px;
+    }
+
+    .hero {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-dark);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Noto Serif TC", "Times New Roman", serif;
+      font-size: clamp(2.1rem, 5vw, 3.6rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      max-width: 720px;
+      margin: 14px 0 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .editor {
+      position: sticky;
+      top: 20px;
+      padding: 22px;
+    }
+
+    .panel-title {
+      margin: 0 0 18px;
+      font-size: 1.15rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 15px;
+    }
+
+    .field label {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea,
+    .toolbar input,
+    .toolbar select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .field input,
+    .toolbar input,
+    .toolbar select {
+      min-height: 44px;
+      padding: 10px 12px;
+    }
+
+    .field textarea {
+      min-height: 220px;
+      padding: 12px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .toolbar input:focus,
+    .toolbar select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(122, 111, 95, 0.12);
+    }
+
+    .hint {
+      margin: -4px 0 18px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .button-row,
+    .entry-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 11px;
+      padding: 9px 15px;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .btn-secondary {
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #f5eaea;
+      color: var(--danger);
+    }
+
+    .diary {
+      min-width: 0;
+    }
+
+    .board-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 150px;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .entry-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .entry {
+      padding: 22px;
+    }
+
+    .entry-date {
+      margin: 0 0 6px;
+      color: var(--accent-dark);
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .entry-title {
+      margin: 0;
+      font-family: Georgia, "Noto Serif TC", "Times New Roman", serif;
+      font-size: 1.35rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .entry-content {
+      margin: 16px 0 18px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .entry-actions .btn {
+      min-height: 36px;
+      padding: 6px 11px;
+      font-size: 0.86rem;
+    }
+
+    .empty,
+    .error-box {
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .error-box {
+      color: var(--danger);
+    }
+
+    .status-line {
+      margin-top: 14px;
+      min-height: 1.5em;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .storage-note {
+      margin-top: 24px;
+      padding: 15px 18px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      overflow-wrap: anywhere;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+      color: var(--accent-dark);
+    }
+
+    @media (max-width: 780px) {
+      .page {
+        width: min(calc(100% - 20px), var(--content));
+        padding-top: 24px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .editor {
+        position: static;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .editor,
+      .entry {
+        padding: 16px;
+      }
+
+      .panel {
+        border-radius: 14px;
+      }
+
+      .button-row,
+      .entry-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .board-head {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">FictionData Consumer Test</p>
+      <h1>本機日記</h1>
+      <p>
+        日記內容只保存在目前瀏覽器的 localStorage。
+        這個頁面只透過 CDN 使用 FictionData，不包含 FictionData 的原始碼。
+      </p>
+    </section>
+
+    <section class="layout">
+      <aside class="panel editor">
+        <h2 class="panel-title" id="formTitle">寫一篇日記</h2>
+
+        <form id="entryForm">
+          <div class="field">
+            <label for="dateInput">日期</label>
+            <input id="dateInput" name="date" type="date" required />
+          </div>
+
+          <div class="field">
+            <label for="titleInput">標題</label>
+            <input
+              id="titleInput"
+              name="title"
+              type="text"
+              maxlength="100"
+              placeholder="今天發生了什麼？"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="contentInput">內文</label>
+            <textarea
+              id="contentInput"
+              name="content"
+              maxlength="5000"
+              placeholder="寫下今天的事情……"
+              required
+            ></textarea>
+          </div>
+
+          <p class="hint">id、createdAt、updatedAt 交給 FictionData 自動處理。</p>
+
+          <div class="button-row">
+            <button class="btn btn-primary" id="submitButton" type="submit">
+              儲存日記
+            </button>
+            <button class="btn btn-secondary" id="cancelEditButton" type="button" hidden>
+              取消編輯
+            </button>
+          </div>
+        </form>
+
+        <div class="status-line" id="statusLine" aria-live="polite"></div>
+      </aside>
+
+      <section class="diary">
+        <div class="board-head">
+          <h2 class="panel-title" style="margin:0;">日記列表</h2>
+          <div class="count" id="entryCount">0 篇</div>
+        </div>
+
+        <div class="toolbar">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="搜尋標題或內文"
+            aria-label="搜尋日記"
+          />
+          <select id="sortSelect" aria-label="排序方式">
+            <option value="date-desc">日期新到舊</option>
+            <option value="date-asc">日期舊到新</option>
+            <option value="updated">最近更新</option>
+            <option value="title">標題排序</option>
+          </select>
+        </div>
+
+        <div class="entry-list" id="entryList"></div>
+
+        <div class="storage-note">
+          storage namespace：
+          <code>diary_test20260906</code><br />
+          collection：
+          <code>entries</code><br />
+          實際 localStorage key：
+          <code>diary_test20260906:entries</code>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const els = {
+        form: document.getElementById("entryForm"),
+        formTitle: document.getElementById("formTitle"),
+        date: document.getElementById("dateInput"),
+        title: document.getElementById("titleInput"),
+        content: document.getElementById("contentInput"),
+        submit: document.getElementById("submitButton"),
+        cancelEdit: document.getElementById("cancelEditButton"),
+        status: document.getElementById("statusLine"),
+        list: document.getElementById("entryList"),
+        count: document.getElementById("entryCount"),
+        search: document.getElementById("searchInput"),
+        sort: document.getElementById("sortSelect")
+      };
+
+      if (!window.FictionData) {
+        els.list.innerHTML = `
+          <div class="panel error-box">
+            FictionData 載入失敗。請確認 CDN 路徑與網路連線。
+          </div>
+        `;
+        els.submit.disabled = true;
+        return;
+      }
+
+      const db = FictionData.create({
+        namespace: "diary_test20260906"
+      });
+
+      const entries = db.collection("entries");
+
+      let editingId = null;
+
+      function todayString() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatDate(value) {
+        if (!value) return "";
+
+        const [year, month, day] = String(value).split("-");
+        if (!year || !month || !day) return String(value);
+
+        return `${year}.${month}.${day}`;
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "";
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+
+        return new Intl.DateTimeFormat("zh-TW", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function setStatus(text) {
+        els.status.textContent = text;
+
+        if (text) {
+          window.setTimeout(() => {
+            if (els.status.textContent === text) {
+              els.status.textContent = "";
+            }
+          }, 2200);
+        }
+      }
+
+      function resetForm() {
+        editingId = null;
+        els.form.reset();
+        els.date.value = todayString();
+        els.formTitle.textContent = "寫一篇日記";
+        els.submit.textContent = "儲存日記";
+        els.cancelEdit.hidden = true;
+      }
+
+      function getSortConfig() {
+        switch (els.sort.value) {
+          case "date-asc":
+            return {
+              field: "date",
+              direction: "asc",
+              type: "date"
+            };
+
+          case "updated":
+            return {
+              field: "updatedAt",
+              direction: "desc",
+              type: "date"
+            };
+
+          case "title":
+            return {
+              field: "title",
+              direction: "asc",
+              type: "string"
+            };
+
+          case "date-desc":
+          default:
+            return {
+              field: "date",
+              direction: "desc",
+              type: "date"
+            };
+        }
+      }
+
+      async function loadEntries() {
+        try {
+          const keyword = els.search.value.trim();
+
+          const result = await entries.query({
+            search: keyword
+              ? {
+                  keyword,
+                  fields: ["title", "content", "date"]
+                }
+              : null,
+            sort: getSortConfig()
+          });
+
+          renderEntries(result);
+        } catch (error) {
+          console.error(error);
+          els.list.innerHTML = `
+            <div class="panel error-box">
+              讀取日記時發生錯誤。
+            </div>
+          `;
+        }
+      }
+
+      function renderEntries(items) {
+        els.count.textContent = `${items.length} 篇`;
+
+        if (!items.length) {
+          els.list.innerHTML = `
+            <div class="panel empty">
+              目前沒有符合條件的日記。
+            </div>
+          `;
+          return;
+        }
+
+        els.list.innerHTML = items.map(item => `
+          <article class="panel entry" data-id="${escapeHtml(item.id)}">
+            <p class="entry-date">${escapeHtml(formatDate(item.date))}</p>
+            <h3 class="entry-title">${escapeHtml(item.title)}</h3>
+            <div class="entry-meta">
+              建立：${escapeHtml(formatDateTime(item.createdAt))}
+              ${
+                item.updatedAt && item.updatedAt !== item.createdAt
+                  ? `　更新：${escapeHtml(formatDateTime(item.updatedAt))}`
+                  : ""
+              }
+            </div>
+
+            <div class="entry-content">${escapeHtml(item.content)}</div>
+
+            <div class="entry-actions">
+              <button class="btn btn-secondary" type="button" data-action="edit">
+                編輯
+              </button>
+              <button class="btn btn-danger" type="button" data-action="delete">
+                刪除
+              </button>
+            </div>
+          </article>
+        `).join("");
+      }
+
+      els.form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const date = els.date.value;
+        const title = els.title.value.trim();
+        const content = els.content.value.trim();
+
+        if (!date || !title || !content) return;
+
+        try {
+          if (editingId) {
+            await entries.update(editingId, {
+              date,
+              title,
+              content
+            });
+
+            setStatus("日記已更新。");
+          } else {
+            await entries.add({
+              date,
+              title,
+              content
+            });
+
+            setStatus("日記已儲存。");
+          }
+
+          resetForm();
+          await loadEntries();
+        } catch (error) {
+          console.error(error);
+          setStatus("儲存失敗，請查看 console。");
+        }
+      });
+
+      els.cancelEdit.addEventListener("click", () => {
+        resetForm();
+        setStatus("已取消編輯。");
+      });
+
+      els.list.addEventListener("click", async event => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const card = button.closest("[data-id]");
+        if (!card) return;
+
+        const id = card.dataset.id;
+        const action = button.dataset.action;
+
+        if (action === "edit") {
+          const item = await entries.get(id);
+          if (!item) return;
+
+          editingId = id;
+          els.date.value = item.date || todayString();
+          els.title.value = item.title || "";
+          els.content.value = item.content || "";
+          els.formTitle.textContent = "編輯日記";
+          els.submit.textContent = "儲存修改";
+          els.cancelEdit.hidden = false;
+
+          if (window.innerWidth <= 780) {
+            els.form.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          }
+
+          els.title.focus();
+        }
+
+        if (action === "delete") {
+          const confirmed = window.confirm("確定要刪除這篇日記嗎？");
+          if (!confirmed) return;
+
+          const removed = await entries.remove(id);
+
+          if (removed) {
+            if (editingId === id) resetForm();
+            setStatus("日記已刪除。");
+            await loadEntries();
+          }
+        }
+      });
+
+      els.search.addEventListener("input", loadEntries);
+      els.sort.addEventListener("change", loadEntries);
+
+      els.date.value = todayString();
+      loadEntries();
+    })();
+  </script>
+</body>
+</html>
