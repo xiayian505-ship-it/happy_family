@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e7eef0">
+  <title>旅館控房系統｜單機測試</title>
+
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+
+  <style>
+    :root {
+      --bg: #e7eef0;
+      --surface: rgba(248, 251, 252, .92);
+      --surface-strong: #f7fafb;
+      --text: #243236;
+      --muted: #6d7f84;
+      --muted-2: #8a999d;
+      --line: rgba(58, 83, 90, .15);
+      --line-strong: rgba(58, 83, 90, .24);
+      --accent: #4f7e87;
+      --accent-soft: rgba(79, 126, 135, .12);
+      --success: #5c8a75;
+      --success-soft: rgba(92, 138, 117, .13);
+      --warning: #a87435;
+      --warning-soft: rgba(168, 116, 53, .13);
+      --danger: #b45c55;
+      --danger-soft: rgba(180, 92, 85, .12);
+      --info: #657f9b;
+      --info-soft: rgba(101, 127, 155, .13);
+      --shadow: 0 12px 32px rgba(35, 54, 59, .08);
+      --content: 1180px;
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    html {
+      background: var(--bg);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% -10%, rgba(79, 126, 135, .10), transparent 28rem),
+        linear-gradient(180deg, #eff5f6 0%, var(--bg) 34%, #dfe9eb 100%);
+      font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid var(--line);
+      background: rgba(231, 238, 240, .88);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+    }
+
+    .topbar-inner {
+      width: min(var(--content), calc(100% - 32px));
+      min-height: 64px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .brand-title {
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .brand-kicker {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+
+    .local-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-strong);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .local-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    main {
+      flex: 1;
+      width: min(var(--content), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
+      gap: 28px;
+      align-items: end;
+    }
+
+    .hero-eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 10px 0 0;
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -.04em;
+    }
+
+    .hero p {
+      max-width: 640px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .hero-note {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(248, 251, 252, .72);
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 12px;
+    }
+
+    .hero-note strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .stats {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface);
+      box-shadow: 0 5px 18px rgba(35, 54, 59, .04);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      margin-top: 7px;
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .panel {
+      margin-top: 22px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .65);
+      border-radius: var(--radius-xl);
+      background: rgba(245, 249, 250, .82);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(130px, .55fr));
+      gap: 10px;
+    }
+
+    .search-row input,
+    .search-row select {
+      width: 100%;
+      height: 46px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      background: var(--surface-strong);
+      color: var(--text);
+    }
+
+    .search-row input:focus,
+    .search-row select:focus {
+      border-color: rgba(79, 126, 135, .48);
+      box-shadow: 0 0 0 3px rgba(79, 126, 135, .10);
+    }
+
+    .toolbar {
+      margin-top: 32px;
+      padding: 0 2px 12px;
+      border-bottom: 1px solid var(--line-strong);
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .toolbar h2 {
+      margin: 0;
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 23px;
+    }
+
+    .toolbar p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: var(--surface-strong);
+      color: var(--text);
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      border-color: rgba(79, 126, 135, .42);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 6px 18px rgba(79, 126, 135, .22);
+    }
+
+    .btn.danger {
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .room-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .room-card {
+      min-width: 0;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(248, 251, 252, .90);
+      box-shadow: 0 5px 18px rgba(35, 54, 59, .04);
+      cursor: pointer;
+      transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .room-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(79, 126, 135, .30);
+      box-shadow: 0 10px 24px rgba(35, 54, 59, .07);
+    }
+
+    .room-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .room-number {
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 31px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    .room-type {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-空房 {
+      color: var(--success);
+      background: var(--success-soft);
+    }
+
+    .status-住房 {
+      color: var(--info);
+      background: var(--info-soft);
+    }
+
+    .status-保留 {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
+
+    .status-維修 {
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .housekeeping-已清潔 {
+      color: var(--success);
+      background: var(--success-soft);
+    }
+
+    .housekeeping-待清潔 {
+      color: var(--warning);
+      background: var(--warning-soft);
+    }
+
+    .housekeeping-檢查中 {
+      color: var(--info);
+      background: var(--info-soft);
+    }
+
+    .room-meta {
+      margin-top: 15px;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .room-meta-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .room-meta-line strong {
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .room-tags {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .small-tag {
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: rgba(58, 83, 90, .07);
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .quick-actions {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .quick-actions button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 9px;
+      background: var(--surface-strong);
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .quick-actions button:hover {
+      color: var(--accent);
+      border-color: rgba(79, 126, 135, .38);
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      padding: 72px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 21px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(20, 30, 33, .28);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      z-index: 80;
+      top: 0;
+      right: 0;
+      width: min(520px, 92vw);
+      height: 100dvh;
+      transform: translateX(102%);
+      transition: transform .26s cubic-bezier(.22, .8, .24, 1);
+      display: flex;
+      flex-direction: column;
+      background: rgba(244, 249, 250, .98);
+      box-shadow: -18px 0 50px rgba(0, 0, 0, .12);
+    }
+
+    .drawer.show {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 249, 250, .94);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .drawer-header strong {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(58, 83, 90, .09);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .drawer-body {
+      padding: 22px 22px 42px;
+      overflow: auto;
+    }
+
+    .detail-room {
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 44px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .detail-type {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .detail-section {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-section-title {
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+
+    .detail-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .detail-line:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-key {
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+
+    .detail-value {
+      text-align: right;
+      min-width: 0;
+    }
+
+    .detail-note {
+      margin: 0;
+      white-space: pre-wrap;
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 13px;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .detail-actions .btn {
+      flex: 1 1 140px;
+      border-radius: 12px;
+    }
+
+    .modal-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(20, 30, 33, .30);
+      backdrop-filter: blur(7px);
+    }
+
+    .modal-wrap.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(680px, 100%);
+      max-height: min(92dvh, 900px);
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 24px;
+      background: rgba(255,255,255,.98);
+      box-shadow: 0 24px 80px rgba(0,0,0,.18);
+    }
+
+    .modal-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 17px 19px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 20px;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      outline: none;
+      background: rgba(58, 83, 90, .05);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: rgba(79, 126, 135, .45);
+      box-shadow: 0 0 0 3px rgba(79, 126, 135, .10);
+    }
+
+    .modal-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      padding: 13px 19px calc(13px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(18px);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 120;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 18px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(28, 36, 39, .94);
+      color: white;
+      font-size: 12px;
+      transition: .18s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.15);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 24px 0 calc(28px + env(safe-area-inset-bottom));
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-inner {
+      width: min(var(--content), calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .room-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .search-row {
+        grid-template-columns: minmax(0, 1fr) repeat(3, minmax(120px, .4fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      main,
+      .topbar-inner,
+      .footer-inner {
+        width: min(100% - 24px, var(--content));
+      }
+
+      main {
+        padding-top: 28px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .search-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .search-row input {
+        grid-column: 1 / -1;
+      }
+
+      .room-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toolbar {
+        align-items: center;
+      }
+
+      .drawer {
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: min(92dvh, 840px);
+        border-radius: 24px 24px 0 0;
+        transform: translateY(102%);
+      }
+
+      .drawer.show {
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand-kicker {
+        display: none;
+      }
+
+      .local-pill {
+        font-size: 11px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat-card {
+        padding: 14px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .search-row input {
+        grid-column: auto;
+      }
+
+      .toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .room-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .room-card {
+        padding: 16px;
+      }
+
+      .room-number {
+        font-size: 34px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.full {
+        grid-column: auto;
+      }
+
+      .modal-wrap {
+        padding: 8px;
+        align-items: flex-end;
+      }
+
+      .modal-card {
+        width: 100%;
+        max-height: 94dvh;
+        border-radius: 22px 22px 0 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="brand" type="button" onclick="resetFilters()">
+        <div class="brand-title">旅館控房</div>
+        <div class="brand-kicker">Local Room Control Test</div>
+      </button>
+
+      <div class="local-pill">
+        <span class="dot"></span>
+        <span>FictionData 單機版</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="hero-eyebrow">Front Desk Room Control</div>
+        <h1>今日房況</h1>
+        <p>
+          假的旅館控房系統。房號、房型、房況、清潔狀態與住房資料全部儲存在這台裝置的瀏覽器。
+        </p>
+      </div>
+
+      <div class="hero-note">
+        <strong>測試目的</strong>
+        這一頁不接後端、不接訂房平台，只拿 FictionData 管一般營運資料，測試它離開小說／內容型資料後能不能照樣工作。
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-label">總房數</div>
+        <div id="statTotal" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">空房</div>
+        <div id="statVacant" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">住房</div>
+        <div id="statOccupied" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">保留</div>
+        <div id="statReserved" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">維修</div>
+        <div id="statMaintenance" class="stat-value">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">待清潔</div>
+        <div id="statDirty" class="stat-value">0</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="search-row">
+        <input id="searchInput" type="search" placeholder="搜尋房號、房型、備註" autocomplete="off">
+
+        <select id="statusFilter">
+          <option value="">全部房況</option>
+          <option value="空房">空房</option>
+          <option value="住房">住房</option>
+          <option value="保留">保留</option>
+          <option value="維修">維修</option>
+        </select>
+
+        <select id="housekeepingFilter">
+          <option value="">全部清潔狀態</option>
+          <option value="已清潔">已清潔</option>
+          <option value="待清潔">待清潔</option>
+          <option value="檢查中">檢查中</option>
+        </select>
+
+        <select id="floorFilter">
+          <option value="">全部樓層</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <div class="toolbar">
+        <div>
+          <h2>房間列表</h2>
+          <p id="resultCount">0 間房</p>
+        </div>
+
+        <div class="toolbar-actions">
+          <button class="btn" type="button" onclick="sortRooms('room')">房號排序</button>
+          <button class="btn" type="button" onclick="resetFilters()">清除篩選</button>
+          <button class="btn" type="button" onclick="seedDemoData()">匯入測試房況</button>
+          <button class="btn primary" type="button" onclick="openRoomForm()">＋ 新增房間</button>
+        </div>
+      </div>
+
+      <div id="roomGrid" class="room-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>hotel_room_control_test</span>
+      <button class="btn danger" type="button" onclick="confirmClearAll()">清空本機資料</button>
+    </div>
+  </footer>
+</div>
+
+<div id="detailOverlay" class="overlay" onclick="closeDetail()"></div>
+<aside id="detailDrawer" class="drawer" aria-hidden="true">
+  <div class="drawer-header">
+    <strong>房間詳情</strong>
+    <button class="icon-btn" type="button" onclick="closeDetail()" aria-label="關閉">×</button>
+  </div>
+  <div id="detailBody" class="drawer-body"></div>
+</aside>
+
+<div id="modalWrap" class="modal-wrap" onclick="handleModalBackdrop(event)">
+  <div id="modalCard" class="modal-card"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  const ROOM_STATUSES = ["空房", "住房", "保留", "維修"];
+  const HOUSEKEEPING_STATUSES = ["已清潔", "待清潔", "檢查中"];
+  const ROOM_TYPES = ["單人房", "雙人房", "雙床房", "三人房", "家庭房", "套房"];
+
+  const db = FictionData.create({
+    namespace: "hotel_room_control_test"
+  });
+
+  const roomsStore = db.collection("rooms");
+
+  let rooms = [];
+  let searchText = "";
+  let statusFilter = "";
+  let housekeepingFilter = "";
+  let floorFilter = "";
+  let sortMode = "room";
+  let activeRoomId = null;
+
+  function escapeHTML(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function escapeAttr(value) {
+    return escapeHTML(value).replace(/`/g, "&#096;");
+  }
+
+  function normalizeRoom(raw) {
+    return {
+      ...raw,
+      roomNumber: String(raw.roomNumber || "").trim(),
+      roomType: ROOM_TYPES.includes(raw.roomType) ? raw.roomType : "雙人房",
+      floor: Number(raw.floor || 1),
+      roomStatus: ROOM_STATUSES.includes(raw.roomStatus) ? raw.roomStatus : "空房",
+      housekeepingStatus: HOUSEKEEPING_STATUSES.includes(raw.housekeepingStatus)
+        ? raw.housekeepingStatus
+        : "已清潔",
+      guests: Math.max(0, Number(raw.guests || 0)),
+      guestName: String(raw.guestName || "").trim(),
+      checkInDate: String(raw.checkInDate || ""),
+      checkOutDate: String(raw.checkOutDate || ""),
+      note: String(raw.note || "").trim()
+    };
+  }
+
+  function todayISO() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function addDaysISO(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 1900);
+  }
+
+  async function loadRooms() {
+    rooms = (await roomsStore.all()).map(normalizeRoom);
+    renderAll();
+  }
+
+  function renderStats() {
+    document.getElementById("statTotal").textContent = rooms.length;
+    document.getElementById("statVacant").textContent =
+      rooms.filter(room => room.roomStatus === "空房").length;
+    document.getElementById("statOccupied").textContent =
+      rooms.filter(room => room.roomStatus === "住房").length;
+    document.getElementById("statReserved").textContent =
+      rooms.filter(room => room.roomStatus === "保留").length;
+    document.getElementById("statMaintenance").textContent =
+      rooms.filter(room => room.roomStatus === "維修").length;
+    document.getElementById("statDirty").textContent =
+      rooms.filter(room => room.housekeepingStatus === "待清潔").length;
+  }
+
+  function renderFloorFilter() {
+    const select = document.getElementById("floorFilter");
+    const floors = [...new Set(rooms.map(room => Number(room.floor)).filter(Boolean))]
+      .sort((a, b) => a - b);
+
+    const current = floorFilter;
+
+    select.innerHTML = `
+      <option value="">全部樓層</option>
+      ${floors.map(floor => `
+        <option value="${floor}" ${String(current) === String(floor) ? "selected" : ""}>
+          ${floor} 樓
+        </option>
+      `).join("")}
+    `;
+  }
+
+  function getFilteredRooms() {
+    const q = searchText.trim().toLocaleLowerCase("zh-Hant");
+
+    let result = rooms.filter(room => {
+      const searchBlob = [
+        room.roomNumber,
+        room.roomType,
+        room.guestName,
+        room.note
+      ].join(" ").toLocaleLowerCase("zh-Hant");
+
+      const searchOk = !q || searchBlob.includes(q);
+      const statusOk = !statusFilter || room.roomStatus === statusFilter;
+      const housekeepingOk =
+        !housekeepingFilter || room.housekeepingStatus === housekeepingFilter;
+      const floorOk = !floorFilter || String(room.floor) === String(floorFilter);
+
+      return searchOk && statusOk && housekeepingOk && floorOk;
+    });
+
+    if (sortMode === "room") {
+      result = [...result].sort((a, b) =>
+        String(a.roomNumber).localeCompare(
+          String(b.roomNumber),
+          "zh-Hant",
+          { numeric: true }
+        )
+      );
+    }
+
+    return result;
+  }
+
+  function renderRooms() {
+    const grid = document.getElementById("roomGrid");
+    const filtered = getFilteredRooms();
+
+    document.getElementById("resultCount").textContent =
+      `${filtered.length} 間房${filtered.length !== rooms.length ? `／共 ${rooms.length} 間` : ""}`;
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="empty">
+          <strong>${rooms.length ? "沒有符合條件的房間" : "目前還沒有房間資料"}</strong>
+          ${rooms.length
+            ? "換個條件，或清除篩選再看看。"
+            : "可以先按「匯入測試房況」快速建立一組假資料。"}
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(room => {
+      const today = todayISO();
+      const isCheckoutToday =
+        room.roomStatus === "住房" && room.checkOutDate === today;
+
+      const isCheckinToday =
+        room.roomStatus === "保留" && room.checkInDate === today;
+
+      return `
+        <article class="room-card" onclick="openDetail('${escapeAttr(room.id)}')">
+          <div class="room-top">
+            <div>
+              <div class="room-number">${escapeHTML(room.roomNumber)}</div>
+              <div class="room-type">${escapeHTML(room.roomType)} · ${escapeHTML(room.floor)} 樓</div>
+            </div>
+
+            <span class="badge status-${escapeAttr(room.roomStatus)}">
+              ${escapeHTML(room.roomStatus)}
+            </span>
+          </div>
+
+          <div class="room-meta">
+            <div class="room-meta-line">
+              <span>清潔</span>
+              <strong>${escapeHTML(room.housekeepingStatus)}</strong>
+            </div>
+
+            <div class="room-meta-line">
+              <span>入住人數</span>
+              <strong>${room.guests || 0} 人</strong>
+            </div>
+
+            ${room.guestName ? `
+              <div class="room-meta-line">
+                <span>住客</span>
+                <strong>${escapeHTML(room.guestName)}</strong>
+              </div>
+            ` : ""}
+
+            ${room.checkOutDate ? `
+              <div class="room-meta-line">
+                <span>退房</span>
+                <strong>${escapeHTML(room.checkOutDate)}</strong>
+              </div>
+            ` : ""}
+          </div>
+
+          <div class="room-tags">
+            <span class="badge housekeeping-${escapeAttr(room.housekeepingStatus)}">
+              ${escapeHTML(room.housekeepingStatus)}
+            </span>
+
+            ${isCheckoutToday ? `<span class="small-tag">今日退房</span>` : ""}
+            ${isCheckinToday ? `<span class="small-tag">今日入住</span>` : ""}
+            ${room.note ? `<span class="small-tag">有備註</span>` : ""}
+          </div>
+
+          <div class="quick-actions" onclick="event.stopPropagation()">
+            <button type="button" onclick="cycleRoomStatus('${escapeAttr(room.id)}')">
+              切換房況
+            </button>
+
+            <button type="button" onclick="cycleHousekeeping('${escapeAttr(room.id)}')">
+              切換清潔
+            </button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderAll() {
+    renderStats();
+    renderFloorFilter();
+    renderRooms();
+  }
+
+  function findRoom(id) {
+    return rooms.find(room => String(room.id) === String(id)) || null;
+  }
+
+  function resetFilters() {
+    searchText = "";
+    statusFilter = "";
+    housekeepingFilter = "";
+    floorFilter = "";
+
+    document.getElementById("searchInput").value = "";
+    document.getElementById("statusFilter").value = "";
+    document.getElementById("housekeepingFilter").value = "";
+    document.getElementById("floorFilter").value = "";
+
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function sortRooms(mode) {
+    sortMode = mode;
+    renderRooms();
+  }
+
+  async function cycleRoomStatus(id) {
+    const room = findRoom(id);
+    if (!room) return;
+
+    const currentIndex = ROOM_STATUSES.indexOf(room.roomStatus);
+    const next = ROOM_STATUSES[(currentIndex + 1) % ROOM_STATUSES.length];
+
+    const patch = { roomStatus: next };
+
+    if (next === "空房") {
+      patch.guests = 0;
+      patch.guestName = "";
+      patch.checkInDate = "";
+      patch.checkOutDate = "";
+    }
+
+    const saved = await roomsStore.update(id, patch);
+    const index = rooms.findIndex(item => String(item.id) === String(id));
+
+    if (index >= 0) {
+      rooms[index] = normalizeRoom(saved);
+    }
+
+    renderAll();
+
+    if (activeRoomId === id) {
+      openDetail(id, false);
+    }
+
+    showToast(`${room.roomNumber} 已改為${next}`);
+  }
+
+  async function cycleHousekeeping(id) {
+    const room = findRoom(id);
+    if (!room) return;
+
+    const currentIndex = HOUSEKEEPING_STATUSES.indexOf(room.housekeepingStatus);
+    const next =
+      HOUSEKEEPING_STATUSES[
+        (currentIndex + 1) % HOUSEKEEPING_STATUSES.length
+      ];
+
+    const saved = await roomsStore.update(id, {
+      housekeepingStatus: next
+    });
+
+    const index = rooms.findIndex(item => String(item.id) === String(id));
+
+    if (index >= 0) {
+      rooms[index] = normalizeRoom(saved);
+    }
+
+    renderAll();
+
+    if (activeRoomId === id) {
+      openDetail(id, false);
+    }
+
+    showToast(`${room.roomNumber} 清潔狀態：${next}`);
+  }
+
+  function openDetail(id, lockScroll = true) {
+    const room = findRoom(id);
+    if (!room) return;
+
+    activeRoomId = id;
+
+    const drawer = document.getElementById("detailDrawer");
+    const overlay = document.getElementById("detailOverlay");
+    const body = document.getElementById("detailBody");
+
+    body.innerHTML = `
+      <div class="detail-room">${escapeHTML(room.roomNumber)}</div>
+      <div class="detail-type">${escapeHTML(room.roomType)} · ${escapeHTML(room.floor)} 樓</div>
+
+      <section class="detail-section">
+        <div class="detail-line">
+          <span class="detail-key">房況</span>
+          <span class="detail-value">
+            <span class="badge status-${escapeAttr(room.roomStatus)}">
+              ${escapeHTML(room.roomStatus)}
+            </span>
+          </span>
+        </div>
+
+        <div class="detail-line">
+          <span class="detail-key">清潔狀態</span>
+          <span class="detail-value">
+            <span class="badge housekeeping-${escapeAttr(room.housekeepingStatus)}">
+              ${escapeHTML(room.housekeepingStatus)}
+            </span>
+          </span>
+        </div>
+
+        <div class="detail-line">
+          <span class="detail-key">入住人數</span>
+          <span class="detail-value">${room.guests || 0} 人</span>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <div class="detail-section-title">住房資料</div>
+
+        <div class="detail-line">
+          <span class="detail-key">住客姓名</span>
+          <span class="detail-value">${escapeHTML(room.guestName || "—")}</span>
+        </div>
+
+        <div class="detail-line">
+          <span class="detail-key">入住日期</span>
+          <span class="detail-value">${escapeHTML(room.checkInDate || "—")}</span>
+        </div>
+
+        <div class="detail-line">
+          <span class="detail-key">退房日期</span>
+          <span class="detail-value">${escapeHTML(room.checkOutDate || "—")}</span>
+        </div>
+      </section>
+
+      <section class="detail-section">
+        <div class="detail-section-title">備註</div>
+        <p class="detail-note">${escapeHTML(room.note || "目前沒有備註。")}</p>
+      </section>
+
+      <section class="detail-section">
+        <div class="detail-actions">
+          <button class="btn" type="button" onclick="cycleRoomStatus('${escapeAttr(room.id)}')">
+            切換房況
+          </button>
+
+          <button class="btn" type="button" onclick="cycleHousekeeping('${escapeAttr(room.id)}')">
+            切換清潔
+          </button>
+
+          <button class="btn primary" type="button" onclick="openRoomForm('${escapeAttr(room.id)}')">
+            編輯房間
+          </button>
+
+          <button class="btn danger" type="button" onclick="deleteRoom('${escapeAttr(room.id)}')">
+            刪除房間
+          </button>
+        </div>
+      </section>
+    `;
+
+    drawer.classList.add("show");
+    overlay.classList.add("show");
+    drawer.setAttribute("aria-hidden", "false");
+
+    if (lockScroll) {
+      document.body.style.overflow = "hidden";
+    }
+  }
+
+  function closeDetail() {
+    document.getElementById("detailDrawer").classList.remove("show");
+    document.getElementById("detailOverlay").classList.remove("show");
+    document.getElementById("detailDrawer").setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    activeRoomId = null;
+  }
+
+  function roomFormHTML(room) {
+    const editing = Boolean(room?.id);
+
+    const data = room || {
+      roomNumber: "",
+      roomType: "雙人房",
+      floor: 1,
+      roomStatus: "空房",
+      housekeepingStatus: "已清潔",
+      guests: 0,
+      guestName: "",
+      checkInDate: "",
+      checkOutDate: "",
+      note: ""
+    };
+
+    return `
+      <div class="modal-head">
+        <h3>${editing ? "編輯房間" : "新增房間"}</h3>
+        <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>房號 *</label>
+            <input id="formRoomNumber" value="${escapeAttr(data.roomNumber)}" placeholder="例如 301">
+          </div>
+
+          <div class="field">
+            <label>樓層 *</label>
+            <input id="formFloor" type="number" min="1" step="1" value="${escapeAttr(data.floor)}">
+          </div>
+
+          <div class="field">
+            <label>房型</label>
+            <select id="formRoomType">
+              ${ROOM_TYPES.map(type => `
+                <option value="${escapeAttr(type)}" ${data.roomType === type ? "selected" : ""}>
+                  ${escapeHTML(type)}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>房況</label>
+            <select id="formRoomStatus">
+              ${ROOM_STATUSES.map(status => `
+                <option value="${escapeAttr(status)}" ${data.roomStatus === status ? "selected" : ""}>
+                  ${escapeHTML(status)}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>清潔狀態</label>
+            <select id="formHousekeepingStatus">
+              ${HOUSEKEEPING_STATUSES.map(status => `
+                <option value="${escapeAttr(status)}" ${data.housekeepingStatus === status ? "selected" : ""}>
+                  ${escapeHTML(status)}
+                </option>
+              `).join("")}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>入住人數</label>
+            <input id="formGuests" type="number" min="0" step="1" value="${escapeAttr(data.guests)}">
+          </div>
+
+          <div class="field full">
+            <label>住客姓名</label>
+            <input id="formGuestName" value="${escapeAttr(data.guestName)}" placeholder="測試資料即可">
+          </div>
+
+          <div class="field">
+            <label>入住日期</label>
+            <input id="formCheckInDate" type="date" value="${escapeAttr(data.checkInDate)}">
+          </div>
+
+          <div class="field">
+            <label>退房日期</label>
+            <input id="formCheckOutDate" type="date" value="${escapeAttr(data.checkOutDate)}">
+          </div>
+
+          <div class="field full">
+            <label>備註</label>
+            <textarea id="formNote" placeholder="例如：加嬰兒床、冷氣待確認、延後退房">${escapeHTML(data.note)}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" type="button" onclick="closeModal()">取消</button>
+        <button class="btn primary" type="button"
+          onclick="saveRoom('${editing ? escapeAttr(data.id) : ""}')">
+          ${editing ? "儲存變更" : "新增房間"}
+        </button>
+      </div>
+    `;
+  }
+
+  function openRoomForm(id = "") {
+    const room = id ? findRoom(id) : null;
+
+    if (id && !room) {
+      showToast("找不到房間資料");
+      return;
+    }
+
+    if (activeRoomId) {
+      closeDetail();
+    }
+
+    openModal(roomFormHTML(room));
+  }
+
+  async function saveRoom(id = "") {
+    const roomNumber =
+      String(document.getElementById("formRoomNumber")?.value || "").trim();
+
+    const floor =
+      Math.max(1, Number(document.getElementById("formFloor")?.value || 1));
+
+    const roomType =
+      String(document.getElementById("formRoomType")?.value || "雙人房");
+
+    const roomStatus =
+      String(document.getElementById("formRoomStatus")?.value || "空房");
+
+    const housekeepingStatus =
+      String(document.getElementById("formHousekeepingStatus")?.value || "已清潔");
+
+    const guests =
+      Math.max(0, Number(document.getElementById("formGuests")?.value || 0));
+
+    const guestName =
+      String(document.getElementById("formGuestName")?.value || "").trim();
+
+    const checkInDate =
+      String(document.getElementById("formCheckInDate")?.value || "");
+
+    const checkOutDate =
+      String(document.getElementById("formCheckOutDate")?.value || "");
+
+    const note =
+      String(document.getElementById("formNote")?.value || "").trim();
+
+    if (!roomNumber) {
+      showToast("請輸入房號");
+      return;
+    }
+
+    const duplicate = rooms.find(room =>
+      String(room.roomNumber).toLocaleLowerCase("zh-Hant") ===
+        roomNumber.toLocaleLowerCase("zh-Hant") &&
+      String(room.id) !== String(id)
+    );
+
+    if (duplicate) {
+      showToast("這個房號已存在");
+      return;
+    }
+
+    const payload = normalizeRoom({
+      roomNumber,
+      floor,
+      roomType,
+      roomStatus,
+      housekeepingStatus,
+      guests,
+      guestName,
+      checkInDate,
+      checkOutDate,
+      note
+    });
+
+    if (roomStatus === "空房") {
+      payload.guests = 0;
+      payload.guestName = "";
+      payload.checkInDate = "";
+      payload.checkOutDate = "";
+    }
+
+    try {
+      if (id) {
+        const saved = await roomsStore.update(id, payload);
+        const index = rooms.findIndex(room => String(room.id) === String(id));
+
+        if (index >= 0) {
+          rooms[index] = normalizeRoom(saved);
+        }
+
+        showToast(`${roomNumber} 已更新`);
+      } else {
+        const saved = await roomsStore.add(payload);
+        rooms.push(normalizeRoom(saved));
+        showToast(`${roomNumber} 已新增`);
+      }
+
+      closeModal();
+      renderAll();
+    } catch (error) {
+      console.error("房間儲存失敗", error);
+      showToast("房間儲存失敗");
+    }
+  }
+
+  function deleteRoom(id) {
+    const room = findRoom(id);
+    if (!room) return;
+
+    openModal(`
+      <div class="modal-head">
+        <h3>刪除房間</h3>
+        <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="margin:0;line-height:1.8;">
+          確定要刪除房號 ${escapeHTML(room.roomNumber)} 嗎？
+        </p>
+
+        <p style="margin:10px 0 0;color:var(--danger);font-size:12px;line-height:1.7;">
+          這是單機測試資料，刪除後無法復原。
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" type="button" onclick="closeModal()">取消</button>
+        <button class="btn danger" type="button"
+          onclick="confirmDeleteRoom('${escapeAttr(room.id)}')">
+          確定刪除
+        </button>
+      </div>
+    `);
+  }
+
+  async function confirmDeleteRoom(id) {
+    const room = findRoom(id);
+    if (!room) return;
+
+    try {
+      await roomsStore.remove(id);
+      rooms = rooms.filter(item => String(item.id) !== String(id));
+
+      closeModal();
+      closeDetail();
+      renderAll();
+      showToast(`${room.roomNumber} 已刪除`);
+    } catch (error) {
+      console.error("刪除房間失敗", error);
+      showToast("刪除失敗");
+    }
+  }
+
+  async function seedDemoData() {
+    if (rooms.length) {
+      showToast("目前已有房間資料");
+      return;
+    }
+
+    const today = todayISO();
+    const tomorrow = addDaysISO(1);
+    const yesterday = addDaysISO(-1);
+    const dayAfterTomorrow = addDaysISO(2);
+
+    const demo = [
+      { roomNumber: "201", floor: 2, roomType: "單人房", roomStatus: "空房", housekeepingStatus: "已清潔", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "" },
+      { roomNumber: "202", floor: 2, roomType: "雙人房", roomStatus: "住房", housekeepingStatus: "已清潔", guests: 2, guestName: "林小姐", checkInDate: yesterday, checkOutDate: today, note: "預計 11:30 前退房" },
+      { roomNumber: "203", floor: 2, roomType: "雙床房", roomStatus: "住房", housekeepingStatus: "已清潔", guests: 2, guestName: "陳先生", checkInDate: today, checkOutDate: dayAfterTomorrow, note: "" },
+      { roomNumber: "205", floor: 2, roomType: "家庭房", roomStatus: "保留", housekeepingStatus: "已清潔", guests: 4, guestName: "王小姐", checkInDate: today, checkOutDate: tomorrow, note: "需要嬰兒床" },
+
+      { roomNumber: "301", floor: 3, roomType: "雙人房", roomStatus: "空房", housekeepingStatus: "待清潔", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "剛退房" },
+      { roomNumber: "302", floor: 3, roomType: "雙人房", roomStatus: "空房", housekeepingStatus: "檢查中", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "" },
+      { roomNumber: "303", floor: 3, roomType: "套房", roomStatus: "維修", housekeepingStatus: "已清潔", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "浴室排水待處理" },
+      { roomNumber: "305", floor: 3, roomType: "三人房", roomStatus: "住房", housekeepingStatus: "已清潔", guests: 3, guestName: "張先生", checkInDate: yesterday, checkOutDate: tomorrow, note: "延後退房到 12:00" },
+
+      { roomNumber: "401", floor: 4, roomType: "雙人房", roomStatus: "空房", housekeepingStatus: "已清潔", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "" },
+      { roomNumber: "402", floor: 4, roomType: "雙床房", roomStatus: "保留", housekeepingStatus: "已清潔", guests: 2, guestName: "吳小姐", checkInDate: tomorrow, checkOutDate: dayAfterTomorrow, note: "" },
+      { roomNumber: "403", floor: 4, roomType: "家庭房", roomStatus: "空房", housekeepingStatus: "待清潔", guests: 0, guestName: "", checkInDate: "", checkOutDate: "", note: "" },
+      { roomNumber: "405", floor: 4, roomType: "套房", roomStatus: "住房", housekeepingStatus: "已清潔", guests: 2, guestName: "許先生", checkInDate: yesterday, checkOutDate: dayAfterTomorrow, note: "房內有加床" }
+    ];
+
+    try {
+      for (const item of demo) {
+        await roomsStore.add(normalizeRoom(item));
+      }
+
+      await loadRooms();
+      showToast("測試房況已匯入");
+    } catch (error) {
+      console.error("匯入測試資料失敗", error);
+      showToast("匯入失敗");
+    }
+  }
+
+  function confirmClearAll() {
+    if (!rooms.length) {
+      showToast("目前沒有資料");
+      return;
+    }
+
+    openModal(`
+      <div class="modal-head">
+        <h3>清空本機資料</h3>
+        <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="margin:0;line-height:1.8;">
+          確定要清空目前這個瀏覽器裡的所有房間資料嗎？
+        </p>
+
+        <p style="margin:10px 0 0;color:var(--danger);font-size:12px;line-height:1.7;">
+          清空後無法復原。
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" type="button" onclick="closeModal()">取消</button>
+        <button class="btn danger" type="button" onclick="clearAllRooms()">
+          全部清空
+        </button>
+      </div>
+    `);
+  }
+
+  async function clearAllRooms() {
+    try {
+      await roomsStore.clear();
+      rooms = [];
+      closeModal();
+      closeDetail();
+      resetFilters();
+      showToast("本機房間資料已清空");
+    } catch (error) {
+      console.error("清空資料失敗", error);
+      showToast("清空失敗");
+    }
+  }
+
+  function openModal(html) {
+    const wrap = document.getElementById("modalWrap");
+    const card = document.getElementById("modalCard");
+
+    card.innerHTML = html;
+    wrap.classList.add("show");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    document.getElementById("modalWrap").classList.remove("show");
+    document.getElementById("modalCard").innerHTML = "";
+    document.body.style.overflow = activeRoomId ? "hidden" : "";
+  }
+
+  function handleModalBackdrop(event) {
+    if (event.target.id === "modalWrap") {
+      closeModal();
+    }
+  }
+
+  document.getElementById("searchInput").addEventListener("input", event => {
+    searchText = event.target.value;
+    renderRooms();
+  });
+
+  document.getElementById("statusFilter").addEventListener("change", event => {
+    statusFilter = event.target.value;
+    renderRooms();
+  });
+
+  document.getElementById("housekeepingFilter").addEventListener("change", event => {
+    housekeepingFilter = event.target.value;
+    renderRooms();
+  });
+
+  document.getElementById("floorFilter").addEventListener("change", event => {
+    floorFilter = event.target.value;
+    renderRooms();
+  });
+
+  async function init() {
+    try {
+      await loadRooms();
+    } catch (error) {
+      console.error("FictionData 啟動失敗", error);
+
+      document.getElementById("roomGrid").innerHTML = `
+        <div class="empty">
+          <strong>FictionData 無法啟動</strong>
+          請確認 CDN 是否正常載入。
+        </div>
+      `;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
