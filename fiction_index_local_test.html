@@ -1,0 +1,3004 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#dce9eb" />
+  <title>作品探索｜單機版</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+
+  <style>
+    :root {
+      --bg: #dce9eb;
+      --surface: rgba(236,245,246,.87);
+      --surface-solid: #edf5f6;
+      --text: #1f2c30;
+      --muted: #60747A;
+      --muted-2: #7d9196;
+      --line: rgba(43,76,84,.14);
+      --line-strong: rgba(43,76,84,.22);
+      --accent: #4f8994;
+      --accent-soft: rgba(79,137,148,.12);
+      --danger: #ff3b30;
+      --warning: #ff9f0a;
+      --success: #5d9584;
+      --shadow: 0 10px 35px rgba(0,0,0,.08);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --content: 1180px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% -10%, rgba(79,137,148,.11), transparent 28rem),
+        linear-gradient(180deg, #e8f2f3 0%, var(--bg) 36%, #d6e5e8 100%);
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a { color: inherit; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: rgba(220,233,235,.85);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      width: min(var(--content), calc(100% - 32px));
+      margin: 0 auto;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .brand-text { min-width: 0; }
+
+    .brand-title {
+      font-family: "Noto Serif TC", serif;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .brand-kicker {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    .admin-pill {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 10px 7px 12px;
+      background: var(--surface-solid);
+      border: 1px solid var(--line);
+      box-shadow: 0 3px 14px rgba(0,0,0,.04);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .admin-pill.show { display: inline-flex; }
+
+    .admin-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+    }
+
+    .admin-pill button {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    main {
+      flex: 1;
+      width: min(var(--content), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 46px 0 72px;
+    }
+
+    .hero { padding: 20px 0 30px; }
+
+    .hero-eyebrow {
+      font-size: 12px;
+      letter-spacing: .14em;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: "Noto Serif TC", serif;
+      font-size: clamp(36px, 6vw, 68px);
+      letter-spacing: -.04em;
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 14px 0 0;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .search-panel {
+      margin-top: 26px;
+      padding: 14px;
+      border-radius: var(--radius-xl);
+      background: rgba(234,243,245,.81);
+      border: 1px solid rgba(255,255,255,.58);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px) saturate(170%);
+      -webkit-backdrop-filter: blur(24px) saturate(170%);
+    }
+
+    .search-box { position: relative; }
+
+    .search-box input {
+      width: 100%;
+      height: 52px;
+      padding: 0 46px 0 46px;
+      border: 0;
+      border-radius: 18px;
+      outline: none;
+      background: rgba(72,101,108,.09);
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .search-box input:focus {
+      box-shadow: inset 0 0 0 2px rgba(79,137,148,.20);
+      background: rgba(72,101,108,.07);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 17px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-2);
+      pointer-events: none;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(79,137,148,.28);
+      color: white;
+      display: none;
+      place-items: center;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .search-clear.show { display: grid; }
+
+    .filter-area {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .filter-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-trigger {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: .18s ease;
+    }
+
+    .filter-trigger:hover,
+    .filter-trigger.active {
+      border-color: rgba(79,137,148,.40);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .filter-trigger .count {
+      margin-left: 5px;
+      color: var(--accent);
+    }
+
+    .filter-drawer {
+      display: none;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(72,101,108,.07);
+    }
+
+    .filter-drawer.show { display: block; }
+
+    .filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .check-chip {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: var(--surface-solid);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12.5px;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .check-chip.active {
+      color: white;
+      background: var(--accent);
+      box-shadow: none;
+    }
+
+    .escape-chip.active { background: var(--text); }
+
+    .active-filters {
+      display: none;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .active-filters.show { display: flex; }
+
+    .active-title {
+      color: var(--muted);
+      font-size: 12px;
+      margin-right: 2px;
+    }
+
+    .active-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(79,137,148,.12);
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .clear-all {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 7px 4px;
+    }
+
+    .index-toolbar {
+      margin-top: 38px;
+      padding: 0 2px 12px;
+      border-bottom: 1px solid var(--line-strong);
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .index-title h2 {
+      margin: 0;
+      font-family: "Noto Serif TC", serif;
+      font-size: 22px;
+    }
+
+    .index-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .index-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .primary-btn {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      box-shadow: 0 5px 18px rgba(79,137,148,.24);
+    }
+
+    .primary-btn:hover { filter: brightness(.97); }
+
+    .sort-btn {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+
+    .sort-btn:hover,
+    .sort-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .book-list { display: grid; }
+
+    #pagination {
+      margin-top: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    #pagination button {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: .18s ease;
+    }
+
+    #pagination button:hover:not(:disabled) {
+      border-color: rgba(79,137,148,.40);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    #pagination button:disabled {
+      opacity: .4;
+      cursor: default;
+    }
+
+    #pagination span {
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+
+    .book-row {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr) 140px;
+      gap: 18px;
+      padding: 24px 2px;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .book-row:hover { background: rgba(247,247,249,.42); }
+
+    .book-index {
+      color: var(--muted-2);
+      font-size: 12px;
+      letter-spacing: .08em;
+      padding-top: 5px;
+    }
+
+    .book-main { min-width: 0; }
+
+    .book-title {
+      margin: 0;
+      font-family: "Noto Serif TC", serif;
+      font-size: clamp(20px, 2.4vw, 29px);
+      line-height: 1.35;
+      letter-spacing: -.02em;
+    }
+
+    .book-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .book-hook {
+      margin: 13px 0 0;
+      color: #3a3a3c;
+      font-size: 14px;
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    .book-meta {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 10px;
+    }
+
+    .author-link {
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+
+    .system-tag {
+      border: 0;
+      background: rgba(72,101,108,.08);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 8px;
+      cursor: pointer;
+      font-size: 11.5px;
+    }
+
+    .system-tag:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .book-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-連載中 {
+      background: rgba(79,137,148,.12);
+      color: var(--accent);
+    }
+
+    .status-已完結 {
+      background: rgba(93,149,132,.13);
+      color: #527d72;
+    }
+
+    .status-停更中 {
+      background: rgba(255,159,10,.13);
+      color: #b26a00;
+    }
+
+    .row-arrow {
+      color: var(--muted-2);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .empty-state {
+      padding: 72px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state strong {
+      display: block;
+      color: var(--text);
+      font-family: "Noto Serif TC", serif;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 26px 0 calc(30px + env(safe-area-inset-bottom));
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .footer-inner {
+      width: min(var(--content), calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-manage {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px;
+      font-size: 12px;
+    }
+
+    .footer-manage:hover { color: var(--accent); }
+
+    .footer-signature {
+      width: min(var(--content), calc(100% - 32px));
+      margin: 22px auto 0;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      color: var(--muted-2);
+      font-family: "Noto Serif TC", serif;
+      font-size: 12px;
+      letter-spacing: .08em;
+    }
+
+    .footer-signature .en {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans TC", sans-serif;
+      letter-spacing: .06em;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(0,0,0,.24);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      z-index: 80;
+      top: 0;
+      right: 0;
+      width: min(560px, 92vw);
+      height: 100dvh;
+      transform: translateX(102%);
+      transition: transform .28s cubic-bezier(.22,.8,.24,1);
+      background: rgba(234,243,245,.97);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      box-shadow: -18px 0 50px rgba(0,0,0,.13);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .drawer.show { transform: translateX(0); }
+    .drawer-grabber { display: none; }
+
+    .drawer-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(234,243,245,.91);
+      backdrop-filter: blur(20px);
+    }
+
+    .drawer-header-title {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(72,101,108,.10);
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .drawer-body {
+      padding: 24px 24px 42px;
+      overflow: auto;
+    }
+
+    .detail-title {
+      margin: 0;
+      font-family: "Noto Serif TC", serif;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 1.22;
+      letter-spacing: -.03em;
+    }
+
+    .detail-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .detail-hook {
+      margin: 18px 0 0;
+      font-size: 16px;
+      line-height: 1.85;
+      color: #2c2c2e;
+      font-weight: 500;
+    }
+
+    .detail-section {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+    }
+
+    .detail-copy {
+      margin: 0;
+      color: #3a3a3c;
+      font-size: 14px;
+      line-height: 1.95;
+      white-space: pre-wrap;
+    }
+
+    .detail-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .detail-line:last-child { border-bottom: 0; }
+    .detail-key { color: var(--muted); flex: 0 0 auto; }
+    .detail-value { text-align: right; min-width: 0; }
+
+    .detail-tag-wrap,
+    .custom-tag-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .detail-tag {
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(79,143,132,.11);
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .custom-tag {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(72,101,108,.08);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .link-list { display: grid; gap: 9px; }
+
+    .work-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      text-decoration: none;
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: var(--surface-solid);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .work-link:hover { border-color: rgba(79,137,148,.30); }
+
+    .share-actions,
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .action-btn {
+      flex: 1 1 160px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12.5px;
+      background: rgba(72,101,108,.09);
+      color: var(--text);
+    }
+
+    .action-btn.accent { background: var(--accent); color: white; }
+    .action-btn.danger { background: rgba(255,59,48,.10); color: var(--danger); }
+
+    .modal-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.28);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-wrap.show { display: flex; }
+
+    .modal-card {
+      width: min(680px, 100%);
+      max-height: min(92dvh, 900px);
+      overflow: auto;
+      background: rgba(255,255,255,.98);
+      border-radius: 26px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.82);
+    }
+
+    .modal-card.small { width: min(430px, 100%); }
+
+    .modal-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px 14px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-family: "Noto Serif TC", serif;
+      font-size: 20px;
+    }
+
+    .modal-body { padding: 20px; }
+
+    .form-section {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .form-section:first-child { padding-top: 0; }
+    .form-section:last-child { border-bottom: 0; padding-bottom: 0; }
+
+    .form-section-title {
+      margin: 0 0 13px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .05em;
+    }
+
+    .form-grid { display: grid; gap: 12px; }
+    .form-grid.two { grid-template-columns: 1fr 1fr; }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 11px 12px;
+      outline: none;
+      background: rgba(72,101,108,.06);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .field textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.7;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: rgba(79,137,148,.42);
+      box-shadow: 0 0 0 3px rgba(79,137,148,.11);
+    }
+
+    .counter {
+      margin-top: 5px;
+      text-align: right;
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .segmented { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .segment {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .segment.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .series-editor { display: grid; gap: 9px; }
+
+    .series-block {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(72,101,108,.04);
+      overflow: hidden;
+    }
+
+    .series-toggle {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 12px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .series-children {
+      display: none;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .series-children.show { display: flex; }
+
+    .tag-entry { display: flex; gap: 8px; }
+    .tag-entry input { flex: 1; }
+
+    .small-btn {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 13px;
+      background: rgba(72,101,108,.10);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag-edit-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 7px 8px 7px 10px;
+      background: rgba(72,101,108,.09);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tag-edit-chip button {
+      width: 20px;
+      height: 20px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(118,118,128,.18);
+      cursor: pointer;
+      color: white;
+      line-height: 1;
+    }
+
+    .link-editor-list { display: grid; gap: 10px; }
+
+    .link-editor-row {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(72,101,108,.04);
+    }
+
+    .link-editor-grid {
+      display: grid;
+      grid-template-columns: minmax(110px, .7fr) minmax(0, 1.5fr);
+      gap: 8px;
+    }
+
+    .link-row-actions {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .mini-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 7px 9px;
+      background: rgba(72,101,108,.09);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .mini-btn.danger { color: var(--danger); background: rgba(255,59,48,.08); }
+
+    .link-note {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .form-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 3;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--line);
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--text);
+      border-radius: 13px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+
+    .save-btn {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      border-radius: 13px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 700;
+    }
+
+    .save-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .toast {
+      position: fixed;
+      z-index: 120;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(29,29,31,.92);
+      color: white;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 12px;
+      transition: .2s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.16);
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 24px, var(--content));
+        padding-top: 28px;
+      }
+
+      .topbar-inner,
+      .footer-inner {
+        width: min(100% - 24px, var(--content));
+      }
+
+      .hero { padding-top: 14px; }
+      .hero p { font-size: 14px; }
+
+      .search-panel {
+        border-radius: 22px;
+        padding: 10px;
+      }
+
+      .book-row {
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 12px;
+        padding: 20px 2px;
+      }
+
+      .book-side {
+        grid-column: 2;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .index-toolbar { align-items: center; }
+
+      .drawer {
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: min(92dvh, 850px);
+        border-radius: 26px 26px 0 0;
+        transform: translateY(102%);
+      }
+
+      .drawer.show { transform: translateY(0); }
+
+      .drawer-grabber {
+        display: block;
+        width: 42px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(118,118,128,.28);
+        margin: 8px auto 0;
+      }
+
+      .drawer-header { padding-top: 8px; }
+      .drawer-body { padding: 20px 18px 36px; }
+      .form-grid.two { grid-template-columns: 1fr; }
+      .link-editor-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .brand-kicker { display: none; }
+      .hero h1 { font-size: 42px; }
+      .hero p { margin-top: 10px; }
+
+      .filter-strip {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+
+      .filter-strip::-webkit-scrollbar { display: none; }
+      .filter-trigger { flex: 0 0 auto; }
+      .index-toolbar { margin-top: 28px; }
+      .book-index { font-size: 10px; }
+      .book-title { font-size: 22px; }
+      .book-hook { font-size: 13.5px; }
+
+      .modal-wrap {
+        padding: 8px;
+        align-items: flex-end;
+      }
+
+      .modal-card,
+      .modal-card.small {
+        width: 100%;
+        max-height: 94dvh;
+        border-radius: 24px 24px 0 0;
+      }
+
+      .share-actions,
+      .admin-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .action-btn { width: 100%; }
+
+      .index-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+</head>
+
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="brand" type="button" onclick="goHome()" aria-label="回到作品探索首頁">
+        <div class="brand-text">
+          <div class="brand-title">作品探索</div>
+          <div class="brand-kicker">Fiction Index</div>
+        </div>
+      </button>
+
+      <div id="adminPill" class="admin-pill">
+        <span class="dot"></span>
+        <span>管理中</span>
+        <button type="button" onclick="logoutAdmin()">退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-eyebrow">Discover your next story</div>
+      <h1>作品探索</h1>
+      <p>想讀的故事，總是到處散落，希望來到這裡，可以找到你要的。</p>
+
+      <div class="search-panel">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input id="searchInput" type="search" placeholder="搜尋書名、作者、副標題或一句話簡介" autocomplete="off">
+          <button id="searchClear" class="search-clear" type="button" aria-label="清除搜尋">×</button>
+        </div>
+
+        <div class="filter-area">
+          <div id="creationTypeOptions" class="filter-options"></div>
+          <div id="seriesTriggers" class="filter-strip"></div>
+          <div id="seriesDrawers"></div>
+          <div id="activeFilters" class="active-filters"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="index-toolbar">
+        <div class="index-title">
+          <h2>作品索引</h2>
+          <p id="resultCount">0 部作品</p>
+        </div>
+
+        <div class="index-actions">
+          <button id="randomSortBtn" class="sort-btn active" type="button" onclick="sortRandom()">隨機</button>
+          <button id="oldestSortBtn" class="sort-btn" type="button" onclick="sortByOldest()">最早</button>
+          <button id="newestSortBtn" class="sort-btn" type="button" onclick="sortByNewest()">最新</button>
+          <button id="addWorkBtn" class="primary-btn" type="button" style="display:none;">＋ 新增作品</button>
+        </div>
+      </div>
+
+      <div id="bookList" class="book-list"></div>
+      <div id="pagination"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>
+        <button class="footer-manage" type="button" onclick="openChangelog()" style="padding:0;">fiction_local_1</button>
+        ·
+        <button class="footer-manage" type="button" onclick="openSiteRecord()" style="padding:0;">慢慢運行紀錄</button>
+      </span>
+      <button id="manageBtn" class="footer-manage" type="button">管理</button>
+    </div>
+
+    <div class="footer-signature">
+      <a href="https://xiayian505-ship-it.github.io/stillness_by_slowly/" target="_top" style="color:inherit;text-decoration:none;">
+        慢 慢 <span class="en">| stillness by slowly</span>
+      </a>
+    </div>
+  </footer>
+</div>
+
+<div id="detailOverlay" class="overlay" onclick="closeDetail()"></div>
+<aside id="detailDrawer" class="drawer" aria-hidden="true">
+  <div class="drawer-grabber"></div>
+  <div class="drawer-header">
+    <span class="drawer-header-title">作品詳情</span>
+    <button class="icon-btn" type="button" onclick="closeDetail()" aria-label="關閉">×</button>
+  </div>
+  <div id="detailBody" class="drawer-body"></div>
+</aside>
+
+<div id="modalWrap" class="modal-wrap" onclick="handleModalBackdrop(event)">
+  <div id="modalCard" class="modal-card"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const CREATION_TYPES = ["原創", "同人", "改編"];
+
+const SERIES = [
+  { id: "romance", label: "戀愛系列", options: ["戀愛系列", "戀愛", "耽美", "言情", "百合"] },
+  { id: "era", label: "時代背景", options: ["時代背景", "古風", "現代", "未來", "末日"] },
+  { id: "fantasy", label: "奇幻系列", options: ["奇幻系列", "東方奇幻", "西方奇幻", "現代奇幻"] },
+  { id: "xuanhuan", label: "玄幻系列", options: ["玄幻系列", "東方玄幻", "現代玄幻", "架空玄幻"] },
+  { id: "wuxia", label: "武俠仙俠系列", options: ["武俠仙俠系列", "武俠", "仙俠"] },
+  { id: "mystery", label: "推理系列", options: ["推理系列", "一般推理", "特殊設定推理"] },
+  { id: "crime", label: "犯罪系列", options: ["犯罪系列", "犯罪", "犯罪心理"] },
+  { id: "investigation", label: "刑偵系列", options: ["刑偵系列", "刑偵", "調查", "辦案"] },
+  { id: "suspense", label: "懸疑系列", options: ["懸疑系列", "懸疑", "驚悚"] },
+  { id: "supernatural", label: "靈異系列", options: ["靈異系列", "靈異", "恐怖"] },
+  { id: "transmigration", label: "穿越系列", options: ["穿越系列", "穿越", "重生", "穿書"] },
+  { id: "scifi", label: "科幻系列", options: ["科幻系列", "一般科幻", "未來科技", "星際宇宙"] },
+  { id: "history", label: "歷史系列", options: ["歷史系列", "真實歷史", "架空歷史"] },
+  { id: "game", label: "遊戲系列", options: ["遊戲系列", "遊戲", "電競", "網遊"] },
+  { id: "military", label: "戰爭軍事系列", options: ["戰爭軍事系列", "戰爭軍事", "陸軍", "海軍", "空軍", "海軍陸戰隊"] },
+  { id: "worldview", label: "世界觀設定", options: ["世界觀設定", "ABO", "哨兵嚮導"] },
+  { id: "sports", label: "運動系列", options: ["運動系列", "球類運動", "格鬥運動", "水上運動", "田徑運動", "其他運動"] },
+  { id: "psychology", label: "心理系列", options: ["心理系列", "心理", "心理療癒", "心理創傷"] }
+];
+
+const ESCAPE_TAG = "我也不知道怎麼分類";
+const STATUS_OPTIONS = ["連載中", "已完結", "停更中"];
+const MAX_HOOK = 30;
+const MAX_SUBTITLE = 16;
+const MAX_CUSTOM_TAG = 16;
+const PAGE_SIZE = 12;
+
+const localDB = FictionData.create({ namespace: "fiction_index_local_test" });
+const worksStore = localDB.collection("works");
+const authorsStore = localDB.collection("authors");
+const metaStore = localDB.collection("meta");
+
+let works = [];
+let authors = [];
+let searchText = "";
+let selectedCreationTypes = new Set();
+let selectedCategories = new Set();
+let selectedAuthor = "";
+let selectedAuthorId = null;
+let escapeFilter = false;
+let openSeriesId = "";
+let activeDetailId = null;
+let isAdmin = false;
+let currentPage = 1;
+let sortMode = "random";
+let formState = null;
+let authorFormReturn = false;
+let randomOrder = [];
+let siteViewCount = 0;
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function escapeAttr(value) {
+  return escapeHTML(value).replace(/`/g, "&#096;");
+}
+
+function isValidCategory(value) {
+  return SERIES.some(group => group.options.includes(value));
+}
+
+function normalizeWork(raw) {
+  return {
+    ...raw,
+    authorId: raw.authorId ?? null,
+    author: String(raw.author || "").trim(),
+    title: String(raw.title || "").trim(),
+    subtitle: [...String(raw.subtitle || "").trim()].slice(0, MAX_SUBTITLE).join(""),
+    hook: [...String(raw.hook || "").trim()].slice(0, MAX_HOOK).join(""),
+    copy: String(raw.copy || ""),
+    status: STATUS_OPTIONS.includes(raw.status) ? raw.status : "連載中",
+    lastPublishedAt: raw.status === "停更中" ? String(raw.lastPublishedAt || "") : "",
+    creationTypes: Array.isArray(raw.creationTypes) ? raw.creationTypes.filter(x => CREATION_TYPES.includes(x)) : [],
+    categories: Array.isArray(raw.categories) ? raw.categories.filter(isValidCategory) : [],
+    escape: Boolean(raw.escape),
+    customTags: Array.isArray(raw.customTags)
+      ? raw.customTags.map(x => String(x).trim().slice(0, MAX_CUSTOM_TAG)).filter(Boolean)
+      : [],
+    links: Array.isArray(raw.links)
+      ? raw.links.map(link => ({
+          label: String(link?.label || "").trim(),
+          url: String(link?.url || "").trim()
+        })).filter(link => link.label || link.url)
+      : []
+  };
+}
+
+function normalizeAuthor(raw) {
+  return {
+    ...raw,
+    name: String(raw.name || "").trim(),
+    bio: String(raw.bio || "").trim(),
+    website: String(raw.website || "").trim()
+  };
+}
+
+async function loadLocalData() {
+  works = (await worksStore.all()).map(normalizeWork);
+  authors = (await authorsStore.all()).map(normalizeAuthor);
+
+  if (!isAdmin && sortMode === "random") {
+    randomOrder = shuffleWorks(works);
+  }
+
+  renderAll();
+
+  const workIdFromUrl = new URL(location.href).searchParams.get("work");
+  if (workIdFromUrl && findWork(workIdFromUrl)) {
+    setTimeout(() => openDetail(workIdFromUrl, false), 60);
+  }
+}
+
+async function incrementLocalCounter() {
+  const current = await metaStore.get("site-counter");
+  if (current) {
+    const updated = await metaStore.update("site-counter", {
+      value: Number(current.value || 0) + 1
+    });
+    siteViewCount = Number(updated.value || 0);
+  } else {
+    const created = await metaStore.add({
+      id: "site-counter",
+      value: 1
+    });
+    siteViewCount = Number(created.value || 1);
+  }
+}
+
+function findWork(id) {
+  return works.find(work => String(work.id) === String(id)) || null;
+}
+
+function findAuthorById(id) {
+  return authors.find(author => String(author.id) === String(id)) || null;
+}
+
+function getAuthorWorkCount(authorId) {
+  if (!authorId) return 0;
+  return works.filter(work => String(work.authorId) === String(authorId)).length;
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove("show"), 2100);
+}
+
+function getAllSystemTags(work) {
+  return [...(work.creationTypes || []), ...(work.categories || [])];
+}
+
+function filterWorks() {
+  const q = searchText.trim().toLocaleLowerCase("zh-Hant");
+
+  return works.filter(work => {
+    const searchBlob = [
+      work.title,
+      work.subtitle,
+      work.author,
+      work.hook,
+      work.copy
+    ].join(" ").toLocaleLowerCase("zh-Hant");
+
+    const searchOk = !q || searchBlob.includes(q);
+    const authorOk = !selectedAuthor || work.author === selectedAuthor;
+
+    const creationOk =
+      selectedCreationTypes.size === 0 ||
+      [...selectedCreationTypes].every(tag => work.creationTypes.includes(tag));
+
+    const categoriesOk =
+      selectedCategories.size === 0 ||
+      [...selectedCategories].every(tag => work.categories.includes(tag));
+
+    const escapeOk = !escapeFilter || work.escape;
+
+    return searchOk && authorOk && creationOk && categoriesOk && escapeOk;
+  });
+}
+
+function goHome() {
+  closeDetail(false);
+  searchText = "";
+  selectedCreationTypes.clear();
+  selectedCategories.clear();
+  selectedAuthor = "";
+  selectedAuthorId = null;
+  escapeFilter = false;
+  openSeriesId = "";
+  currentPage = 1;
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.value = "";
+
+  document.getElementById("searchClear")?.classList.remove("show");
+
+  const url = new URL(location.href);
+  url.searchParams.delete("work");
+  history.replaceState(null, "", url);
+
+  renderAll();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderFilters() {
+  const creationContainer = document.getElementById("creationTypeOptions");
+  creationContainer.innerHTML = [
+    ...CREATION_TYPES.map(type => `
+      <button type="button"
+        class="check-chip ${selectedCreationTypes.has(type) ? "active" : ""}"
+        onclick="toggleCreationType('${escapeAttr(type)}')">${escapeHTML(type)}</button>
+    `),
+    `<button type="button"
+      class="check-chip escape-chip ${escapeFilter ? "active" : ""}"
+      onclick="toggleEscapeFilter()">${ESCAPE_TAG}</button>`
+  ].join("");
+
+  document.getElementById("seriesTriggers").innerHTML = SERIES.map(group => {
+    const count = group.options.filter(option => selectedCategories.has(option)).length;
+    return `
+      <button type="button"
+        class="filter-trigger ${openSeriesId === group.id || count ? "active" : ""}"
+        onclick="toggleSeries('${group.id}')">
+        ${escapeHTML(group.label)}
+        ${count ? `<span class="count">${count}</span>` : ""}
+      </button>`;
+  }).join("");
+
+  document.getElementById("seriesDrawers").innerHTML = SERIES.map(group => `
+    <div class="filter-drawer ${openSeriesId === group.id ? "show" : ""}">
+      <div class="filter-options">
+        ${group.options.map(option => `
+          <button type="button"
+            class="check-chip ${selectedCategories.has(option) ? "active" : ""}"
+            onclick="toggleCategory('${escapeAttr(option)}')">${escapeHTML(option)}</button>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+
+  renderActiveFilters();
+}
+
+function renderActiveFilters() {
+  const box = document.getElementById("activeFilters");
+  const chips = [];
+
+  if (selectedAuthor) {
+    chips.push(`
+      <button class="active-chip" type="button" onclick="clearAuthorFilter()">
+        作者：${escapeHTML(selectedAuthor)} ×
+      </button>
+      ${selectedAuthorId ? `
+        <button class="active-chip" type="button"
+          onclick="previewAuthorCard('${escapeAttr(selectedAuthorId)}')">作者名片預覽</button>
+      ` : ""}
+    `);
+  }
+
+  selectedCreationTypes.forEach(tag => {
+    chips.push(`<button class="active-chip" type="button"
+      onclick="toggleCreationType('${escapeAttr(tag)}')">${escapeHTML(tag)} ×</button>`);
+  });
+
+  selectedCategories.forEach(tag => {
+    chips.push(`<button class="active-chip" type="button"
+      onclick="toggleCategory('${escapeAttr(tag)}')">${escapeHTML(tag)} ×</button>`);
+  });
+
+  if (escapeFilter) {
+    chips.push(`<button class="active-chip" type="button"
+      onclick="toggleEscapeFilter()">${ESCAPE_TAG} ×</button>`);
+  }
+
+  const has = chips.length > 0;
+  box.classList.toggle("show", has);
+  box.innerHTML = has
+    ? `<span class="active-title">目前條件</span>${chips.join("")}<button class="clear-all" type="button" onclick="clearAllFilters()">清除全部</button>`
+    : "";
+}
+
+function toggleSeries(id) {
+  openSeriesId = openSeriesId === id ? "" : id;
+  renderFilters();
+}
+
+function toggleCreationType(type) {
+  selectedCreationTypes.has(type) ? selectedCreationTypes.delete(type) : selectedCreationTypes.add(type);
+  currentPage = 1;
+  renderAll();
+}
+
+function toggleCategory(category) {
+  selectedCategories.has(category) ? selectedCategories.delete(category) : selectedCategories.add(category);
+  currentPage = 1;
+  renderAll();
+}
+
+function toggleEscapeFilter() {
+  escapeFilter = !escapeFilter;
+  currentPage = 1;
+  renderAll();
+}
+
+function setAuthorFilter(author, authorId = null) {
+  selectedAuthor = author;
+  selectedAuthorId = authorId || null;
+  currentPage = 1;
+  closeDetail();
+  renderAll();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function clearAuthorFilter() {
+  selectedAuthor = "";
+  selectedAuthorId = null;
+  currentPage = 1;
+  renderAll();
+}
+
+function clearAllFilters() {
+  selectedCreationTypes.clear();
+  selectedCategories.clear();
+  selectedAuthor = "";
+  selectedAuthorId = null;
+  escapeFilter = false;
+  searchText = "";
+  currentPage = 1;
+  document.getElementById("searchInput").value = "";
+  document.getElementById("searchClear").classList.remove("show");
+  renderAll();
+}
+
+function applySystemTag(tag) {
+  if (CREATION_TYPES.includes(tag)) selectedCreationTypes.add(tag);
+  else if (isValidCategory(tag)) selectedCategories.add(tag);
+
+  currentPage = 1;
+  closeDetail();
+  renderAll();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setSortButton(id) {
+  document.querySelectorAll(".sort-btn").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(id)?.classList.add("active");
+}
+
+function sortByNewest() {
+  sortMode = "newest";
+  currentPage = 1;
+  setSortButton("newestSortBtn");
+  renderBookList();
+}
+
+function sortByOldest() {
+  sortMode = "oldest";
+  currentPage = 1;
+  setSortButton("oldestSortBtn");
+  renderBookList();
+}
+
+function shuffleWorks(items) {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.map(work => work.id);
+}
+
+function sortRandom() {
+  sortMode = "random";
+  currentPage = 1;
+  randomOrder = shuffleWorks(filterWorks());
+  setSortButton("randomSortBtn");
+  renderBookList();
+}
+
+function renderBookList() {
+  const list = document.getElementById("bookList");
+  let filtered = filterWorks();
+
+  if (sortMode === "newest") {
+    filtered = [...filtered].sort((a, b) =>
+      String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
+    );
+  }
+
+  if (sortMode === "oldest") {
+    filtered = [...filtered].sort((a, b) =>
+      String(a.createdAt || "").localeCompare(String(b.createdAt || ""))
+    );
+  }
+
+  if (sortMode === "random") {
+    if (!randomOrder.length) randomOrder = shuffleWorks(filtered);
+    const orderMap = new Map(randomOrder.map((id, index) => [String(id), index]));
+    filtered = [...filtered].sort((a, b) =>
+      (orderMap.get(String(a.id)) ?? Infinity) -
+      (orderMap.get(String(b.id)) ?? Infinity)
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pagedWorks = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+  renderPagination(totalPages);
+
+  document.getElementById("resultCount").textContent =
+    `${filtered.length} 部作品${works.length !== filtered.length ? `／共 ${works.length} 部` : ""}`;
+
+  if (!filtered.length) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <strong>${works.length ? "目前沒有符合條件的作品" : "目前還沒有作品"}</strong>
+        ${works.length ? "換個關鍵字或取消部分篩選看看。" : "進入管理模式後，可以新增第一部作品。"}
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = pagedWorks.map((work, index) => {
+    const systemTags = getAllSystemTags(work);
+    return `
+      <article class="book-row" onclick="openDetail('${escapeAttr(work.id)}')">
+        <div class="book-index">${String(startIndex + index + 1).padStart(3, "0")}</div>
+
+        <div class="book-main">
+          <h3 class="book-title">${escapeHTML(work.title)}</h3>
+          ${work.subtitle ? `<div class="book-subtitle">${escapeHTML(work.subtitle)}</div>` : ""}
+          <p class="book-hook">${escapeHTML(work.hook || "尚未填寫一句話故事簡介。")}</p>
+
+          <div class="book-meta">
+            <button class="author-link" type="button"
+              onclick="event.stopPropagation(); setAuthorFilter('${escapeAttr(work.author)}','${escapeAttr(work.authorId ?? "")}')">
+              ${escapeHTML(work.author || "未署名")}
+            </button>
+
+            ${systemTags.slice(0, 5).map(tag => `
+              <button class="system-tag" type="button"
+                onclick="event.stopPropagation(); applySystemTag('${escapeAttr(tag)}')">${escapeHTML(tag)}</button>
+            `).join("")}
+            ${systemTags.length > 5 ? `<span class="system-tag">＋${systemTags.length - 5}</span>` : ""}
+          </div>
+        </div>
+
+        <div class="book-side">
+          <span class="status-badge status-${escapeAttr(work.status)}">${escapeHTML(work.status)}</span>
+          <span class="row-arrow">›</span>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function renderPagination(totalPages) {
+  const box = document.getElementById("pagination");
+  if (totalPages <= 1) {
+    box.innerHTML = "";
+    return;
+  }
+
+  box.innerHTML = `
+    <button type="button" onclick="changePage(-1)" ${currentPage === 1 ? "disabled" : ""}>上一頁</button>
+    <span>${currentPage} / ${totalPages}</span>
+    <button type="button" onclick="changePage(1)" ${currentPage === totalPages ? "disabled" : ""}>下一頁</button>
+  `;
+}
+
+function changePage(direction) {
+  const nextPage = currentPage + direction;
+  const totalPages = Math.max(1, Math.ceil(filterWorks().length / PAGE_SIZE));
+  if (nextPage < 1 || nextPage > totalPages) return;
+
+  currentPage = nextPage;
+  renderAll();
+
+  document.querySelector(".index-toolbar")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function openDetail(id, updateUrl = true) {
+  const work = findWork(id);
+  if (!work) return;
+
+  activeDetailId = id;
+  const drawer = document.getElementById("detailDrawer");
+  const overlay = document.getElementById("detailOverlay");
+  const body = document.getElementById("detailBody");
+  const systemTags = getAllSystemTags(work);
+
+  body.innerHTML = `
+    <h2 class="detail-title">${escapeHTML(work.title)}</h2>
+    ${work.subtitle ? `<div class="detail-subtitle">${escapeHTML(work.subtitle)}</div>` : ""}
+    <div class="detail-hook">${escapeHTML(work.hook || "尚未填寫一句話故事簡介。")}</div>
+
+    <section class="detail-section">
+      <div class="detail-line">
+        <span class="detail-key">作者</span>
+        <button class="author-link detail-value" type="button"
+          onclick="setAuthorFilter('${escapeAttr(work.author)}','${escapeAttr(work.authorId ?? "")}')">
+          ${escapeHTML(work.author || "未署名")} ›
+        </button>
+      </div>
+      <div class="detail-line">
+        <span class="detail-key">狀態</span>
+        <span class="detail-value">
+          <span class="status-badge status-${escapeAttr(work.status)}">${escapeHTML(work.status)}</span>
+        </span>
+      </div>
+      ${work.status === "停更中" && work.lastPublishedAt ? `
+        <div class="detail-line">
+          <span class="detail-key">最後發布日期</span>
+          <span class="detail-value">${escapeHTML(formatDate(work.lastPublishedAt))}</span>
+        </div>` : ""}
+    </section>
+
+    ${work.copy ? `
+      <section class="detail-section">
+        <div class="detail-label">文案</div>
+        <p class="detail-copy">${escapeHTML(work.copy)}</p>
+      </section>` : ""}
+
+    <section class="detail-section">
+      <div class="detail-label">作品分類</div>
+      <div class="detail-tag-wrap">
+        ${systemTags.map(tag => `
+          <button class="detail-tag" type="button"
+            onclick="applySystemTag('${escapeAttr(tag)}')">${escapeHTML(tag)}</button>
+        `).join("")}
+        ${work.escape ? `<span class="custom-tag">${ESCAPE_TAG}</span>` : ""}
+      </div>
+    </section>
+
+    ${work.customTags.length ? `
+      <section class="detail-section">
+        <div class="detail-label">自由標籤</div>
+        <div class="custom-tag-wrap">
+          ${work.customTags.map(tag => `<span class="custom-tag">${escapeHTML(tag)}</span>`).join("")}
+        </div>
+      </section>` : ""}
+
+    <section class="detail-section">
+      <div class="detail-label">作品連結</div>
+      <div class="link-list">
+        ${work.links.length
+          ? work.links.map(link => `
+              <a class="work-link" href="${escapeAttr(safeUrl(link.url))}"
+                target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                <span>${escapeHTML(link.label || "作品連結")}</span>
+                <span>↗</span>
+              </a>`).join("")
+          : `<div class="detail-copy" style="color:var(--muted);">目前沒有提供外部作品連結。</div>`
+        }
+      </div>
+    </section>
+
+    <section class="detail-section">
+      <div class="detail-label">分享</div>
+      <div class="share-actions">
+        <button class="action-btn accent" type="button"
+          onclick="downloadShareCard('${escapeAttr(work.id)}')">下載分享書卡</button>
+        <button class="action-btn" type="button"
+          onclick="shareWork('${escapeAttr(work.id)}')">分享作品</button>
+      </div>
+    </section>
+
+    ${isAdmin ? `
+      <section class="detail-section">
+        <div class="detail-label">管理</div>
+        <div class="admin-actions">
+          <button class="action-btn" type="button"
+            onclick="openWorkForm('${escapeAttr(work.id)}')">編輯作品</button>
+          <button class="action-btn danger" type="button"
+            onclick="deleteWork('${escapeAttr(work.id)}')">刪除作品</button>
+        </div>
+      </section>` : ""}
+  `;
+
+  drawer.classList.add("show");
+  overlay.classList.add("show");
+  drawer.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+
+  if (updateUrl) {
+    const url = new URL(location.href);
+    url.searchParams.set("work", id);
+    history.replaceState(null, "", url);
+  }
+}
+
+function closeDetail(updateUrl = true) {
+  document.getElementById("detailDrawer").classList.remove("show");
+  document.getElementById("detailOverlay").classList.remove("show");
+  document.getElementById("detailDrawer").setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  activeDetailId = null;
+
+  if (updateUrl) {
+    const url = new URL(location.href);
+    url.searchParams.delete("work");
+    history.replaceState(null, "", url);
+  }
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const d = new Date(value + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return value;
+  return new Intl.DateTimeFormat("zh-Hant", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(d);
+}
+
+function safeUrl(url) {
+  const value = String(url || "").trim();
+  return /^https?:\/\//i.test(value) ? value : "#";
+}
+
+function getWorkShareUrl(work) {
+  const url = new URL(location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("work", work.id);
+  return url.toString();
+}
+
+async function copyShareUrl(shareUrl) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast("作品連結已複製");
+      return;
+    }
+  } catch (_) {}
+
+  window.prompt("複製作品連結", shareUrl);
+}
+
+async function shareWork(id) {
+  const work = findWork(id);
+  if (!work) return;
+
+  const shareUrl = getWorkShareUrl(work);
+  const shareData = {
+    title: work.title,
+    text: [work.title, work.subtitle, work.hook].filter(Boolean).join("\n"),
+    url: shareUrl
+  };
+
+  if (typeof navigator.share === "function") {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+
+  await copyShareUrl(shareUrl);
+}
+
+function roundedRect(ctx, x, y, w, h, r) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, maxLines = Infinity) {
+  const chars = [...String(text || "")];
+  let line = "";
+  const lines = [];
+
+  for (const ch of chars) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = ch;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = test;
+    }
+  }
+
+  if (line && lines.length < maxLines) lines.push(line);
+
+  if (lines.length === maxLines && chars.join("") !== lines.join("")) {
+    let last = lines[lines.length - 1];
+    while (ctx.measureText(last + "…").width > maxWidth && last.length) {
+      last = last.slice(0, -1);
+    }
+    lines[lines.length - 1] = last + "…";
+  }
+
+  lines.forEach((lineText, index) => {
+    ctx.fillText(lineText, x, y + index * lineHeight);
+  });
+
+  return y + Math.max(0, lines.length - 1) * lineHeight;
+}
+
+async function createShareCardBlob(work, authorCard = false) {
+  const width = 820;
+  const height = 450;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#D9E8EB";
+  ctx.fillRect(0, 0, width, height);
+
+  roundedRect(ctx, 24, 24, width - 48, height - 48, 28);
+  ctx.fillStyle = "#EDF5F6";
+  ctx.fill();
+
+  const left = 58;
+  const contentW = width - 116;
+  let y = 88;
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#1F2C30";
+  ctx.font = '700 40px "Noto Serif TC", serif';
+
+  y = drawWrappedText(ctx, work.title, left, y, contentW, 58, 1);
+
+  if (work.subtitle) {
+    ctx.fillStyle = "#60747A";
+    ctx.font = '500 21px "Noto Sans TC", sans-serif';
+    y += 34;
+    y = drawWrappedText(ctx, work.subtitle, left, y, contentW, 36, 1);
+  }
+
+  y += 46;
+  ctx.fillStyle = "#7D9196";
+  ctx.font = '600 17px "Noto Sans TC", sans-serif';
+  ctx.fillText(authorCard ? "本站收錄" : "作者", left, y);
+
+  ctx.fillStyle = "#1F2C30";
+  ctx.font = '700 20px "Noto Sans TC", sans-serif';
+  ctx.fillText(work.author || "未署名", left + (authorCard ? 92 : 62), y);
+
+  y += 48;
+  ctx.fillStyle = "#60747A";
+  ctx.font = '500 17px "Noto Sans TC", sans-serif';
+  drawWrappedText(ctx, work.tags || "", left, y, contentW, 30, 1);
+
+  ctx.strokeStyle = "rgba(43,76,84,.14)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(58, 350);
+  ctx.lineTo(width - 58, 350);
+  ctx.stroke();
+
+  ctx.fillStyle = "#7D9196";
+  ctx.font = '600 17px "Noto Serif TC", serif';
+  ctx.fillText("慢 慢", 58, 398);
+
+  const logoWidth = ctx.measureText("慢 慢").width;
+  ctx.font = '500 16px -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif';
+  ctx.fillText(" | stillness by slowly", 58 + logoWidth + 5, 398);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#7D9196";
+  ctx.font = '500 14px "Noto Sans TC", sans-serif';
+  ctx.fillText("作品探索", width - 58, 398);
+
+  return await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+}
+
+async function previewBlob(blob, filename, title, alt) {
+  if (!blob) {
+    showToast("圖片產生失敗");
+    return;
+  }
+
+  const previewUrl = URL.createObjectURL(blob);
+  window.shareCardPreview = { blob, url: previewUrl, filename };
+
+  openModal(`
+    <div class="modal-head">
+      <h3>${escapeHTML(title)}</h3>
+      <button class="icon-btn" type="button" onclick="closeShareCardPreview()">×</button>
+    </div>
+    <div class="modal-body">
+      <img src="${previewUrl}" alt="${escapeAttr(alt)}"
+        style="display:block;width:100%;height:auto;border-radius:16px;">
+    </div>
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="closeShareCardPreview()">取消</button>
+      <button class="save-btn" type="button" onclick="confirmShareCardDownload()">下載 PNG</button>
+    </div>
+  `);
+}
+
+async function downloadShareCard(id) {
+  const work = findWork(id);
+  if (!work) return;
+
+  const blob = await createShareCardBlob({
+    title: work.title,
+    subtitle: work.subtitle,
+    author: work.author,
+    tags: getAllSystemTags(work).slice(0, 6).join("  ·  ")
+  });
+
+  const safeName = (work.title || "作品").replace(/[\\/:*?"<>|]/g, "_").trim();
+  await previewBlob(blob, `${safeName}_分享書卡.png`, "分享書卡預覽", `${work.title} 分享書卡`);
+}
+
+async function previewAuthorCard(authorId) {
+  const author = findAuthorById(authorId);
+  if (!author) {
+    showToast("找不到作者資料");
+    return;
+  }
+
+  const blob = await createShareCardBlob({
+    title: author.name || "未命名作者",
+    subtitle: author.website || "",
+    author: `${getAuthorWorkCount(authorId)} 部作品`,
+    tags: author.bio || "未提供作者簡介"
+  }, true);
+
+  const safeName = (author.name || "作者").replace(/[\\/:*?"<>|]/g, "_").trim();
+  await previewBlob(blob, `${safeName}_作者名片.png`, "作者名片預覽", `${author.name || "作者"} 作者名片`);
+}
+
+function confirmShareCardDownload() {
+  const data = window.shareCardPreview;
+  if (!data) return;
+
+  const a = document.createElement("a");
+  a.href = data.url;
+  a.download = data.filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  closeShareCardPreview();
+}
+
+function closeShareCardPreview() {
+  const data = window.shareCardPreview;
+  if (data?.url) URL.revokeObjectURL(data.url);
+  window.shareCardPreview = null;
+  closeModal();
+}
+
+function openLogin() {
+  if (isAdmin) {
+    showToast("目前為管理模式");
+    return;
+  }
+
+  openModal(`
+    <div class="modal-head">
+      <h3>單機管理模式</h3>
+      <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="detail-copy">
+        這是 FictionData 單機測試版，不使用帳號與 Supabase。
+        進入後即可在這台裝置的瀏覽器新增、編輯與刪除作品。
+      </p>
+    </div>
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="closeModal()">取消</button>
+      <button class="save-btn" type="button" onclick="enterLocalAdmin()">進入管理</button>
+    </div>
+  `, true);
+}
+
+function enterLocalAdmin() {
+  isAdmin = true;
+  closeModal();
+  renderAdminState();
+  renderBookList();
+  showToast("已進入單機管理模式");
+}
+
+function logoutAdmin() {
+  isAdmin = false;
+  closeDetail();
+  renderAdminState();
+  renderBookList();
+  showToast("已退出管理模式");
+}
+
+function renderAdminState() {
+  document.getElementById("adminPill").classList.toggle("show", isAdmin);
+  document.getElementById("addWorkBtn").style.display = isAdmin ? "inline-flex" : "none";
+  document.getElementById("manageBtn").textContent = isAdmin ? "管理中" : "管理";
+}
+
+function createEmptyFormState() {
+  return {
+    id: "",
+    authorId: null,
+    author: "",
+    title: "",
+    subtitle: "",
+    hook: "",
+    copy: "",
+    status: "連載中",
+    lastPublishedAt: "",
+    creationTypes: [],
+    categories: [],
+    escape: false,
+    customTags: [],
+    links: [{ label: "", url: "" }]
+  };
+}
+
+function openWorkForm(id = "") {
+  if (!isAdmin) {
+    openLogin();
+    return;
+  }
+
+  closeDetail();
+
+  if (id) {
+    const work = findWork(id);
+    if (!work) return;
+    formState = JSON.parse(JSON.stringify(work));
+    if (!formState.links.length) formState.links = [{ label: "", url: "" }];
+  } else {
+    formState = createEmptyFormState();
+  }
+
+  renderWorkForm();
+}
+
+function syncWorkFormState() {
+  if (!formState) return;
+  const fields = {
+    formTitle: "title",
+    formSubtitle: "subtitle",
+    formHook: "hook",
+    formCopy: "copy",
+    formLastPublishedAt: "lastPublishedAt"
+  };
+
+  for (const [id, key] of Object.entries(fields)) {
+    const el = document.getElementById(id);
+    if (el) formState[key] = el.value;
+  }
+}
+
+function renderWorkForm() {
+  const editing = Boolean(formState.id);
+
+  openModal(`
+    <div class="modal-head">
+      <h3>${editing ? "編輯作品" : "新增作品"}</h3>
+      <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <section class="form-section">
+        <div class="form-section-title">基本資料</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>作者 *</label>
+
+            ${editing && formState.authorId ? `
+              <div style="margin-bottom:8px;color:var(--muted);font-size:11.5px;">
+                作者 ID：
+                <button type="button" class="author-link"
+                  onclick="openAuthorEditForm('${escapeAttr(formState.authorId)}')">
+                  ${escapeHTML(formState.authorId)}
+                </button>
+              </div>` : ""}
+
+            <input id="formAuthorSearch" type="text"
+              placeholder="搜尋作者名稱或 ID" autocomplete="off"
+              value="${escapeAttr(formState.authorId ? (findAuthorById(formState.authorId)?.name || formState.author) : "")}"
+              oninput="searchFormAuthor(this.value)">
+
+            <div id="formAuthorResults" style="margin-top:6px;"></div>
+
+            <button type="button" class="small-btn"
+              style="margin-top:8px;padding:9px 12px;" onclick="openNewAuthorForm()">＋ 新增作者</button>
+          </div>
+
+          <div class="field">
+            <label>書名 *</label>
+            <input id="formTitle" value="${escapeAttr(formState.title)}" placeholder="作品名稱">
+          </div>
+
+          <div class="field">
+            <label>副標題（選填，最多 ${MAX_SUBTITLE} 字）</label>
+            <input id="formSubtitle" maxlength="${MAX_SUBTITLE}"
+              value="${escapeAttr(formState.subtitle)}" placeholder="最多 ${MAX_SUBTITLE} 字"
+              oninput="updateSubtitleCounter()">
+            <div id="subtitleCounter" class="counter">${[...formState.subtitle].length} / ${MAX_SUBTITLE}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">作品介紹</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>一句話故事簡介 *（最多 ${MAX_HOOK} 字）</label>
+            <input id="formHook" maxlength="${MAX_HOOK}"
+              value="${escapeAttr(formState.hook)}"
+              placeholder="讓讀者在一眼內知道這本在講什麼"
+              oninput="updateHookCounter()">
+            <div id="hookCounter" class="counter">${[...formState.hook].length} / ${MAX_HOOK}</div>
+          </div>
+
+          <div class="field">
+            <label>文案（選填）</label>
+            <textarea id="formCopy" placeholder="完整作品文案">${escapeHTML(formState.copy)}</textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">作品狀態</div>
+        <div class="segmented">
+          ${STATUS_OPTIONS.map(status => `
+            <button class="segment ${formState.status === status ? "active" : ""}"
+              type="button" onclick="setFormStatus('${status}')">${status}</button>
+          `).join("")}
+        </div>
+
+        <div id="lastPublishedField" class="field"
+          style="margin-top:12px;${formState.status === "停更中" ? "" : "display:none;"}">
+          <label>最後發布日期（選填）</label>
+          <input id="formLastPublishedAt" type="date" value="${escapeAttr(formState.lastPublishedAt)}">
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">創作類型（可複選）</div>
+        <div class="segmented">
+          ${CREATION_TYPES.map(type => `
+            <button class="segment ${formState.creationTypes.includes(type) ? "active" : ""}"
+              type="button" onclick="toggleFormCreationType('${type}')">${type}</button>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">作品分類（可跨系列複選）</div>
+        <div class="series-editor">
+          ${SERIES.map(group => `
+            <div class="series-block">
+              <button type="button" class="series-toggle"
+                onclick="toggleFormSeries('${group.id}')">
+                <span>${group.label}</span>
+                <span>${group.options.filter(option => formState.categories.includes(option)).length || "＋"}</span>
+              </button>
+
+              <div id="formSeries-${group.id}" class="series-children">
+                ${group.options.map(option => `
+                  <button type="button"
+                    class="check-chip ${formState.categories.includes(option) ? "active" : ""}"
+                    onclick="toggleFormCategory('${option}')">${option}</button>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+
+        <div style="margin-top:10px;">
+          <button type="button"
+            class="check-chip escape-chip ${formState.escape ? "active" : ""}"
+            onclick="toggleFormEscape()">${ESCAPE_TAG}</button>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">自由標籤</div>
+        <div class="tag-entry">
+          <input id="customTagInput" maxlength="${MAX_CUSTOM_TAG}"
+            placeholder="自訂標籤（最多 ${MAX_CUSTOM_TAG} 字）"
+            onkeydown="handleCustomTagKeydown(event)"
+            style="width:100%;border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:rgba(118,118,128,.06);">
+          <button class="small-btn" type="button" onclick="addCustomTag()">新增</button>
+        </div>
+        <div class="link-note">自由標籤只展示，不參與搜尋與篩選。</div>
+        <div id="customTagPreview" class="tag-preview">${renderFormCustomTags()}</div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">作品連結</div>
+        <div id="linkEditorList" class="link-editor-list">${renderLinkEditorRows()}</div>
+        <button class="small-btn" style="margin-top:10px;padding:9px 12px;"
+          type="button" onclick="addLinkRow()">＋ 新增作品連結</button>
+      </section>
+    </div>
+
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="closeModal()">取消</button>
+      <button id="workSaveBtn" class="save-btn" type="button"
+        onclick="saveWorkFromForm()">${editing ? "儲存變更" : "新增作品"}</button>
+    </div>
+  `);
+
+  bindFormLiveFields();
+  updateWorkSaveButton();
+}
+
+function bindFormLiveFields() {
+  ["formTitle", "formSubtitle", "formHook", "formCopy", "formLastPublishedAt"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener("input", () => {
+      if (id === "formTitle") formState.title = el.value;
+      if (id === "formSubtitle") formState.subtitle = [...el.value].slice(0, MAX_SUBTITLE).join("");
+      if (id === "formHook") formState.hook = [...el.value].slice(0, MAX_HOOK).join("");
+      if (id === "formCopy") formState.copy = el.value;
+      if (id === "formLastPublishedAt") formState.lastPublishedAt = el.value;
+      updateWorkSaveButton();
+    });
+  });
+}
+
+function updateHookCounter() {
+  const input = document.getElementById("formHook");
+  const counter = document.getElementById("hookCounter");
+  if (input && counter) counter.textContent = `${[...input.value].length} / ${MAX_HOOK}`;
+}
+
+function updateSubtitleCounter() {
+  const input = document.getElementById("formSubtitle");
+  const counter = document.getElementById("subtitleCounter");
+  if (input && counter) counter.textContent = `${[...input.value].length} / ${MAX_SUBTITLE}`;
+}
+
+function updateWorkSaveButton() {
+  const btn = document.getElementById("workSaveBtn");
+  if (!btn || !formState) return;
+  btn.disabled = !formState.author.trim() || !formState.title.trim() || !formState.hook.trim();
+}
+
+function searchFormAuthor(keyword) {
+  const box = document.getElementById("formAuthorResults");
+  if (!box) return;
+
+  const q = String(keyword || "").trim().toLocaleLowerCase("zh-Hant");
+  formState.authorId = null;
+  formState.author = "";
+  updateWorkSaveButton();
+
+  if (!q) {
+    box.innerHTML = "";
+    return;
+  }
+
+  const matchedAuthors = authors.filter(author => {
+    const name = String(author.name || "").toLocaleLowerCase("zh-Hant");
+    const id = String(author.id || "").toLocaleLowerCase("zh-Hant");
+    return name.includes(q) || id.includes(q);
+  }).slice(0, 20);
+
+  box.innerHTML = matchedAuthors.length
+    ? matchedAuthors.map(author => `
+        <button type="button"
+          onclick="selectFormAuthor('${escapeAttr(author.id)}')"
+          style="display:block;width:100%;padding:10px 12px;margin-top:5px;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--surface-solid);color:var(--text);cursor:pointer;">
+          ${escapeHTML(author.name || "未命名作者")} ｜本站收錄 ${getAuthorWorkCount(author.id)} 部
+        </button>`).join("")
+    : `<div style="padding:10px 4px;color:var(--muted);font-size:12px;">找不到作者，可以使用「＋ 新增作者」</div>`;
+}
+
+function selectFormAuthor(authorId) {
+  const author = findAuthorById(authorId);
+  if (!author) return;
+
+  formState.authorId = author.id;
+  formState.author = author.name || "";
+
+  const searchInput = document.getElementById("formAuthorSearch");
+  const results = document.getElementById("formAuthorResults");
+
+  if (searchInput) searchInput.value = author.name || "";
+  if (results) results.innerHTML = "";
+
+  updateWorkSaveButton();
+}
+
+function setFormStatus(status) {
+  syncWorkFormState();
+  formState.status = status;
+  if (status !== "停更中") formState.lastPublishedAt = "";
+  renderWorkForm();
+}
+
+function toggleFormCreationType(type) {
+  syncWorkFormState();
+  const set = new Set(formState.creationTypes);
+  set.has(type) ? set.delete(type) : set.add(type);
+  formState.creationTypes = [...set];
+  renderWorkForm();
+}
+
+function toggleFormSeries(id) {
+  document.getElementById(`formSeries-${id}`)?.classList.toggle("show");
+}
+
+function toggleFormCategory(category) {
+  const set = new Set(formState.categories);
+  set.has(category) ? set.delete(category) : set.add(category);
+  formState.categories = [...set];
+
+  document.querySelectorAll(".series-children .check-chip").forEach(btn => {
+    if (btn.textContent.trim() === category) btn.classList.toggle("active", set.has(category));
+  });
+}
+
+function toggleFormEscape() {
+  formState.escape = !formState.escape;
+  const btn = [...document.querySelectorAll(".escape-chip")]
+    .find(node => node.textContent.trim() === ESCAPE_TAG && document.getElementById("modalCard").contains(node));
+  if (btn) btn.classList.toggle("active", formState.escape);
+}
+
+function handleCustomTagKeydown(event) {
+  if (event.key === "Enter" || event.key === ",") {
+    event.preventDefault();
+    addCustomTag();
+  }
+}
+
+function addCustomTag() {
+  const input = document.getElementById("customTagInput");
+  if (!input) return;
+
+  const value = [...input.value.trim()].slice(0, MAX_CUSTOM_TAG).join("");
+  if (!value) return;
+
+  if (!formState.customTags.includes(value)) formState.customTags.push(value);
+  input.value = "";
+  document.getElementById("customTagPreview").innerHTML = renderFormCustomTags();
+}
+
+function renderFormCustomTags() {
+  return (formState?.customTags || []).map((tag, index) => `
+    <span class="tag-edit-chip">
+      ${escapeHTML(tag)}
+      <button type="button" onclick="removeCustomTag(${index})">×</button>
+    </span>
+  `).join("");
+}
+
+function removeCustomTag(index) {
+  formState.customTags.splice(index, 1);
+  document.getElementById("customTagPreview").innerHTML = renderFormCustomTags();
+}
+
+function renderLinkEditorRows() {
+  return (formState?.links || []).map((link, index) => `
+    <div class="link-editor-row">
+      <div class="link-editor-grid">
+        <div class="field">
+          <label>平台／網站名稱</label>
+          <input value="${escapeAttr(link.label)}" placeholder="例如：角角者"
+            oninput="updateLinkRow(${index},'label',this.value)">
+        </div>
+        <div class="field">
+          <label>作品網址</label>
+          <input value="${escapeAttr(link.url)}" placeholder="https://..."
+            oninput="updateLinkRow(${index},'url',this.value)">
+        </div>
+      </div>
+
+      <div class="link-row-actions">
+        <button class="mini-btn" type="button"
+          onclick="moveLinkRow(${index},-1)" ${index === 0 ? "disabled" : ""}>↑</button>
+        <button class="mini-btn" type="button"
+          onclick="moveLinkRow(${index},1)" ${index === formState.links.length - 1 ? "disabled" : ""}>↓</button>
+        <button class="mini-btn danger" type="button"
+          onclick="removeLinkRow(${index})">刪除</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function updateLinkRow(index, field, value) {
+  if (formState.links[index]) formState.links[index][field] = value;
+}
+
+function addLinkRow() {
+  formState.links.push({ label: "", url: "" });
+  document.getElementById("linkEditorList").innerHTML = renderLinkEditorRows();
+}
+
+function removeLinkRow(index) {
+  formState.links.splice(index, 1);
+  if (!formState.links.length) formState.links.push({ label: "", url: "" });
+  document.getElementById("linkEditorList").innerHTML = renderLinkEditorRows();
+}
+
+function moveLinkRow(index, direction) {
+  const target = index + direction;
+  if (target < 0 || target >= formState.links.length) return;
+  [formState.links[index], formState.links[target]] = [formState.links[target], formState.links[index]];
+  document.getElementById("linkEditorList").innerHTML = renderLinkEditorRows();
+}
+
+async function openNewAuthorForm() {
+  syncWorkFormState();
+
+  openModal(`
+    <div class="modal-head">
+      <h3>新增作者</h3>
+      <button class="icon-btn" type="button" onclick="renderWorkForm()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>作者名稱 *</label>
+        <input id="newAuthorName" type="text" placeholder="請輸入作者名稱">
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>作者簡介</label>
+        <textarea id="newAuthorBio" placeholder="請輸入作者簡介"></textarea>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>個人網站</label>
+        <input id="newAuthorWebsite" type="url" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="renderWorkForm()">返回</button>
+      <button class="save-btn" type="button" onclick="saveNewAuthor()">新增作者</button>
+    </div>
+  `, true);
+}
+
+async function saveNewAuthor() {
+  const name = String(document.getElementById("newAuthorName")?.value || "").trim();
+  const bio = String(document.getElementById("newAuthorBio")?.value || "").trim();
+  const website = String(document.getElementById("newAuthorWebsite")?.value || "").trim();
+
+  if (!name) {
+    showToast("請輸入作者名稱");
+    return;
+  }
+
+  const existing = authors.find(author =>
+    String(author.name || "").trim().toLocaleLowerCase("zh-Hant") === name.toLocaleLowerCase("zh-Hant")
+  );
+
+  if (existing) {
+    formState.authorId = existing.id;
+    formState.author = existing.name;
+    renderWorkForm();
+    showToast(`作者「${existing.name}」已存在，已直接選取`);
+    return;
+  }
+
+  const saved = await authorsStore.add({ name, bio, website });
+  authors.push(normalizeAuthor(saved));
+
+  formState.authorId = saved.id;
+  formState.author = saved.name;
+
+  renderWorkForm();
+  showToast(`已新增作者：${saved.name}`);
+}
+
+function openAuthorEditForm(authorId) {
+  const author = findAuthorById(authorId);
+  if (!author) return;
+
+  syncWorkFormState();
+
+  openModal(`
+    <div class="modal-head">
+      <h3>編輯作者</h3>
+      <button class="icon-btn" type="button" onclick="renderWorkForm()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field">
+        <label>作者名稱 *</label>
+        <input id="editAuthorName" value="${escapeAttr(author.name || "")}">
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>作者簡介</label>
+        <textarea id="editAuthorBio">${escapeHTML(author.bio || "")}</textarea>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>個人網站</label>
+        <input id="editAuthorWebsite" type="url" value="${escapeAttr(author.website || "")}">
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="renderWorkForm()">返回</button>
+      <button class="save-btn" type="button"
+        onclick="saveAuthorEdit('${escapeAttr(author.id)}')">儲存作者資料</button>
+    </div>
+  `, true);
+}
+
+async function saveAuthorEdit(authorId) {
+  const author = findAuthorById(authorId);
+  if (!author) return;
+
+  const name = String(document.getElementById("editAuthorName")?.value || "").trim();
+  const bio = String(document.getElementById("editAuthorBio")?.value || "").trim();
+  const website = String(document.getElementById("editAuthorWebsite")?.value || "").trim();
+
+  if (!name) {
+    showToast("作者名稱不能空白");
+    return;
+  }
+
+  const duplicate = authors.find(item =>
+    String(item.id) !== String(authorId) &&
+    String(item.name || "").trim().toLocaleLowerCase("zh-Hant") === name.toLocaleLowerCase("zh-Hant")
+  );
+
+  if (duplicate) {
+    showToast("已有相同名稱的作者");
+    return;
+  }
+
+  const updated = await authorsStore.update(authorId, { name, bio, website });
+  const authorIndex = authors.findIndex(item => String(item.id) === String(authorId));
+  if (authorIndex >= 0) authors[authorIndex] = normalizeAuthor(updated);
+
+  const related = works.filter(work => String(work.authorId) === String(authorId));
+  for (const work of related) {
+    const savedWork = await worksStore.update(work.id, { author: name });
+    const index = works.findIndex(item => String(item.id) === String(work.id));
+    if (index >= 0) works[index] = normalizeWork(savedWork);
+  }
+
+  if (formState && String(formState.authorId) === String(authorId)) {
+    formState.author = name;
+  }
+
+  renderWorkForm();
+  showToast("作者資料已更新");
+}
+
+async function saveWorkFromForm() {
+  if (!isAdmin) return;
+
+  syncWorkFormState();
+
+  formState.title = String(formState.title || "").trim();
+  formState.subtitle = [...String(formState.subtitle || "").trim()].slice(0, MAX_SUBTITLE).join("");
+  formState.hook = [...String(formState.hook || "").trim()].slice(0, MAX_HOOK).join("");
+  formState.copy = String(formState.copy || "").trim();
+
+  if (formState.status !== "停更中") formState.lastPublishedAt = "";
+
+  if (!formState.author || !formState.title || !formState.hook) {
+    showToast("作者、書名與一句話簡介為必填");
+    return;
+  }
+
+  formState.links = formState.links
+    .map(link => ({
+      label: String(link.label || "").trim(),
+      url: String(link.url || "").trim()
+    }))
+    .filter(link => link.label || link.url);
+
+  const normalized = normalizeWork(formState);
+
+  try {
+    if (formState.id) {
+      const saved = await worksStore.update(formState.id, normalized);
+      const index = works.findIndex(work => String(work.id) === String(saved.id));
+      if (index >= 0) works[index] = normalizeWork(saved);
+      showToast("作品已更新");
+    } else {
+      const { id, createdAt, updatedAt, ...payload } = normalized;
+      const saved = await worksStore.add(payload);
+      works.unshift(normalizeWork(saved));
+      showToast("作品已新增");
+    }
+
+    randomOrder = shuffleWorks(works);
+    currentPage = 1;
+    closeModal();
+    renderAll();
+  } catch (error) {
+    console.error(error);
+    showToast("作品儲存失敗");
+  }
+}
+
+function deleteWork(id) {
+  const work = findWork(id);
+  if (!work) return;
+
+  openModal(`
+    <div class="modal-head">
+      <h3>刪除作品</h3>
+      <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0;line-height:1.8;color:var(--text);">
+        確定要刪除《${escapeHTML(work.title)}》嗎？
+      </p>
+      <p style="margin:10px 0 0;line-height:1.8;color:var(--danger);font-size:12px;">
+        刪除後無法復原。
+      </p>
+    </div>
+    <div class="form-footer">
+      <button class="ghost-btn" type="button" onclick="closeModal()">取消</button>
+      <button class="save-btn" type="button"
+        onclick="confirmDeleteWork('${escapeAttr(work.id)}')"
+        style="background:var(--danger);">確定刪除</button>
+    </div>
+  `, true);
+}
+
+async function confirmDeleteWork(id) {
+  await worksStore.remove(id);
+  works = works.filter(item => String(item.id) !== String(id));
+  randomOrder = randomOrder.filter(itemId => String(itemId) !== String(id));
+
+  closeModal();
+  closeDetail();
+  renderAll();
+  showToast("作品已刪除");
+}
+
+function openChangelog() {
+  openModal(`
+    <div class="modal-head">
+      <h3>版本更新</h3>
+      <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <section class="form-section">
+        <div class="form-section-title">fiction_local_1</div>
+        <p class="detail-copy">
+以作品探索 v3_5 的介面與操作為基礎。
+資料層改為 FictionData CDN。
+作品、作者與運行紀錄改存於本機 localStorage。
+移除 Supabase、帳號登入與遠端資料庫。
+管理按鈕改為單機管理模式。
+引用共用 responsive.css。
+        </p>
+      </section>
+    </div>
+  `);
+}
+
+function openSiteRecord() {
+  openModal(`
+    <div class="modal-head">
+      <h3>慢慢運行紀錄</h3>
+      <button class="icon-btn" type="button" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <section class="form-section">
+        <div class="form-section-title">住在慢慢的居民</div>
+        <p class="detail-copy">${authors.length} 　位</p>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">蓋在慢慢的房子</div>
+        <p class="detail-copy">${works.length} 　部</p>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">掀開慢慢的次數</div>
+        <p class="detail-copy">${siteViewCount.toLocaleString("zh-TW")} 　次（此瀏覽器）</p>
+      </section>
+    </div>
+  `);
+}
+
+function openModal(html, small = false) {
+  const wrap = document.getElementById("modalWrap");
+  const card = document.getElementById("modalCard");
+  card.className = `modal-card${small ? " small" : ""}`;
+  card.innerHTML = html;
+  wrap.classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  document.getElementById("modalWrap").classList.remove("show");
+  document.getElementById("modalCard").innerHTML = "";
+  document.body.style.overflow = activeDetailId ? "hidden" : "";
+}
+
+function handleModalBackdrop(event) {
+  if (event.target.id !== "modalWrap") return;
+  if (window.shareCardPreview) closeShareCardPreview();
+  else closeModal();
+}
+
+document.getElementById("searchInput").addEventListener("input", event => {
+  searchText = event.target.value;
+  currentPage = 1;
+  document.getElementById("searchClear").classList.toggle("show", Boolean(searchText));
+  renderBookList();
+});
+
+document.getElementById("searchClear").addEventListener("click", () => {
+  searchText = "";
+  currentPage = 1;
+  document.getElementById("searchInput").value = "";
+  document.getElementById("searchClear").classList.remove("show");
+  renderBookList();
+});
+
+document.getElementById("manageBtn").addEventListener("click", openLogin);
+document.getElementById("addWorkBtn").addEventListener("click", () => openWorkForm());
+
+function renderAll() {
+  renderFilters();
+  renderBookList();
+  renderAdminState();
+}
+
+async function init() {
+  try {
+    await incrementLocalCounter();
+    await loadLocalData();
+  } catch (error) {
+    console.error("FictionData 啟動失敗", error);
+    document.getElementById("resultCount").textContent = "讀取失敗";
+    document.getElementById("bookList").innerHTML = `
+      <div class="empty-state">
+        <strong>FictionData 無法啟動</strong>
+        請確認 CDN 是否正常載入。
+      </div>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
