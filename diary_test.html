@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本機日記｜FictionData Test</title>
+  <title>本機日記｜FictionData + Calendar Test</title>
+
+  <link
+    rel="stylesheet"
+    href="https://lib.stillnessbyslowly.com/ui/responsive.css"
+  />
+
   <style>
     :root {
       --bg: #f3f1ec;
@@ -226,10 +232,17 @@
     }
 
     .entry-date {
-      margin: 0 0 6px;
+      margin: 0 0 4px;
       color: var(--accent-dark);
       font-size: 0.86rem;
       font-weight: 700;
+    }
+
+    .entry-calendar {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.6;
     }
 
     .entry-title {
@@ -336,14 +349,17 @@
     }
   </style>
 </head>
+
 <body>
   <main class="page">
     <section class="hero">
-      <p class="eyebrow">FictionData Consumer Test</p>
+      <p class="eyebrow">FictionData + Calendar Consumer Test</p>
+
       <h1>本機日記</h1>
+
       <p>
         日記內容只保存在目前瀏覽器的 localStorage。
-        這個頁面只透過 CDN 使用 FictionData，不包含 FictionData 的原始碼。
+        FictionData 負責資料處理，Calendar 系列模組負責農曆、節日與節氣資訊。
       </p>
     </section>
 
@@ -354,11 +370,19 @@
         <form id="entryForm">
           <div class="field">
             <label for="dateInput">日期</label>
-            <input id="dateInput" name="date" type="date" required />
+            <input
+              id="dateInput"
+              name="date"
+              type="date"
+              min="1901-01-01"
+              max="2100-12-31"
+              required
+            />
           </div>
 
           <div class="field">
             <label for="titleInput">標題</label>
+
             <input
               id="titleInput"
               name="title"
@@ -371,6 +395,7 @@
 
           <div class="field">
             <label for="contentInput">內文</label>
+
             <textarea
               id="contentInput"
               name="content"
@@ -380,19 +405,35 @@
             ></textarea>
           </div>
 
-          <p class="hint">id、createdAt、updatedAt 交給 FictionData 自動處理。</p>
+          <p class="hint">
+            日記資料由 FictionData 儲存；農曆、節日與節氣不寫入資料，只在顯示時查詢。
+          </p>
 
           <div class="button-row">
-            <button class="btn btn-primary" id="submitButton" type="submit">
+            <button
+              class="btn btn-primary"
+              id="submitButton"
+              type="submit"
+            >
               儲存日記
             </button>
-            <button class="btn btn-secondary" id="cancelEditButton" type="button" hidden>
+
+            <button
+              class="btn btn-secondary"
+              id="cancelEditButton"
+              type="button"
+              hidden
+            >
               取消編輯
             </button>
           </div>
         </form>
 
-        <div class="status-line" id="statusLine" aria-live="polite"></div>
+        <div
+          class="status-line"
+          id="statusLine"
+          aria-live="polite"
+        ></div>
       </aside>
 
       <section class="diary">
@@ -408,6 +449,7 @@
             placeholder="搜尋標題或內文"
             aria-label="搜尋日記"
           />
+
           <select id="sortSelect" aria-label="排序方式">
             <option value="date-desc">日期新到舊</option>
             <option value="date-asc">日期舊到新</option>
@@ -421,8 +463,10 @@
         <div class="storage-note">
           storage namespace：
           <code>diary_test20260906</code><br />
+
           collection：
           <code>entries</code><br />
+
           實際 localStorage key：
           <code>diary_test20260906:entries</code>
         </div>
@@ -430,7 +474,25 @@
     </section>
   </main>
 
+  <!-- FictionData -->
   <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+
+  <!-- Lunar Calendar -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar.js"></script>
+
+  <!-- Lunar Festivals -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals.js"></script>
+
+  <!-- Solar Festivals -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals.js"></script>
+
+  <!-- Solar Terms -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms.js"></script>
+
   <script>
     (() => {
       "use strict";
@@ -456,6 +518,7 @@
             FictionData 載入失敗。請確認 CDN 路徑與網路連線。
           </div>
         `;
+
         els.submit.disabled = true;
         return;
       }
@@ -470,9 +533,11 @@
 
       function todayString() {
         const now = new Date();
+
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
+
         return `${year}-${month}-${day}`;
       }
 
@@ -489,7 +554,10 @@
         if (!value) return "";
 
         const [year, month, day] = String(value).split("-");
-        if (!year || !month || !day) return String(value);
+
+        if (!year || !month || !day) {
+          return String(value);
+        }
 
         return `${year}.${month}.${day}`;
       }
@@ -498,7 +566,10 @@
         if (!value) return "";
 
         const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return String(value);
+
+        if (Number.isNaN(date.getTime())) {
+          return String(value);
+        }
 
         return new Intl.DateTimeFormat("zh-TW", {
           year: "numeric",
@@ -507,6 +578,180 @@
           hour: "2-digit",
           minute: "2-digit"
         }).format(date);
+      }
+
+      function normalizeNames(value) {
+        if (!value) return [];
+
+        if (Array.isArray(value)) {
+          return value
+            .map(item => {
+              if (typeof item === "string") return item;
+              return item?.name || "";
+            })
+            .filter(Boolean);
+        }
+
+        if (typeof value === "string") {
+          return [value];
+        }
+
+        if (value.name) {
+          return [value.name];
+        }
+
+        return [];
+      }
+
+      function getLunarText(date) {
+        if (!window.Lunar) return "";
+
+        try {
+          const lunar = Lunar.toLunar(date);
+
+          if (!lunar) return "";
+
+          if (typeof Lunar.formatLunar === "function") {
+            try {
+              const formatted = Lunar.formatLunar(lunar);
+
+              if (formatted) {
+                return formatted;
+              }
+            } catch (_) {
+              // fallback below
+            }
+          }
+
+          const month =
+            lunar.monthName ??
+            lunar.lunarMonthName ??
+            lunar.month ??
+            lunar.lunarMonth;
+
+          const day =
+            lunar.dayName ??
+            lunar.lunarDayName ??
+            lunar.day ??
+            lunar.lunarDay;
+
+          if (month == null || day == null) {
+            return "";
+          }
+
+          const leap = lunar.isLeapMonth ? "閏" : "";
+
+          return `${leap}${month}月${day}`;
+        } catch (error) {
+          console.warn("Lunar lookup failed:", date, error);
+          return "";
+        }
+      }
+
+      function getLunarFestivalNames(date) {
+        if (!window.LunarFestivals) return [];
+
+        try {
+          if (typeof LunarFestivals.getNames === "function") {
+            return normalizeNames(
+              LunarFestivals.getNames(date)
+            );
+          }
+
+          if (typeof LunarFestivals.get === "function") {
+            return normalizeNames(
+              LunarFestivals.get(date)
+            );
+          }
+        } catch (error) {
+          console.warn(
+            "Lunar festival lookup failed:",
+            date,
+            error
+          );
+        }
+
+        return [];
+      }
+
+      function getSolarFestivalNames(date) {
+        if (!window.SolarFestivals) return [];
+
+        try {
+          if (typeof SolarFestivals.getNames === "function") {
+            return normalizeNames(
+              SolarFestivals.getNames(date)
+            );
+          }
+
+          if (typeof SolarFestivals.get === "function") {
+            return normalizeNames(
+              SolarFestivals.get(date)
+            );
+          }
+        } catch (error) {
+          console.warn(
+            "Solar festival lookup failed:",
+            date,
+            error
+          );
+        }
+
+        return [];
+      }
+
+      function getSolarTermNames(date) {
+        if (!window.SolarTerms) return [];
+
+        try {
+          if (typeof SolarTerms.getByDate === "function") {
+            return normalizeNames(
+              SolarTerms.getByDate(date)
+            );
+          }
+
+          if (typeof SolarTerms.get === "function") {
+            return normalizeNames(
+              SolarTerms.get(date)
+            );
+          }
+        } catch (error) {
+          console.warn(
+            "Solar term lookup failed:",
+            date,
+            error
+          );
+        }
+
+        return [];
+      }
+
+      function getCalendarInfo(date) {
+        const parts = [];
+
+        const lunarText = getLunarText(date);
+
+        if (lunarText) {
+          parts.push(`農曆 ${lunarText}`);
+        }
+
+        parts.push(...getLunarFestivalNames(date));
+        parts.push(...getSolarFestivalNames(date));
+        parts.push(...getSolarTermNames(date));
+
+        return [...new Set(parts)];
+      }
+
+      function renderCalendarInfo(date) {
+        const parts = getCalendarInfo(date);
+
+        if (!parts.length) return "";
+
+        return `
+          <div class="entry-calendar">
+            ${parts.map(escapeHtml).join("　")}
+          </div>
+        `;
       }
 
       function setStatus(text) {
@@ -523,8 +768,10 @@
 
       function resetForm() {
         editingId = null;
+
         els.form.reset();
         els.date.value = todayString();
+
         els.formTitle.textContent = "寫一篇日記";
         els.submit.textContent = "儲存日記";
         els.cancelEdit.hidden = true;
@@ -571,15 +818,21 @@
             search: keyword
               ? {
                   keyword,
-                  fields: ["title", "content", "date"]
+                  fields: [
+                    "title",
+                    "content",
+                    "date"
+                  ]
                 }
               : null,
+
             sort: getSortConfig()
           });
 
           renderEntries(result);
         } catch (error) {
           console.error(error);
+
           els.list.innerHTML = `
             <div class="panel error-box">
               讀取日記時發生錯誤。
@@ -597,29 +850,55 @@
               目前沒有符合條件的日記。
             </div>
           `;
+
           return;
         }
 
         els.list.innerHTML = items.map(item => `
-          <article class="panel entry" data-id="${escapeHtml(item.id)}">
-            <p class="entry-date">${escapeHtml(formatDate(item.date))}</p>
-            <h3 class="entry-title">${escapeHtml(item.title)}</h3>
+          <article
+            class="panel entry"
+            data-id="${escapeHtml(item.id)}"
+          >
+            <p class="entry-date">
+              ${escapeHtml(formatDate(item.date))}
+            </p>
+
+            ${renderCalendarInfo(item.date)}
+
+            <h3 class="entry-title">
+              ${escapeHtml(item.title)}
+            </h3>
+
             <div class="entry-meta">
               建立：${escapeHtml(formatDateTime(item.createdAt))}
               ${
-                item.updatedAt && item.updatedAt !== item.createdAt
-                  ? `　更新：${escapeHtml(formatDateTime(item.updatedAt))}`
+                item.updatedAt &&
+                item.updatedAt !== item.createdAt
+                  ? `　更新：${escapeHtml(
+                      formatDateTime(item.updatedAt)
+                    )}`
                   : ""
               }
             </div>
 
-            <div class="entry-content">${escapeHtml(item.content)}</div>
+            <div class="entry-content">
+              ${escapeHtml(item.content)}
+            </div>
 
             <div class="entry-actions">
-              <button class="btn btn-secondary" type="button" data-action="edit">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                data-action="edit"
+              >
                 編輯
               </button>
-              <button class="btn btn-danger" type="button" data-action="delete">
+
+              <button
+                class="btn btn-danger"
+                type="button"
+                data-action="delete"
+              >
                 刪除
               </button>
             </div>
@@ -627,97 +906,144 @@
         `).join("");
       }
 
-      els.form.addEventListener("submit", async event => {
-        event.preventDefault();
+      els.form.addEventListener(
+        "submit",
+        async event => {
+          event.preventDefault();
 
-        const date = els.date.value;
-        const title = els.title.value.trim();
-        const content = els.content.value.trim();
+          const date = els.date.value;
+          const title = els.title.value.trim();
+          const content = els.content.value.trim();
 
-        if (!date || !title || !content) return;
+          if (!date || !title || !content) return;
 
-        try {
-          if (editingId) {
-            await entries.update(editingId, {
-              date,
-              title,
-              content
-            });
+          try {
+            if (editingId) {
+              await entries.update(editingId, {
+                date,
+                title,
+                content
+              });
 
-            setStatus("日記已更新。");
-          } else {
-            await entries.add({
-              date,
-              title,
-              content
-            });
+              setStatus("日記已更新。");
+            } else {
+              await entries.add({
+                date,
+                title,
+                content
+              });
 
-            setStatus("日記已儲存。");
-          }
+              setStatus("日記已儲存。");
+            }
 
-          resetForm();
-          await loadEntries();
-        } catch (error) {
-          console.error(error);
-          setStatus("儲存失敗，請查看 console。");
-        }
-      });
-
-      els.cancelEdit.addEventListener("click", () => {
-        resetForm();
-        setStatus("已取消編輯。");
-      });
-
-      els.list.addEventListener("click", async event => {
-        const button = event.target.closest("button[data-action]");
-        if (!button) return;
-
-        const card = button.closest("[data-id]");
-        if (!card) return;
-
-        const id = card.dataset.id;
-        const action = button.dataset.action;
-
-        if (action === "edit") {
-          const item = await entries.get(id);
-          if (!item) return;
-
-          editingId = id;
-          els.date.value = item.date || todayString();
-          els.title.value = item.title || "";
-          els.content.value = item.content || "";
-          els.formTitle.textContent = "編輯日記";
-          els.submit.textContent = "儲存修改";
-          els.cancelEdit.hidden = false;
-
-          if (window.innerWidth <= 780) {
-            els.form.scrollIntoView({
-              behavior: "smooth",
-              block: "start"
-            });
-          }
-
-          els.title.focus();
-        }
-
-        if (action === "delete") {
-          const confirmed = window.confirm("確定要刪除這篇日記嗎？");
-          if (!confirmed) return;
-
-          const removed = await entries.remove(id);
-
-          if (removed) {
-            if (editingId === id) resetForm();
-            setStatus("日記已刪除。");
+            resetForm();
             await loadEntries();
+          } catch (error) {
+            console.error(error);
+
+            setStatus(
+              "儲存失敗，請查看 console。"
+            );
           }
         }
-      });
+      );
 
-      els.search.addEventListener("input", loadEntries);
-      els.sort.addEventListener("change", loadEntries);
+      els.cancelEdit.addEventListener(
+        "click",
+        () => {
+          resetForm();
+          setStatus("已取消編輯。");
+        }
+      );
+
+      els.list.addEventListener(
+        "click",
+        async event => {
+          const button =
+            event.target.closest(
+              "button[data-action]"
+            );
+
+          if (!button) return;
+
+          const card =
+            button.closest("[data-id]");
+
+          if (!card) return;
+
+          const id = card.dataset.id;
+          const action = button.dataset.action;
+
+          if (action === "edit") {
+            const item = await entries.get(id);
+
+            if (!item) return;
+
+            editingId = id;
+
+            els.date.value =
+              item.date || todayString();
+
+            els.title.value =
+              item.title || "";
+
+            els.content.value =
+              item.content || "";
+
+            els.formTitle.textContent =
+              "編輯日記";
+
+            els.submit.textContent =
+              "儲存修改";
+
+            els.cancelEdit.hidden = false;
+
+            if (window.innerWidth <= 780) {
+              els.form.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+              });
+            }
+
+            els.title.focus();
+          }
+
+          if (action === "delete") {
+            const confirmed =
+              window.confirm(
+                "確定要刪除這篇日記嗎？"
+              );
+
+            if (!confirmed) return;
+
+            const removed =
+              await entries.remove(id);
+
+            if (removed) {
+              if (editingId === id) {
+                resetForm();
+              }
+
+              setStatus("日記已刪除。");
+
+              await loadEntries();
+            }
+          }
+        }
+      );
+
+      els.search.addEventListener(
+        "input",
+        loadEntries
+      );
+
+      els.sort.addEventListener(
+        "change",
+        loadEntries
+      );
 
       els.date.value = todayString();
+
       loadEntries();
     })();
   </script>
