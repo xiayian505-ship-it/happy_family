@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>假外送平台｜FictionData CDN Test</title>
+<style>
+:root{
+  --bg:#f4f4f1;
+  --surface:#ffffff;
+  --surface-2:#f8f8f6;
+  --text:#202525;
+  --muted:#6d7676;
+  --line:#d9dddd;
+  --accent:#2f6e68;
+  --accent-soft:#e3efed;
+  --danger:#a64f4f;
+  --warning:#9a742d;
+  --success:#4f7e61;
+  --shadow:0 12px 36px rgba(32,37,37,.08);
+  --radius:20px;
+  --content:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,"Microsoft JhengHei","Noto Sans TC",sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.55}
+a{color:inherit}
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:30;
+  background:rgba(244,244,241,.92);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(217,221,221,.9);
+}
+.topbar-inner{
+  max-width:var(--content);
+  margin:auto;
+  min-height:66px;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+.brand-mark{
+  width:34px;
+  height:34px;
+  border-radius:11px;
+  display:grid;
+  place-items:center;
+  background:var(--accent);
+  color:#fff;
+  font-size:14px;
+  letter-spacing:0;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--muted);
+  border-radius:999px;
+  padding:8px 11px;
+  font-size:12px;
+  white-space:nowrap;
+}
+main{
+  max-width:var(--content);
+  margin:auto;
+  padding:24px 18px 72px;
+}
+.hero{
+  display:grid;
+  grid-template-columns:1.4fr .8fr;
+  gap:18px;
+  align-items:stretch;
+  margin-bottom:20px;
+}
+.hero-card,.cart-panel,.panel,.shop-card,.order-card,.empty,.drawer-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.hero-card{
+  border-radius:28px;
+  padding:28px;
+}
+.eyebrow{
+  margin:0 0 8px;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+h1{
+  margin:0;
+  font-size:clamp(30px,5vw,56px);
+  line-height:1.05;
+  letter-spacing:-.035em;
+}
+.hero-copy{
+  max-width:640px;
+  margin:14px 0 0;
+  color:var(--muted);
+  line-height:1.75;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.stat{
+  border:1px solid var(--line);
+  background:var(--surface);
+  border-radius:22px;
+  padding:20px;
+  min-height:118px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.stat strong{
+  font-size:30px;
+  line-height:1;
+}
+.stat span{
+  color:var(--muted);
+  font-size:13px;
+}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 340px;
+  gap:20px;
+  align-items:start;
+}
+.panel{
+  border-radius:24px;
+  padding:18px;
+}
+.toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,1.6fr) repeat(2,minmax(120px,.7fr));
+  gap:10px;
+  margin-bottom:14px;
+}
+.field{
+  width:100%;
+  min-height:44px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  border-radius:13px;
+  padding:10px 12px;
+  outline:none;
+}
+.field:focus{border-color:var(--accent)}
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:center;
+  margin:2px 0 14px;
+}
+.section-head h2,.section-head h3{
+  margin:0;
+  font-size:20px;
+}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.btn{
+  min-height:40px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:9px 13px;
+  background:var(--surface);
+  color:var(--text);
+}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.btn.soft{
+  border-color:#c9deda;
+  background:var(--accent-soft);
+  color:#24524e;
+}
+.btn.danger{
+  border-color:#e5cccc;
+  color:var(--danger);
+  background:#fff;
+}
+.shop-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.shop-card{
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:none;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.shop-card:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--shadow);
+}
+.shop-cover{
+  aspect-ratio:16/7;
+  background:
+    linear-gradient(135deg,rgba(47,110,104,.95),rgba(109,118,118,.65)),
+    radial-gradient(circle at 20% 20%,#fff3 0 16%,transparent 17%);
+  color:#fff;
+  padding:18px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+.cover-title{
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+.cover-code{
+  font-size:11px;
+  border:1px solid #ffffff66;
+  border-radius:999px;
+  padding:6px 9px;
+  background:#ffffff18;
+}
+.shop-body{padding:16px}
+.shop-meta,.tag-row,.order-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+.tag{
+  display:inline-flex;
+  align-items:center;
+  min-height:27px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+}
+.tag.active{
+  background:var(--accent-soft);
+  color:#285955;
+  border-color:#c8deda;
+}
+.shop-desc{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+  min-height:42px;
+  margin:10px 0 14px;
+}
+.shop-footer{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+}
+.price-note{
+  color:var(--muted);
+  font-size:12px;
+}
+.cart-panel{
+  position:sticky;
+  top:88px;
+  border-radius:24px;
+  padding:18px;
+}
+.cart-list{
+  display:grid;
+  gap:10px;
+  margin:14px 0;
+}
+.cart-item{
+  border:1px solid var(--line);
+  border-radius:15px;
+  padding:11px;
+  display:grid;
+  gap:9px;
+}
+.cart-item-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+.qty{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.qty button{
+  width:30px;
+  height:30px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+}
+.cart-total{
+  border-top:1px dashed var(--line);
+  padding-top:14px;
+  display:grid;
+  gap:8px;
+}
+.total-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+.total-row.grand{
+  font-weight:800;
+  font-size:18px;
+}
+.empty{
+  border-radius:20px;
+  padding:26px;
+  text-align:center;
+  color:var(--muted);
+  box-shadow:none;
+}
+.history{
+  margin-top:22px;
+}
+.order-list{
+  display:grid;
+  gap:12px;
+}
+.order-card{
+  border-radius:18px;
+  padding:15px;
+  box-shadow:none;
+}
+.order-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.order-title{
+  margin:0;
+  font-size:16px;
+}
+.status{
+  display:inline-flex;
+  align-items:center;
+  min-height:29px;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  border:1px solid transparent;
+  white-space:nowrap;
+}
+.status.pending{background:#f5efe0;color:#775a21;border-color:#e7d8b5}
+.status.preparing{background:#e8edf4;color:#425e7e;border-color:#d0dae7}
+.status.delivering{background:#e6efed;color:#35655e;border-color:#cddfdb}
+.status.done{background:#e8f0e9;color:#42664d;border-color:#d0dfd3}
+.status.cancelled{background:#f4e7e7;color:#8d4747;border-color:#e5cdcd}
+.order-items{
+  margin:10px 0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.65;
+}
+.drawer{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:none;
+}
+.drawer.open{display:block}
+.drawer-backdrop{
+  position:absolute;
+  inset:0;
+  background:#18212066;
+}
+.drawer-card{
+  position:absolute;
+  top:0;
+  right:0;
+  width:min(560px,100%);
+  height:100%;
+  border-radius:0;
+  overflow:auto;
+  padding:22px;
+}
+.drawer-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--line);
+}
+.drawer-head h2{margin:0}
+.menu-list{
+  display:grid;
+  gap:11px;
+  margin-top:16px;
+}
+.menu-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:13px;
+}
+.menu-item h4{margin:0 0 5px}
+.menu-item p{
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.55;
+}
+.menu-price{
+  font-weight:800;
+  margin-bottom:8px;
+  text-align:right;
+}
+.notice{
+  margin-top:14px;
+  border:1px solid #d7dfde;
+  background:#f7faf9;
+  border-radius:14px;
+  padding:12px;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.65;
+}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:24px;
+  z-index:120;
+  transform:translateX(-50%) translateY(20px);
+  background:#1f2928;
+  color:#fff;
+  border-radius:999px;
+  padding:10px 14px;
+  font-size:13px;
+  opacity:0;
+  pointer-events:none;
+  transition:.18s ease;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+@media (max-width:960px){
+  .hero{grid-template-columns:1fr}
+  .layout{grid-template-columns:1fr}
+  .cart-panel{position:static}
+}
+@media (max-width:720px){
+  main{padding:16px 12px 54px}
+  .topbar-inner{padding:10px 12px}
+  .hero-card{padding:22px}
+  .toolbar{grid-template-columns:1fr}
+  .shop-list{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .section-head{align-items:flex-start;flex-direction:column}
+  .actions{width:100%}
+  .actions .btn{flex:1}
+}
+@media (max-width:420px){
+  .stats{grid-template-columns:1fr 1fr}
+  .stat{min-height:100px;padding:16px}
+  .brand span:last-child{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">FD</div>
+      <span>外送平台測試站</span>
+    </div>
+    <div class="pill">FictionData CDN 單機版</div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Delivery Sandbox</p>
+      <h1>今天想吃什麼？</h1>
+      <p class="hero-copy">
+        完全假的外送平台。商家、菜單與訂單都只存在這個瀏覽器，
+        用來測 FictionData CDN 在另一種完全不同的資料情境下是否穩定。
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><strong id="statShops">0</strong><span>可選商家</span></div>
+      <div class="stat"><strong id="statOrders">0</strong><span>本機訂單</span></div>
+      <div class="stat"><strong id="statCart">0</strong><span>購物車品項</span></div>
+      <div class="stat"><strong id="statSpent">$0</strong><span>完成訂單金額</span></div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>附近商家</h2>
+          <div class="muted small" id="shopCount">0 間商家</div>
+        </div>
+        <div class="actions">
+          <button class="btn soft" id="seedBtn">載入測試商家</button>
+          <button class="btn" id="resetFiltersBtn">清除篩選</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="field" id="searchInput" placeholder="搜尋店名、料理、標籤">
+        <select class="field" id="categorySelect">
+          <option value="">全部料理</option>
+        </select>
+        <select class="field" id="sortSelect">
+          <option value="rating">評分最高</option>
+          <option value="fee">外送費最低</option>
+          <option value="time">最快送達</option>
+          <option value="name">店名排序</option>
+        </select>
+      </div>
+
+      <div id="shopList" class="shop-list"></div>
+
+      <section class="history">
+        <div class="section-head">
+          <div>
+            <h3>我的訂單</h3>
+            <div class="muted small">可測試新增、狀態更新與刪除</div>
+          </div>
+          <div class="actions">
+            <button class="btn danger" id="clearOrdersBtn">清除訂單</button>
+          </div>
+        </div>
+        <div id="orderList" class="order-list"></div>
+      </section>
+    </section>
+
+    <aside class="cart-panel">
+      <div class="section-head">
+        <div>
+          <h3>購物車</h3>
+          <div class="muted small" id="cartShopName">尚未選擇商家</div>
+        </div>
+        <button class="btn" id="clearCartBtn">清空</button>
+      </div>
+
+      <div id="cartList" class="cart-list"></div>
+
+      <div class="cart-total">
+        <div class="total-row"><span class="muted">餐點小計</span><strong id="subtotal">$0</strong></div>
+        <div class="total-row"><span class="muted">外送費</span><strong id="deliveryFee">$0</strong></div>
+        <div class="total-row grand"><span>合計</span><span id="grandTotal">$0</span></div>
+        <button class="btn primary" id="checkoutBtn">送出假訂單</button>
+      </div>
+
+      <div class="notice">
+        localStorage namespace：<strong>delivery_platform_test</strong><br>
+        collections：<strong>shops</strong>、<strong>orders</strong>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="drawer-card">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow">Menu</p>
+        <h2 id="drawerTitle">商家</h2>
+        <div class="muted small" id="drawerMeta"></div>
+      </div>
+      <button class="btn" id="closeDrawerBtn">關閉</button>
+    </div>
+    <div id="menuList" class="menu-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  if (!window.FictionData) {
+    alert("FictionData CDN 載入失敗，請開啟 Console 檢查。");
+    return;
+  }
+
+  const db = FictionData.create({ namespace: "delivery_platform_test" });
+  const shops = db.collection("shops");
+  const orders = db.collection("orders");
+
+  let allShops = [];
+  let allOrders = [];
+  let currentShop = null;
+  let cart = [];
+
+  const $ = (sel) => document.querySelector(sel);
+
+  const els = {
+    statShops: $("#statShops"),
+    statOrders: $("#statOrders"),
+    statCart: $("#statCart"),
+    statSpent: $("#statSpent"),
+    shopCount: $("#shopCount"),
+    shopList: $("#shopList"),
+    orderList: $("#orderList"),
+    searchInput: $("#searchInput"),
+    categorySelect: $("#categorySelect"),
+    sortSelect: $("#sortSelect"),
+    seedBtn: $("#seedBtn"),
+    resetFiltersBtn: $("#resetFiltersBtn"),
+    clearOrdersBtn: $("#clearOrdersBtn"),
+    cartShopName: $("#cartShopName"),
+    cartList: $("#cartList"),
+    subtotal: $("#subtotal"),
+    deliveryFee: $("#deliveryFee"),
+    grandTotal: $("#grandTotal"),
+    checkoutBtn: $("#checkoutBtn"),
+    clearCartBtn: $("#clearCartBtn"),
+    drawer: $("#drawer"),
+    drawerBackdrop: $("#drawerBackdrop"),
+    closeDrawerBtn: $("#closeDrawerBtn"),
+    drawerTitle: $("#drawerTitle"),
+    drawerMeta: $("#drawerMeta"),
+    menuList: $("#menuList"),
+    toast: $("#toast")
+  };
+
+  const SAMPLE_SHOPS = [
+    {
+      id:"shop-rice-01",
+      name:"巷口排骨飯",
+      category:"台式",
+      rating:4.8,
+      deliveryFee:25,
+      eta:22,
+      tags:["便當","台式","熱門"],
+      description:"家常排骨、滷雞腿與每日配菜，適合不知道吃什麼的時候。",
+      menu:[
+        {id:"m1",name:"招牌排骨飯",price:115,desc:"炸排骨、三樣配菜、滷蛋半顆"},
+        {id:"m2",name:"滷雞腿飯",price:125,desc:"滷雞腿、三樣配菜"},
+        {id:"m3",name:"控肉飯",price:120,desc:"滷控肉、酸菜、時蔬"},
+        {id:"m4",name:"味噌湯",price:30,desc:"豆腐、海帶、蔥花"}
+      ]
+    },
+    {
+      id:"shop-noodle-01",
+      name:"深夜牛肉麵",
+      category:"麵食",
+      rating:4.6,
+      deliveryFee:35,
+      eta:28,
+      tags:["牛肉麵","晚餐","湯麵"],
+      description:"紅燒湯頭與厚切牛腱，另外也有乾拌麵與小菜。",
+      menu:[
+        {id:"m1",name:"紅燒牛肉麵",price:180,desc:"牛腱、青菜、酸菜"},
+        {id:"m2",name:"半筋半肉麵",price:220,desc:"牛筋與牛腱各半"},
+        {id:"m3",name:"麻辣乾拌麵",price:95,desc:"花椒香氣，微麻微辣"},
+        {id:"m4",name:"滷味拼盤",price:80,desc:"豆干、海帶、滷蛋"}
+      ]
+    },
+    {
+      id:"shop-cafe-01",
+      name:"午後小咖啡",
+      category:"咖啡",
+      rating:4.9,
+      deliveryFee:20,
+      eta:18,
+      tags:["咖啡","甜點","下午茶"],
+      description:"咖啡、茶與簡單甜點，完全假的但看起來很像真的。",
+      menu:[
+        {id:"m1",name:"拿鐵",price:85,desc:"中深焙濃縮與鮮奶"},
+        {id:"m2",name:"美式咖啡",price:65,desc:"清爽平衡"},
+        {id:"m3",name:"伯爵鮮奶茶",price:90,desc:"佛手柑茶香"},
+        {id:"m4",name:"巴斯克乳酪",price:110,desc:"濃郁乳酪蛋糕"}
+      ]
+    },
+    {
+      id:"shop-burger-01",
+      name:"角落漢堡店",
+      category:"美式",
+      rating:4.5,
+      deliveryFee:40,
+      eta:32,
+      tags:["漢堡","炸物","美式"],
+      description:"現煎漢堡排、薯條與雞翅，適合想吃高熱量的一天。",
+      menu:[
+        {id:"m1",name:"經典起司牛肉堡",price:165,desc:"牛肉排、起司、生菜、番茄"},
+        {id:"m2",name:"辣味雞腿堡",price:150,desc:"酥炸雞腿排、辣醬"},
+        {id:"m3",name:"薯條",price:65,desc:"現炸脆薯"},
+        {id:"m4",name:"六塊雞翅",price:130,desc:"原味胡椒雞翅"}
+      ]
+    },
+    {
+      id:"shop-jp-01",
+      name:"山町丼飯",
+      category:"日式",
+      rating:4.7,
+      deliveryFee:30,
+      eta:26,
+      tags:["丼飯","日式","炸物"],
+      description:"親子丼、豬排丼與咖哩，簡單快速的日式家常飯。",
+      menu:[
+        {id:"m1",name:"親子丼",price:135,desc:"雞肉、滑蛋、洋蔥"},
+        {id:"m2",name:"豬排丼",price:155,desc:"炸豬排、滑蛋、洋蔥"},
+        {id:"m3",name:"日式咖哩飯",price:120,desc:"蔬菜咖哩，可選雞肉"},
+        {id:"m4",name:"可樂餅",price:55,desc:"馬鈴薯可樂餅"}
+      ]
+    },
+    {
+      id:"shop-drink-01",
+      name:"一杯就好",
+      category:"飲料",
+      rating:4.4,
+      deliveryFee:15,
+      eta:15,
+      tags:["飲料","茶","手搖"],
+      description:"純茶、奶茶與水果茶，名字很克制，購物車不一定。",
+      menu:[
+        {id:"m1",name:"四季春",price:35,desc:"清香純茶"},
+        {id:"m2",name:"珍珠鮮奶茶",price:65,desc:"鮮奶茶與黑糖珍珠"},
+        {id:"m3",name:"百香綠茶",price:55,desc:"百香果與綠茶"},
+        {id:"m4",name:"冬瓜檸檬",price:50,desc:"冬瓜茶與檸檬汁"}
+      ]
+    }
+  ];
+
+  const money = n => "$" + Number(n || 0).toLocaleString("zh-TW");
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+
+  function toast(text){
+    els.toast.textContent = text;
+    els.toast.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => els.toast.classList.remove("show"), 1600);
+  }
+
+  function cartCount(){
+    return cart.reduce((sum, item) => sum + item.qty, 0);
+  }
+
+  function cartSubtotal(){
+    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  }
+
+  function getCurrentFee(){
+    return cart.length && currentShop ? Number(currentShop.deliveryFee || 0) : 0;
+  }
+
+  function statusLabel(status){
+    return ({
+      pending:"已送出",
+      preparing:"店家備餐",
+      delivering:"外送中",
+      done:"已完成",
+      cancelled:"已取消"
+    })[status] || status;
+  }
+
+  function nextStatus(status){
+    const flow = ["pending","preparing","delivering","done"];
+    const idx = flow.indexOf(status);
+    if (idx < 0 || idx === flow.length - 1) return "done";
+    return flow[idx + 1];
+  }
+
+  async function loadData(){
+    allShops = await shops.all();
+    allOrders = await orders.all();
+    renderAll();
+  }
+
+  function renderAll(){
+    renderCategories();
+    renderShops();
+    renderCart();
+    renderOrders();
+    renderStats();
+  }
+
+  function renderStats(){
+    els.statShops.textContent = allShops.length;
+    els.statOrders.textContent = allOrders.length;
+    els.statCart.textContent = cartCount();
+
+    const spent = allOrders
+      .filter(o => o.status === "done")
+      .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+    els.statSpent.textContent = money(spent);
+  }
+
+  function renderCategories(){
+    const current = els.categorySelect.value;
+    const cats = [...new Set(allShops.map(s => s.category).filter(Boolean))].sort();
+
+    els.categorySelect.innerHTML =
+      '<option value="">全部料理</option>' +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+
+    if (cats.includes(current)) els.categorySelect.value = current;
+  }
+
+  function getFilteredShops(){
+    const keyword = els.searchInput.value.trim().toLowerCase();
+    const category = els.categorySelect.value;
+    const sort = els.sortSelect.value;
+
+    let list = allShops.filter(shop => {
+      const hay = [
+        shop.name,
+        shop.category,
+        shop.description,
+        ...(shop.tags || [])
+      ].join(" ").toLowerCase();
+
+      return (!keyword || hay.includes(keyword)) &&
+             (!category || shop.category === category);
+    });
+
+    list.sort((a,b) => {
+      if (sort === "fee") return Number(a.deliveryFee) - Number(b.deliveryFee);
+      if (sort === "time") return Number(a.eta) - Number(b.eta);
+      if (sort === "name") return String(a.name).localeCompare(String(b.name),"zh-Hant");
+      return Number(b.rating) - Number(a.rating);
+    });
+
+    return list;
+  }
+
+  function renderShops(){
+    const list = getFilteredShops();
+    els.shopCount.textContent = `${list.length} 間商家`;
+
+    if (!list.length){
+      els.shopList.innerHTML = `<div class="empty" style="grid-column:1/-1">沒有符合條件的商家。</div>`;
+      return;
+    }
+
+    els.shopList.innerHTML = list.map(shop => `
+      <article class="shop-card">
+        <div class="shop-cover">
+          <div class="cover-title">${esc(shop.name)}</div>
+          <div class="cover-code">${esc(shop.category)}</div>
+        </div>
+        <div class="shop-body">
+          <div class="shop-meta">
+            <span class="tag active">評分 ${esc(shop.rating)}</span>
+            <span class="tag">${esc(shop.eta)} 分鐘</span>
+            <span class="tag">外送 ${money(shop.deliveryFee)}</span>
+          </div>
+          <p class="shop-desc">${esc(shop.description)}</p>
+          <div class="tag-row">
+            ${(shop.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("")}
+          </div>
+          <div class="shop-footer" style="margin-top:14px">
+            <span class="price-note">${shop.menu?.length || 0} 項測試餐點</span>
+            <button class="btn primary" data-open-shop="${esc(shop.id)}">看菜單</button>
+          </div>
+        </div>
+      </article>
+    `).join("");
+
+    document.querySelectorAll("[data-open-shop]").forEach(btn => {
+      btn.addEventListener("click", () => openShop(btn.dataset.openShop));
+    });
+  }
+
+  function openShop(id){
+    const shop = allShops.find(s => s.id === id);
+    if (!shop) return;
+
+    currentShop = shop;
+    els.drawerTitle.textContent = shop.name;
+    els.drawerMeta.textContent = `${shop.category} · 評分 ${shop.rating} · 約 ${shop.eta} 分鐘 · 外送 ${money(shop.deliveryFee)}`;
+
+    els.menuList.innerHTML = (shop.menu || []).map(item => `
+      <div class="menu-item">
+        <div>
+          <h4>${esc(item.name)}</h4>
+          <p>${esc(item.desc)}</p>
+        </div>
+        <div>
+          <div class="menu-price">${money(item.price)}</div>
+          <button class="btn soft" data-add-item="${esc(item.id)}">加入</button>
+        </div>
+      </div>
+    `).join("");
+
+    document.querySelectorAll("[data-add-item]").forEach(btn => {
+      btn.addEventListener("click", () => addToCart(shop, btn.dataset.addItem));
+    });
+
+    els.drawer.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDrawer(){
+    els.drawer.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  function addToCart(shop, itemId){
+    if (cart.length && currentShop && currentShop.id !== shop.id){
+      const ok = confirm("購物車已有其他商家的餐點。要清空並改點這間嗎？");
+      if (!ok) return;
+      cart = [];
+    }
+
+    currentShop = shop;
+    const item = (shop.menu || []).find(m => m.id === itemId);
+    if (!item) return;
+
+    const existing = cart.find(x => x.id === item.id);
+    if (existing) existing.qty += 1;
+    else cart.push({ id:item.id, name:item.name, price:Number(item.price), qty:1 });
+
+    renderCart();
+    renderStats();
+    toast(`已加入：${item.name}`);
+  }
+
+  function changeQty(itemId, delta){
+    const item = cart.find(x => x.id === itemId);
+    if (!item) return;
+
+    item.qty += delta;
+    if (item.qty <= 0) cart = cart.filter(x => x.id !== itemId);
+
+    if (!cart.length) currentShop = null;
+
+    renderCart();
+    renderStats();
+  }
+
+  function renderCart(){
+    els.cartShopName.textContent = currentShop ? currentShop.name : "尚未選擇商家";
+
+    if (!cart.length){
+      els.cartList.innerHTML = `<div class="empty">購物車是空的。</div>`;
+    }else{
+      els.cartList.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div class="cart-item-top">
+            <strong>${esc(item.name)}</strong>
+            <strong>${money(item.price * item.qty)}</strong>
+          </div>
+          <div class="qty">
+            <button data-qty-minus="${esc(item.id)}">−</button>
+            <span>${item.qty}</span>
+            <button data-qty-plus="${esc(item.id)}">＋</button>
+            <span class="muted small">${money(item.price)} / 份</span>
+          </div>
+        </div>
+      `).join("");
+
+      document.querySelectorAll("[data-qty-minus]").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(btn.dataset.qtyMinus, -1));
+      });
+      document.querySelectorAll("[data-qty-plus]").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(btn.dataset.qtyPlus, 1));
+      });
+    }
+
+    const sub = cartSubtotal();
+    const fee = getCurrentFee();
+    els.subtotal.textContent = money(sub);
+    els.deliveryFee.textContent = money(fee);
+    els.grandTotal.textContent = money(sub + fee);
+    els.checkoutBtn.disabled = !cart.length;
+  }
+
+  async function checkout(){
+    if (!cart.length || !currentShop) return;
+
+    const now = new Date();
+    const order = {
+      shopId: currentShop.id,
+      shopName: currentShop.name,
+      items: cart.map(x => ({...x})),
+      subtotal: cartSubtotal(),
+      deliveryFee: getCurrentFee(),
+      total: cartSubtotal() + getCurrentFee(),
+      status: "pending",
+      placedAt: now.toISOString()
+    };
+
+    await orders.add(order);
+    cart = [];
+    currentShop = null;
+    closeDrawer();
+    await loadData();
+    toast("假訂單已送出");
+  }
+
+  function renderOrders(){
+    const list = [...allOrders].sort((a,b) =>
+      String(b.placedAt || b.createdAt || "").localeCompare(String(a.placedAt || a.createdAt || ""))
+    );
+
+    if (!list.length){
+      els.orderList.innerHTML = `<div class="empty">還沒有訂單。</div>`;
+      return;
+    }
+
+    els.orderList.innerHTML = list.map(order => {
+      const when = new Date(order.placedAt || order.createdAt || Date.now());
+      const items = (order.items || []).map(i => `${esc(i.name)} × ${i.qty}`).join("、");
+      const canAdvance = !["done","cancelled"].includes(order.status);
+
+      return `
+        <article class="order-card">
+          <div class="order-top">
+            <div>
+              <h4 class="order-title">${esc(order.shopName)}</h4>
+              <div class="order-meta small muted" style="margin-top:5px">
+                <span>${when.toLocaleString("zh-TW")}</span>
+                <span>${money(order.total)}</span>
+              </div>
+            </div>
+            <span class="status ${esc(order.status)}">${esc(statusLabel(order.status))}</span>
+          </div>
+          <div class="order-items">${items || "無餐點資料"}</div>
+          <div class="actions">
+            <button class="btn soft" data-next-order="${esc(order.id)}" ${canAdvance ? "" : "disabled"}>
+              下一狀態
+            </button>
+            <button class="btn danger" data-delete-order="${esc(order.id)}">刪除</button>
+          </div>
+        </article>
+      `;
+    }).join("");
+
+    document.querySelectorAll("[data-next-order]").forEach(btn => {
+      btn.addEventListener("click", () => advanceOrder(btn.dataset.nextOrder));
+    });
+    document.querySelectorAll("[data-delete-order]").forEach(btn => {
+      btn.addEventListener("click", () => deleteOrder(btn.dataset.deleteOrder));
+    });
+  }
+
+  async function advanceOrder(id){
+    const order = allOrders.find(o => o.id === id);
+    if (!order) return;
+
+    const status = nextStatus(order.status);
+    await orders.update(id, { status });
+    await loadData();
+    toast(`訂單狀態：${statusLabel(status)}`);
+  }
+
+  async function deleteOrder(id){
+    if (!confirm("刪除這筆假訂單？")) return;
+    await orders.remove(id);
+    await loadData();
+  }
+
+  async function seedShops(){
+    if (allShops.length){
+      const ok = confirm("目前已有商家。要清空後重新載入測試資料嗎？");
+      if (!ok) return;
+      await shops.clear();
+    }
+
+    for (const shop of SAMPLE_SHOPS){
+      await shops.add(shop);
+    }
+
+    await loadData();
+    toast("測試商家已載入");
+  }
+
+  async function clearOrders(){
+    if (!allOrders.length) return;
+    if (!confirm("清除所有本機訂單？")) return;
+    await orders.clear();
+    await loadData();
+  }
+
+  function clearCart(){
+    cart = [];
+    currentShop = null;
+    renderCart();
+    renderStats();
+  }
+
+  function resetFilters(){
+    els.searchInput.value = "";
+    els.categorySelect.value = "";
+    els.sortSelect.value = "rating";
+    renderShops();
+  }
+
+  els.searchInput.addEventListener("input", renderShops);
+  els.categorySelect.addEventListener("change", renderShops);
+  els.sortSelect.addEventListener("change", renderShops);
+  els.seedBtn.addEventListener("click", seedShops);
+  els.resetFiltersBtn.addEventListener("click", resetFilters);
+  els.clearOrdersBtn.addEventListener("click", clearOrders);
+  els.clearCartBtn.addEventListener("click", clearCart);
+  els.checkoutBtn.addEventListener("click", checkout);
+  els.closeDrawerBtn.addEventListener("click", closeDrawer);
+  els.drawerBackdrop.addEventListener("click", closeDrawer);
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeDrawer();
+  });
+
+  loadData().catch(err => {
+    console.error(err);
+    alert("初始化失敗，請查看 Console。");
+  });
+})();
+</script>
+</body>
+</html>
