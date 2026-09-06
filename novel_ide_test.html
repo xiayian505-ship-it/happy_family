@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novel IDE Local Test｜FictionData CDN</title>
+<style>
+:root{
+  --bg:#eef2f1;
+  --surface:#ffffff;
+  --surface-soft:#f7f9f8;
+  --text:#1f2927;
+  --muted:#6f7d79;
+  --line:#d7dfdc;
+  --accent:#4f746a;
+  --accent-soft:#e6eeeb;
+  --danger:#9b5151;
+  --warning:#916d2f;
+  --success:#4f785c;
+  --shadow:0 12px 34px rgba(31,41,39,.08);
+  --radius:20px;
+  --content:1280px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,"Microsoft JhengHei","Noto Sans TC",sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+textarea{resize:vertical}
+a{color:inherit}
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:30;
+  background:rgba(238,242,241,.94);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:var(--content);
+  margin:auto;
+  min-height:64px;
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+}
+.brand-mark{
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  background:var(--accent);
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 11px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--muted);
+  font-size:12px;
+}
+main{
+  max-width:var(--content);
+  margin:auto;
+  padding:22px 16px 72px;
+}
+.hero{
+  display:grid;
+  grid-template-columns:1.3fr .7fr;
+  gap:18px;
+  margin-bottom:18px;
+}
+.hero-card,.panel,.stat,.stage-card,.project-card,.modal-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.hero-card{
+  border-radius:28px;
+  padding:28px;
+}
+.eyebrow{
+  margin:0 0 8px;
+  color:var(--accent);
+  font-size:12px;
+  letter-spacing:.13em;
+  font-weight:800;
+  text-transform:uppercase;
+}
+h1{
+  margin:0;
+  font-size:clamp(30px,5vw,54px);
+  line-height:1.06;
+  letter-spacing:-.035em;
+}
+.hero-copy{
+  margin:14px 0 0;
+  color:var(--muted);
+  line-height:1.8;
+  max-width:760px;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.stat{
+  border-radius:22px;
+  padding:18px;
+  min-height:112px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.stat strong{font-size:30px}
+.stat span{color:var(--muted);font-size:13px}
+.layout{
+  display:grid;
+  grid-template-columns:290px minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+.sidebar{
+  position:sticky;
+  top:84px;
+  display:grid;
+  gap:14px;
+}
+.panel{
+  border-radius:22px;
+  padding:16px;
+}
+.panel h2,.panel h3{margin:0}
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+.btn{
+  min-height:39px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:9px 12px;
+  background:#fff;
+  color:var(--text);
+}
+.btn:hover{background:var(--surface-soft)}
+.btn.primary{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+}
+.btn.soft{
+  background:var(--accent-soft);
+  color:#315d51;
+  border-color:#ccdcd6;
+}
+.btn.danger{
+  color:var(--danger);
+  border-color:#e5cccc;
+}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.field{
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  border-radius:11px;
+  padding:9px 11px;
+  outline:none;
+}
+.field:focus{border-color:var(--accent)}
+.label{
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:12px;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.full{grid-column:1/-1}
+.project-list{
+  display:grid;
+  gap:8px;
+  max-height:380px;
+  overflow:auto;
+}
+.project-card{
+  box-shadow:none;
+  border-radius:14px;
+  padding:11px;
+  cursor:pointer;
+}
+.project-card.active{
+  border-color:#b8cec6;
+  background:var(--accent-soft);
+}
+.project-card strong{
+  display:block;
+  margin-bottom:4px;
+}
+.progress{
+  height:9px;
+  background:#edf1ef;
+  border-radius:999px;
+  overflow:hidden;
+}
+.progress > span{
+  display:block;
+  height:100%;
+  background:var(--accent);
+  width:0;
+}
+.stage-nav{
+  display:grid;
+  gap:7px;
+}
+.stage-nav button{
+  width:100%;
+  text-align:left;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:11px;
+  padding:10px 11px;
+  color:var(--text);
+}
+.stage-nav button.active{
+  border-color:#b8cec6;
+  background:var(--accent-soft);
+}
+.stage-nav button.done{
+  border-color:#cfe0d3;
+}
+.workspace{
+  display:grid;
+  gap:16px;
+}
+.workspace-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+}
+.workspace-head h2{
+  margin:0;
+  font-size:26px;
+}
+.stage-card{
+  border-radius:20px;
+  padding:18px;
+  box-shadow:none;
+}
+.stage-card h3{
+  margin:0 0 6px;
+}
+.stage-card p{
+  color:var(--muted);
+  line-height:1.65;
+}
+.rule{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  margin-top:10px;
+  background:var(--surface-soft);
+}
+.rule-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+.rule-title{
+  font-weight:700;
+  line-height:1.5;
+}
+.rule-code{
+  font-size:11px;
+  color:var(--muted);
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:999px;
+  padding:4px 7px;
+  white-space:nowrap;
+}
+.checkrow{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  margin-top:8px;
+}
+.checkrow input{margin-top:3px}
+.note-area{
+  margin-top:10px;
+}
+.inline-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.kpi{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
+}
+.kpi strong{font-size:22px}
+.listbox{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+.list-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+}
+.list-item .field{min-height:38px}
+.qa-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.status-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--muted);
+}
+.status-chip.ok{
+  background:#e8f0ea;
+  border-color:#d1e0d4;
+  color:#45664e;
+}
+.status-chip.warn{
+  background:#f4efe4;
+  border-color:#e6d9bc;
+  color:#775c25;
+}
+.status-chip.bad{
+  background:#f4e8e8;
+  border-color:#e5cccc;
+  color:#8a4949;
+}
+.placeholder{
+  border:1px dashed #bfcac6;
+  border-radius:18px;
+  padding:28px;
+  color:var(--muted);
+  text-align:center;
+}
+.notice{
+  border:1px solid #d4dedb;
+  background:#f8faf9;
+  border-radius:14px;
+  padding:12px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.7;
+}
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:90;
+}
+.modal.open{display:block}
+.modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:#1d282566;
+}
+.modal-card{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:min(720px,calc(100% - 24px));
+  max-height:90vh;
+  overflow:auto;
+  border-radius:22px;
+  padding:20px;
+}
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:12px;
+  margin-bottom:14px;
+}
+.modal-head h2{margin:0}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  z-index:120;
+  transform:translateX(-50%) translateY(18px);
+  opacity:0;
+  pointer-events:none;
+  background:#1f2927;
+  color:#fff;
+  border-radius:999px;
+  padding:10px 14px;
+  font-size:13px;
+  transition:.18s ease;
+}
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr}
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static}
+  .project-list{max-height:none}
+}
+@media (max-width:720px){
+  main{padding:16px 12px 54px}
+  .topbar-inner{padding:10px 12px}
+  .hero-card{padding:22px}
+  .form-grid,.inline-grid,.qa-summary{grid-template-columns:1fr}
+  .workspace-head{flex-direction:column}
+  .actions{width:100%}
+  .actions .btn{flex:1}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">IDE</div>
+      <span>小說構思 IDE</span>
+    </div>
+    <div class="pill">FictionData CDN 單機版</div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-card">
+      <p class="eyebrow">Novel Design Environment</p>
+      <h1>把構思手冊變成可操作流程。</h1>
+      <p class="hero-copy">
+        這不是 AI 自動寫小說，而是把 v1.3 手冊中的 PRD、OOP、High Coupling、Oulipo、草稿規格、檢核與 QA
+        盡量轉成可儲存、可迭代、可勾選、可回查的單機 IDE。
+      </p>
+    </div>
+    <div class="stats">
+      <div class="stat"><strong id="statProjects">0</strong><span>專案數</span></div>
+      <div class="stat"><strong id="statProgress">0%</strong><span>目前完成度</span></div>
+      <div class="stat"><strong id="statIllegal">0</strong><span>Illegal 項目</span></div>
+      <div class="stat"><strong id="statModules">0</strong><span>抽離模組</span></div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <div class="section-title">
+          <h3>專案</h3>
+          <button class="btn primary" id="newProjectBtn">新增</button>
+        </div>
+        <div id="projectList" class="project-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <h3>流程</h3>
+          <span class="small muted" id="stageProgressText">0 / 9</span>
+        </div>
+        <div class="progress"><span id="stageProgressBar"></span></div>
+        <div id="stageNav" class="stage-nav" style="margin-top:12px"></div>
+      </section>
+
+      <section class="panel">
+        <div class="actions">
+          <button class="btn soft" id="exportBtn">匯出 JSON</button>
+          <button class="btn danger" id="deleteProjectBtn">刪除專案</button>
+        </div>
+        <div class="notice" style="margin-top:12px">
+          namespace：<strong>novel_ide_test</strong><br>
+          collections：<strong>projects</strong>、<strong>modules</strong>
+        </div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <div id="emptyState" class="placeholder">
+        先新增一個小說專案，或載入測試專案。
+        <div class="actions" style="justify-content:center;margin-top:12px">
+          <button class="btn soft" id="seedBtn">載入測試專案</button>
+        </div>
+      </div>
+
+      <div id="workspaceContent" style="display:none">
+        <div class="workspace-head">
+          <div>
+            <p class="eyebrow" id="stageEyebrow">Stage 0</p>
+            <h2 id="projectTitle">未命名專案</h2>
+            <div class="muted small" id="projectMeta"></div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="editProjectBtn">專案設定</button>
+            <button class="btn primary" id="saveStageBtn">儲存本階段</button>
+          </div>
+        </div>
+
+        <div id="stageContent"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="modal" id="projectModal">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">Project</p>
+        <h2 id="projectModalTitle">新增專案</h2>
+      </div>
+      <button class="btn" data-close-modal>關閉</button>
+    </div>
+    <form id="projectForm">
+      <div class="form-grid">
+        <label class="label">
+          專案名稱
+          <input class="field" id="fTitle" required>
+        </label>
+        <label class="label">
+          暫定書名 / Private Key
+          <input class="field" id="fPrivateKey">
+        </label>
+        <label class="label">
+          大類型
+          <input class="field" id="fMainGenre" placeholder="例如：BL、懸疑、奇幻">
+        </label>
+        <label class="label">
+          目標字數
+          <input class="field" id="fWordTarget" type="number" min="0">
+        </label>
+        <label class="label full">
+          模糊靈感
+          <textarea class="field" id="fIdea" rows="4"></textarea>
+        </label>
+        <label class="label full">
+          一段話主軸
+          <textarea class="field" id="fCorePlot" rows="4"></textarea>
+        </label>
+      </div>
+      <div class="actions" style="justify-content:flex-end;margin-top:16px">
+        <button type="submit" class="btn primary">儲存專案</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://lib.stillnessbyslowly.com/fiction/Fiction_data.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  if (!window.FictionData) {
+    alert("FictionData CDN 載入失敗，請查看 Console。");
+    return;
+  }
+
+  const db = FictionData.create({ namespace:"novel_ide_test" });
+  const projects = db.collection("projects");
+  const modules = db.collection("modules");
+
+  const STAGES = [
+    {id:"0", name:"PRD 前置", title:"0. 決定 PRD"},
+    {id:"1", name:"OOP 核心", title:"1. OOP + System Specification"},
+    {id:"2", name:"命名", title:"2. Private Key / Primary Key"},
+    {id:"3", name:"Oulipo", title:"3. 潛在文學限制"},
+    {id:"4", name:"閱讀體驗", title:"4. High Coupling / 閱讀承諾"},
+    {id:"5", name:"草稿執行", title:"5. 寫作規格與草稿"},
+    {id:"6", name:"特殊情況", title:"6. 角色反噬處理"},
+    {id:"7", name:"QA", title:"7. 完稿後 QA 驗收"},
+    {id:"8", name:"公開前", title:"8. 公開前檢查"}
+  ];
+
+  const RULES = {
+    "0":[
+      ["0-1","依據模糊靈感判斷大類型"],
+      ["0-2","發想可 High Coupling 的子類型，盡量多以保留刪除空間"],
+      ["0-3","用一段話寫清主軸，確保故事完整不偏移"],
+      ["0-4","若出現 6-1-2，可視情況調整 PRD 及 5-2、5-3"]
+    ],
+    "1":[
+      ["1-1-1-1","定義 Class"],
+      ["1-1-1-2","Instantiation"],
+      ["1-1-1-3","Method"],
+      ["1-1-1-4","Encapsulation"],
+      ["1-1-1-5","Inheritance / override"],
+      ["1-1-1-6","Polymorphism"],
+      ["1-1-1-7","Interface"],
+      ["1-2-1","執行 High Coupling，確保閱讀體驗"],
+      ["1-2-2","大類別至少三種、跨類型至少三種、敘事手法至少兩種、元素至少六種"],
+      ["1-2-3","設定 parameter，確保可執行 Inheritance / override"],
+      ["1-2-4","確立 Kernel 與 GUI，且不可混淆"],
+      ["1-2-5","交付 PRD"]
+    ],
+    "2":[
+      ["2-1","命名強制對應 PRD"],
+      ["2-2","命名作為 Primary Key，並與 Private Key 兼容"]
+    ],
+    "3":[
+      ["3-1","決定 Oulipo 使用表層或底層"],
+      ["3-2","本作 Oulipo 不可與其他作品完全重複"]
+    ],
+    "4":[
+      ["4-1","決定 High Coupling 標籤"],
+      ["4-1-1","大類別不能低於三種，元素至少六種"],
+      ["4-2","確立閱讀定位"],
+      ["4-3","查核 PRD 是否完善"],
+      ["4-3-1","Illegal 項目當髒資料處理並重構"],
+      ["4-3-2","喜歡但 Illegal 的內容抽離保留"]
+    ],
+    "5":[
+      ["5-1-1","決定篇幅：短篇 8 萬以下 / 仿單行本 8–12 萬"],
+      ["5-1-1-2","決定總字數，可調整"],
+      ["5-1-1-3","決定章節數不可改；各章字數可調整"],
+      ["5-1-1-3-1","決定章節構成方式，不可改"],
+      ["5-2","決定文風，不可改，Oulipo 除外"],
+      ["5-2-1","依 PRD 選擇文風"],
+      ["5-2-2","依文風選敘事手法"],
+      ["5-2-3","選擇敘事視角"],
+      ["5-2-4","消滅作者聲音"],
+      ["5-2-4-1","角色對話邏輯視情況錯位"],
+      ["5-2-4-2","敘事視角絕對固定"],
+      ["5-2-4-3","多視角時只在節點切換"],
+      ["5-2-5","筆觸、用字、修辭比例"],
+      ["5-3-1","記錄伏筆埋設、收線、不收、可刪、可追加位置"],
+      ["5-3-2","劇情核心重點先行"],
+      ["5-4","潤飾草稿"],
+      ["5-4-1","若未寫完先公開"],
+      ["5-4-2","不影響閱讀的錯字贅字可延後修"],
+      ["5-4-3","影響後續伏筆者須立即修正"],
+      ["5-5","核對前置作業與草稿 Point"],
+      ["5-5-1","每完稿一階段必須檢核一次"],
+      ["5-5-1-2","查核 PRD、Private Key、5-2/5-3、1-1、Oulipo"],
+      ["5-5-1-2-3","不符合者當髒資料刪除"],
+      ["5-5-1-2-4","不符合但喜歡者抽離"]
+    ],
+    "6":[
+      ["6-1","偵測角色是否產生自我"],
+      ["6-1-2","不違反 1-1 時聽從角色聲音"],
+      ["6-1-3","違反 1-1 時當髒資料捨棄"],
+      ["6-1-4","違反 1-1 但很喜歡時抽離"]
+    ],
+    "7":[
+      ["7-1","執行重點 QA 驗收並另外記錄"],
+      ["7-1-1","驗收 Oulipo 限制"],
+      ["7-1-2","驗收 Private Key + Primary Key"],
+      ["7-1-3","驗收文風與敘事"],
+      ["7-1-4","依 PRD 與 5-5 執行細項 QA"],
+      ["7-1-4-1","少數 Illegal 於潤稿處理"],
+      ["7-1-4-2","大量 Illegal 時判斷整本修稿或放棄"],
+      ["7-2-1","公開 QA：Oulipo、命名、文風敘事"],
+      ["7-2-2","其他 QA 詳細記錄保留不公開"]
+    ],
+    "8":[
+      ["8-1","完成目標優先"],
+      ["8-2","若定位不明再考慮 BRD / MRD / SWOT"],
+      ["8-2-1","必要時寫 BRD、MRD，搭配 PRD"],
+      ["8-2-2","SWOT 分析完稿，供下一本修正"]
+    ]
+  };
+
+  const DEFAULT_STAGE_DATA = () => ({
+    "0":{subgenres:[], notes:""},
+    "1":{classes:[], interfaces:[], authorization:"", kernel:"", gui:"", parameters:"", prd:"", notes:""},
+    "2":{privateKey:"", primaryKey:"", namingLogic:"", notes:""},
+    "3":{oulipoName:"", layer:"", rule:"", uniqueness:"", notes:""},
+    "4":{bigGenres:[], crossGenres:[], narrativeMethods:[], elements:[], readingPosition:"", illegal:[], notes:""},
+    "5":{lengthType:"", totalWords:"", chapterCount:"", chapterStructure:"", style:"", narrativeMethod:"", pov:"", authorVoicePlan:"", ratio:"9:1", foreshadowing:[], draftNotes:"", notes:""},
+    "6":{events:[], notes:""},
+    "7":{qaIllegalCount:0, publicQa:"", privateQa:"", result:"", notes:""},
+    "8":{brd:"", mrd:"", swot:"", publicationNotes:""}
+  });
+
+  let allProjects = [];
+  let allModules = [];
+  let currentProject = null;
+  let currentStage = "0";
+  let editingProject = null;
+
+  const $ = s => document.querySelector(s);
+  const els = {
+    statProjects:$("#statProjects"),
+    statProgress:$("#statProgress"),
+    statIllegal:$("#statIllegal"),
+    statModules:$("#statModules"),
+    projectList:$("#projectList"),
+    stageNav:$("#stageNav"),
+    stageProgressText:$("#stageProgressText"),
+    stageProgressBar:$("#stageProgressBar"),
+    emptyState:$("#emptyState"),
+    workspaceContent:$("#workspaceContent"),
+    projectTitle:$("#projectTitle"),
+    projectMeta:$("#projectMeta"),
+    stageEyebrow:$("#stageEyebrow"),
+    stageContent:$("#stageContent"),
+    newProjectBtn:$("#newProjectBtn"),
+    editProjectBtn:$("#editProjectBtn"),
+    saveStageBtn:$("#saveStageBtn"),
+    deleteProjectBtn:$("#deleteProjectBtn"),
+    exportBtn:$("#exportBtn"),
+    seedBtn:$("#seedBtn"),
+    projectModal:$("#projectModal"),
+    projectModalTitle:$("#projectModalTitle"),
+    projectForm:$("#projectForm"),
+    fTitle:$("#fTitle"),
+    fPrivateKey:$("#fPrivateKey"),
+    fMainGenre:$("#fMainGenre"),
+    fWordTarget:$("#fWordTarget"),
+    fIdea:$("#fIdea"),
+    fCorePlot:$("#fCorePlot"),
+    toast:$("#toast")
+  };
+
+  const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function toast(text){
+    els.toast.textContent=text;
+    els.toast.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer=setTimeout(()=>els.toast.classList.remove("show"),1600);
+  }
+
+  function ensureProjectShape(p){
+    return {
+      ...p,
+      stageData:{...DEFAULT_STAGE_DATA(), ...(p.stageData||{})},
+      checks:p.checks||{},
+      completedStages:p.completedStages||[],
+      status:p.status||"planning"
+    };
+  }
+
+  async function load(){
+    allProjects=(await projects.all()).map(ensureProjectShape);
+    allModules=await modules.all();
+    if(currentProject){
+      currentProject=allProjects.find(p=>p.id===currentProject.id)||null;
+    }
+    if(!currentProject && allProjects.length) currentProject=allProjects[0];
+    renderAll();
+  }
+
+  function projectProgress(p){
+    const total=Object.values(RULES).flat().length;
+    const done=Object.values(p.checks||{}).filter(Boolean).length;
+    return total ? Math.round(done/total*100) : 0;
+  }
+
+  function illegalCount(p){
+    const stage4=p.stageData?.["4"]?.illegal||[];
+    const qa=Number(p.stageData?.["7"]?.qaIllegalCount||0);
+    return stage4.length+qa;
+  }
+
+  function renderStats(){
+    els.statProjects.textContent=allProjects.length;
+    els.statProgress.textContent=currentProject ? projectProgress(currentProject)+"%" : "0%";
+    els.statIllegal.textContent=currentProject ? illegalCount(currentProject) : 0;
+    els.statModules.textContent=currentProject ? allModules.filter(m=>m.projectId===currentProject.id).length : 0;
+  }
+
+  function renderProjects(){
+    if(!allProjects.length){
+      els.projectList.innerHTML='<div class="small muted">尚無專案。</div>';
+      return;
+    }
+    els.projectList.innerHTML=allProjects.map(p=>`
+      <div class="project-card ${currentProject?.id===p.id?"active":""}" data-project="${esc(p.id)}">
+        <strong>${esc(p.title)}</strong>
+        <div class="small muted">${esc(p.mainGenre||"未分類")} · ${projectProgress(p)}%</div>
+      </div>
+    `).join("");
+    document.querySelectorAll("[data-project]").forEach(el=>{
+      el.addEventListener("click",()=>{
+        currentProject=allProjects.find(p=>p.id===el.dataset.project)||null;
+        currentStage="0";
+        renderAll();
+      });
+    });
+  }
+
+  function renderStageNav(){
+    els.stageNav.innerHTML=STAGES.map(s=>`
+      <button class="${currentStage===s.id?"active":""} ${currentProject?.completedStages?.includes(s.id)?"done":""}" data-stage="${s.id}">
+        ${s.id}. ${esc(s.name)}
+      </button>
+    `).join("");
+    document.querySelectorAll("[data-stage]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        saveStageToMemory();
+        currentStage=btn.dataset.stage;
+        renderWorkspace();
+        renderStageNav();
+      });
+    });
+    const done=currentProject?.completedStages?.length||0;
+    els.stageProgressText.textContent=`${done} / ${STAGES.length}`;
+    els.stageProgressBar.style.width=`${Math.round(done/STAGES.length*100)}%`;
+  }
+
+  function ruleList(stageId){
+    const p=currentProject;
+    return (RULES[stageId]||[]).map(([code,title])=>`
+      <div class="rule">
+        <div class="rule-head">
+          <div class="rule-title">${esc(title)}</div>
+          <span class="rule-code">${code}</span>
+        </div>
+        <label class="checkrow">
+          <input type="checkbox" data-check="${code}" ${p.checks?.[code]?"checked":""}>
+          <span class="small muted">已完成 / 已確認</span>
+        </label>
+      </div>
+    `).join("");
+  }
+
+  function listEditor(key, items, placeholder){
+    return `
+      <div class="listbox" data-list="${key}">
+        ${(items||[]).map((v,i)=>`
+          <div class="list-item">
+            <input class="field" value="${esc(v)}" data-list-input="${key}" data-index="${i}">
+            <button class="btn danger" type="button" data-remove-item="${key}" data-index="${i}">刪除</button>
+          </div>
+        `).join("")}
+        <button class="btn soft" type="button" data-add-item="${key}" data-placeholder="${esc(placeholder)}">新增一項</button>
+      </div>
+    `;
+  }
+
+  function stageHtml(stage){
+    const d=currentProject.stageData[stage];
+    if(stage==="0") return `
+      <div class="stage-card">
+        <h3>PRD 前置工作</h3>
+        <p>把模糊靈感壓縮成可交付的主軸，並先保留足夠的子類型候選。</p>
+        ${ruleList(stage)}
+        <div class="note-area">
+          <label class="label">High Coupling 子類型候選
+            ${listEditor("subgenres",d.subgenres,"例如：懸疑")}
+          </label>
+        </div>
+        <label class="label" style="margin-top:12px">本階段備註
+          <textarea class="field" rows="5" data-field="notes">${esc(d.notes)}</textarea>
+        </label>
+      </div>`;
+
+    if(stage==="1") return `
+      <div class="stage-card">
+        <h3>OOP / System Specification</h3>
+        <p>把小說核心拆成 Class、Interface、Authorization、Kernel、GUI 與可 override 的 parameter。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">Authorization
+            <textarea class="field" rows="4" data-field="authorization">${esc(d.authorization)}</textarea>
+          </label>
+          <label class="label">Parameters
+            <textarea class="field" rows="4" data-field="parameters">${esc(d.parameters)}</textarea>
+          </label>
+          <label class="label">Kernel
+            <textarea class="field" rows="4" data-field="kernel">${esc(d.kernel)}</textarea>
+          </label>
+          <label class="label">GUI
+            <textarea class="field" rows="4" data-field="gui">${esc(d.gui)}</textarea>
+          </label>
+          <label class="label full">交付 PRD
+            <textarea class="field" rows="8" data-field="prd">${esc(d.prd)}</textarea>
+          </label>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">Classes ${listEditor("classes",d.classes,"例如：主角 Class")}</label>
+          <label class="label">Interfaces ${listEditor("interfaces",d.interfaces,"例如：信任 Interface")}</label>
+        </div>
+      </div>`;
+
+    if(stage==="2") return `
+      <div class="stage-card">
+        <h3>Private Key / Primary Key</h3>
+        <p>將命名與 PRD 綁定，避免角色或作品核心重複。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">Private Key
+            <input class="field" data-field="privateKey" value="${esc(d.privateKey)}">
+          </label>
+          <label class="label">Primary Key
+            <input class="field" data-field="primaryKey" value="${esc(d.primaryKey)}">
+          </label>
+          <label class="label full">命名邏輯
+            <textarea class="field" rows="6" data-field="namingLogic">${esc(d.namingLogic)}</textarea>
+          </label>
+        </div>
+      </div>`;
+
+    if(stage==="3") return `
+      <div class="stage-card">
+        <h3>Oulipo 限制設計</h3>
+        <p>記錄這一本玩的限制、放在表層或底層，以及與既有作品的差異。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">Oulipo 名稱 / 類型
+            <input class="field" data-field="oulipoName" value="${esc(d.oulipoName)}">
+          </label>
+          <label class="label">作用層
+            <select class="field" data-field="layer">
+              <option value="" ${!d.layer?"selected":""}>未決定</option>
+              <option value="表層" ${d.layer==="表層"?"selected":""}>表層</option>
+              <option value="底層" ${d.layer==="底層"?"selected":""}>底層</option>
+            </select>
+          </label>
+          <label class="label full">限制規則
+            <textarea class="field" rows="6" data-field="rule">${esc(d.rule)}</textarea>
+          </label>
+          <label class="label full">不重複證明 / 與其他作品差異
+            <textarea class="field" rows="5" data-field="uniqueness">${esc(d.uniqueness)}</textarea>
+          </label>
+        </div>
+      </div>`;
+
+    if(stage==="4") return `
+      <div class="stage-card">
+        <h3>閱讀承諾 / High Coupling</h3>
+        <p>這裡專門記錄大類別、跨類型、敘事手法、元素與 Illegal 項目。</p>
+        ${ruleList(stage)}
+        <div class="qa-summary" style="margin-top:14px">
+          <div class="kpi"><strong>${(d.bigGenres||[]).length}</strong><div class="small muted">大類別 / 目標 ≥ 3</div></div>
+          <div class="kpi"><strong>${(d.crossGenres||[]).length}</strong><div class="small muted">跨類型 / 建議 ≥ 3</div></div>
+          <div class="kpi"><strong>${(d.narrativeMethods||[]).length}</strong><div class="small muted">敘事手法 / 建議 ≥ 2</div></div>
+          <div class="kpi"><strong>${(d.elements||[]).length}</strong><div class="small muted">元素 / 目標 ≥ 6</div></div>
+        </div>
+        <div class="form-grid">
+          <label class="label">大類別 ${listEditor("bigGenres",d.bigGenres,"新增大類別")}</label>
+          <label class="label">跨類型 ${listEditor("crossGenres",d.crossGenres,"新增跨類型")}</label>
+          <label class="label">敘事手法 ${listEditor("narrativeMethods",d.narrativeMethods,"新增敘事手法")}</label>
+          <label class="label">元素 ${listEditor("elements",d.elements,"新增元素")}</label>
+          <label class="label full">閱讀定位
+            <textarea class="field" rows="5" data-field="readingPosition">${esc(d.readingPosition)}</textarea>
+          </label>
+          <label class="label full">Illegal / 髒資料候選 ${listEditor("illegal",d.illegal,"新增 Illegal 項目")}</label>
+        </div>
+      </div>`;
+
+    if(stage==="5") return `
+      <div class="stage-card">
+        <h3>草稿規格與執行</h3>
+        <p>鎖定不可變項，保留可調整項，並把伏筆和草稿執行記錄集中在這裡。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">篇幅
+            <select class="field" data-field="lengthType">
+              <option value="" ${!d.lengthType?"selected":""}>未決定</option>
+              <option value="短篇" ${d.lengthType==="短篇"?"selected":""}>短篇（8 萬以下）</option>
+              <option value="仿單行本" ${d.lengthType==="仿單行本"?"selected":""}>仿單行本（8–12 萬）</option>
+            </select>
+          </label>
+          <label class="label">總字數
+            <input class="field" type="number" data-field="totalWords" value="${esc(d.totalWords)}">
+          </label>
+          <label class="label">章節數
+            <input class="field" type="number" data-field="chapterCount" value="${esc(d.chapterCount)}">
+          </label>
+          <label class="label">章節構成方式
+            <input class="field" data-field="chapterStructure" value="${esc(d.chapterStructure)}">
+          </label>
+          <label class="label">文風
+            <input class="field" data-field="style" value="${esc(d.style)}">
+          </label>
+          <label class="label">敘事手法
+            <input class="field" data-field="narrativeMethod" value="${esc(d.narrativeMethod)}">
+          </label>
+          <label class="label">敘事視角
+            <input class="field" data-field="pov" value="${esc(d.pov)}">
+          </label>
+          <label class="label">精準推進 : 修辭調度
+            <input class="field" data-field="ratio" value="${esc(d.ratio)}">
+          </label>
+          <label class="label full">消滅作者聲音計畫
+            <textarea class="field" rows="5" data-field="authorVoicePlan">${esc(d.authorVoicePlan)}</textarea>
+          </label>
+          <label class="label full">伏筆 / 收線 / 不收 / 可刪 / 可追加位置
+            ${listEditor("foreshadowing",d.foreshadowing,"新增伏筆或收線紀錄")}
+          </label>
+          <label class="label full">草稿執行備註
+            <textarea class="field" rows="7" data-field="draftNotes">${esc(d.draftNotes)}</textarea>
+          </label>
+        </div>
+      </div>`;
+
+    if(stage==="6") return `
+      <div class="stage-card">
+        <h3>角色反噬 / 特殊情況</h3>
+        <p>把「角色自己長出來」的事件留下來，並標記最後採用、刪除或抽離。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label full">角色反噬事件
+            ${listEditor("events",d.events,"例如：角色拒絕原定選擇")}
+          </label>
+          <label class="label full">判斷備註
+            <textarea class="field" rows="6" data-field="notes">${esc(d.notes)}</textarea>
+          </label>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="btn soft" type="button" id="extractModuleBtn">將喜歡但 Illegal 的內容抽離成 Module</button>
+        </div>
+      </div>`;
+
+    if(stage==="7") return `
+      <div class="stage-card">
+        <h3>QA 驗收</h3>
+        <p>重點 QA、Illegal 數量、公開驗收與不公開細節分開記錄。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label">Illegal 數量
+            <input class="field" type="number" min="0" data-field="qaIllegalCount" value="${esc(d.qaIllegalCount)}">
+          </label>
+          <label class="label">QA 結果
+            <select class="field" data-field="result">
+              <option value="" ${!d.result?"selected":""}>未決定</option>
+              <option value="通過" ${d.result==="通過"?"selected":""}>通過</option>
+              <option value="少量修正" ${d.result==="少量修正"?"selected":""}>少量修正</option>
+              <option value="整本修稿" ${d.result==="整本修稿"?"selected":""}>整本修稿</option>
+              <option value="放棄" ${d.result==="放棄"?"selected":""}>放棄</option>
+            </select>
+          </label>
+          <label class="label full">公開 QA
+            <textarea class="field" rows="6" data-field="publicQa" placeholder="Oulipo、命名、文風與敘事">${esc(d.publicQa)}</textarea>
+          </label>
+          <label class="label full">私有 QA
+            <textarea class="field" rows="7" data-field="privateQa">${esc(d.privateQa)}</textarea>
+          </label>
+        </div>
+      </div>`;
+
+    return `
+      <div class="stage-card">
+        <h3>公開前</h3>
+        <p>把 BRD / MRD / SWOT 當成需要時才啟用的附加層，不強迫每一本都做。</p>
+        ${ruleList(stage)}
+        <div class="form-grid" style="margin-top:14px">
+          <label class="label full">BRD
+            <textarea class="field" rows="5" data-field="brd">${esc(d.brd)}</textarea>
+          </label>
+          <label class="label full">MRD
+            <textarea class="field" rows="5" data-field="mrd">${esc(d.mrd)}</textarea>
+          </label>
+          <label class="label full">SWOT
+            <textarea class="field" rows="6" data-field="swot">${esc(d.swot)}</textarea>
+          </label>
+          <label class="label full">公開前備註
+            <textarea class="field" rows="5" data-field="publicationNotes">${esc(d.publicationNotes)}</textarea>
+          </label>
+        </div>
+      </div>`;
+  }
+
+  function bindStageControls(){
+    document.querySelectorAll("[data-check]").forEach(ch=>{
+      ch.addEventListener("change",()=>{
+        currentProject.checks[ch.dataset.check]=ch.checked;
+        renderStats();
+      });
+    });
+
+    document.querySelectorAll("[data-field]").forEach(el=>{
+      el.addEventListener("input",()=>{
+        const key=el.dataset.field;
+        let value=el.value;
+        if(el.type==="number") value=value===""?"":Number(value);
+        currentProject.stageData[currentStage][key]=value;
+        renderStats();
+      });
+    });
+
+    document.querySelectorAll("[data-list-input]").forEach(el=>{
+      el.addEventListener("input",()=>{
+        const key=el.dataset.listInput;
+        const i=Number(el.dataset.index);
+        currentProject.stageData[currentStage][key][i]=el.value;
+      });
+    });
+
+    document.querySelectorAll("[data-add-item]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const key=btn.dataset.addItem;
+        currentProject.stageData[currentStage][key]=currentProject.stageData[currentStage][key]||[];
+        currentProject.stageData[currentStage][key].push("");
+        renderWorkspace();
+      });
+    });
+
+    document.querySelectorAll("[data-remove-item]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const key=btn.dataset.removeItem;
+        const i=Number(btn.dataset.index);
+        currentProject.stageData[currentStage][key].splice(i,1);
+        renderWorkspace();
+      });
+    });
+
+    const extract=$("#extractModuleBtn");
+    if(extract){
+      extract.addEventListener("click",extractModule);
+    }
+  }
+
+  function renderWorkspace(){
+    if(!currentProject){
+      els.emptyState.style.display="block";
+      els.workspaceContent.style.display="none";
+      return;
+    }
+    els.emptyState.style.display="none";
+    els.workspaceContent.style.display="grid";
+    els.projectTitle.textContent=currentProject.title;
+    els.projectMeta.textContent=[
+      currentProject.mainGenre||"未分類",
+      currentProject.privateKey ? `Private Key：${currentProject.privateKey}` : "尚未設定 Private Key",
+      currentProject.wordTarget ? `${Number(currentProject.wordTarget).toLocaleString("zh-TW")} 字` : "未設定目標字數"
+    ].join(" · ");
+    els.stageEyebrow.textContent=`Stage ${currentStage} · ${STAGES.find(s=>s.id===currentStage)?.name||""}`;
+    els.stageContent.innerHTML=stageHtml(currentStage);
+    bindStageControls();
+  }
+
+  function renderAll(){
+    renderProjects();
+    renderStageNav();
+    renderWorkspace();
+    renderStats();
+  }
+
+  function openProjectModal(project=null){
+    editingProject=project;
+    els.projectModalTitle.textContent=project?"專案設定":"新增專案";
+    els.fTitle.value=project?.title||"";
+    els.fPrivateKey.value=project?.privateKey||"";
+    els.fMainGenre.value=project?.mainGenre||"";
+    els.fWordTarget.value=project?.wordTarget||"";
+    els.fIdea.value=project?.idea||"";
+    els.fCorePlot.value=project?.corePlot||"";
+    els.projectModal.classList.add("open");
+  }
+
+  function closeProjectModal(){
+    els.projectModal.classList.remove("open");
+    editingProject=null;
+  }
+
+  async function saveProjectForm(e){
+    e.preventDefault();
+    const payload={
+      title:els.fTitle.value.trim(),
+      privateKey:els.fPrivateKey.value.trim(),
+      mainGenre:els.fMainGenre.value.trim(),
+      wordTarget:els.fWordTarget.value===""?null:Number(els.fWordTarget.value),
+      idea:els.fIdea.value.trim(),
+      corePlot:els.fCorePlot.value.trim()
+    };
+    if(!payload.title) return;
+
+    if(editingProject){
+      await projects.update(editingProject.id,payload);
+      toast("專案設定已更新");
+    }else{
+      const created=await projects.add({
+        ...payload,
+        stageData:DEFAULT_STAGE_DATA(),
+        checks:{},
+        completedStages:[],
+        status:"planning"
+      });
+      currentProject=ensureProjectShape(created);
+      currentStage="0";
+      toast("已建立小說專案");
+    }
+    closeProjectModal();
+    await load();
+  }
+
+  function saveStageToMemory(){
+    if(!currentProject) return;
+  }
+
+  async function saveCurrentStage(){
+    if(!currentProject) return;
+    const doneCodes=(RULES[currentStage]||[]).map(x=>x[0]);
+    const allDone=doneCodes.length>0 && doneCodes.every(code=>currentProject.checks?.[code]);
+
+    const completed=new Set(currentProject.completedStages||[]);
+    if(allDone) completed.add(currentStage);
+    else completed.delete(currentStage);
+    currentProject.completedStages=[...completed];
+
+    await projects.update(currentProject.id,{
+      stageData:currentProject.stageData,
+      checks:currentProject.checks,
+      completedStages:currentProject.completedStages
+    });
+    await load();
+    toast(allDone?"本階段已完成":"本階段已儲存");
+  }
+
+  async function deleteCurrentProject(){
+    if(!currentProject) return;
+    if(!confirm(`刪除專案「${currentProject.title}」？`)) return;
+    await projects.remove(currentProject.id);
+    const related=allModules.filter(m=>m.projectId===currentProject.id);
+    for(const m of related) await modules.remove(m.id);
+    currentProject=null;
+    await load();
+  }
+
+  async function extractModule(){
+    if(!currentProject) return;
+    const text=prompt("輸入要抽離保留的內容：");
+    if(!text?.trim()) return;
+    await modules.add({
+      projectId:currentProject.id,
+      sourceStage:currentStage,
+      content:text.trim(),
+      reason:"Illegal but liked",
+      status:"detached"
+    });
+    await load();
+    toast("已抽離為 Module");
+  }
+
+  function exportCurrent(){
+    if(!currentProject) return;
+    const payload={
+      project:currentProject,
+      modules:allModules.filter(m=>m.projectId===currentProject.id),
+      exportedAt:new Date().toISOString()
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`novel_ide_${currentProject.title.replace(/[\\/:*?"<>|]/g,"_")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function seed(){
+    if(allProjects.length){
+      const ok=confirm("目前已有專案。仍要新增一個測試專案嗎？");
+      if(!ok) return;
+    }
+    const created=await projects.add({
+      title:"雨城失物招領",
+      privateKey:"RainLostFound",
+      mainGenre:"懸疑 × 都市 × 關係劇",
+      wordTarget:90000,
+      idea:"一間只在下雨天營業的失物招領所，開始收到不存在於任何人記憶中的物品。",
+      corePlot:"一名負責整理失物的年輕人，透過每件無主物品追查一場被城市共同遺忘的事故，並逐步發現自己也是被刪除記憶的一部分。",
+      stageData:{
+        ...DEFAULT_STAGE_DATA(),
+        "0":{subgenres:["都市奇譚","懸疑","心理","關係劇"],notes:"測試資料"},
+        "1":{classes:["Keeper","Visitor","LostObject"],interfaces:["MemoryReadable","Traceable"],authorization:"只有特定角色能讀取物品殘留記憶",kernel:"遺失物與記憶交換規則",gui:"雨城、失物招領所、訪客事件",parameters:"物品殘留時間、記憶可見範圍",prd:"追查被城市共同遺忘的事故，同時維持關係劇與懸疑閱讀承諾。",notes:""},
+        "2":{privateKey:"RainLostFound",primaryKey:"雨城失物招領",namingLogic:"所有核心命名都對應遺失、雨、記憶與招領。",notes:""},
+        "3":{oulipoName:"限制性回憶",layer:"底層",rule:"同一事件只能透過不同失物的局部資訊被重建，禁止全知回溯。",uniqueness:"與既有作品的限制方式不同。",notes:""},
+        "4":{bigGenres:["懸疑","都市奇譚","關係劇"],crossGenres:["心理","推理","日常"],narrativeMethods:["限制視角","碎片重組"],elements:["雨","失物","記憶","舊城","事故","名冊"],readingPosition:"讀者逐步拼出真相，但情感關係必須同步推進。",illegal:["一次性全知解答"],notes:""},
+        "5":{lengthType:"仿單行本",totalWords:90000,chapterCount:12,chapterStructure:"每章一件失物＋主線推進",style:"冷靜直接",narrativeMethod:"碎片式線索拼接",pov:"第三人稱限制視角",authorVoicePlan:"避免作者直接解釋，讓資訊由角色行動與物件痕跡呈現。",ratio:"9:1",foreshadowing:["第2章雨傘編號→第9章事故名冊","第4章缺頁→第11章記憶刪除"],draftNotes:"",notes:""},
+        "6":{events:["配角開始主動追查失物來源"],notes:"暫時不違反 core，保留。"},
+        "7":{qaIllegalCount:1,publicQa:"",privateQa:"",result:"",notes:""},
+        "8":{brd:"",mrd:"",swot:"",publicationNotes:""}
+      },
+      checks:{},
+      completedStages:[],
+      status:"planning"
+    });
+    currentProject=ensureProjectShape(created);
+    currentStage="0";
+    await load();
+  }
+
+  els.newProjectBtn.addEventListener("click",()=>openProjectModal());
+  els.editProjectBtn.addEventListener("click",()=>currentProject&&openProjectModal(currentProject));
+  els.saveStageBtn.addEventListener("click",saveCurrentStage);
+  els.deleteProjectBtn.addEventListener("click",deleteCurrentProject);
+  els.exportBtn.addEventListener("click",exportCurrent);
+  els.seedBtn.addEventListener("click",seed);
+  els.projectForm.addEventListener("submit",saveProjectForm);
+
+  document.querySelectorAll("[data-close-modal]").forEach(el=>{
+    el.addEventListener("click",closeProjectModal);
+  });
+
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape") closeProjectModal();
+  });
+
+  load().catch(err=>{
+    console.error(err);
+    alert("初始化失敗，請查看 Console。");
+  });
+})();
+</script>
+</body>
+</html>
