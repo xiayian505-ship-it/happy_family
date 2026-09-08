@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>A4 農曆月曆列印</title>
+
+  <!-- 慢慢的倉庫：Calendar Core -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/calendar.js"></script>
+
+  <!-- 共用 UI / 完成品元件 -->
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.css">
+  <script src="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.js"></script>
+
+  <style>
+    :root{
+      --page-bg:#ececec;
+      --paper:#fff;
+      --text:#222;
+      --muted:#666;
+      --line:#b8b8b8;
+      --soft:#f5f5f5;
+    }
+
+    *{box-sizing:border-box;}
+
+    html,body{
+      margin:0;
+      min-height:100%;
+      background:var(--page-bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif;
+    }
+
+    body{padding:20px;}
+
+    .print-toolbar{
+      max-width:900px;
+      margin:0 auto 18px;
+      padding:14px 16px;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:12px;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:end;
+      gap:10px;
+    }
+
+    .print-toolbar label{
+      display:grid;
+      gap:5px;
+      font-size:.82rem;
+      color:var(--muted);
+    }
+
+    .print-toolbar input,
+    .print-toolbar select,
+    .print-toolbar button{
+      min-height:38px;
+      padding:7px 10px;
+      border:1px solid #ccc;
+      border-radius:8px;
+      background:#fff;
+      color:var(--text);
+      font:inherit;
+    }
+
+    .print-toolbar button{
+      cursor:pointer;
+      font-weight:700;
+    }
+
+    .print-note{
+      flex-basis:100%;
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size:.78rem;
+      line-height:1.6;
+    }
+
+    .paper-wrap{
+      display:grid;
+      place-items:start center;
+      overflow:auto;
+      padding-bottom:24px;
+    }
+
+    /*
+      古董印表機戰區：
+      A4 210×297mm，這裡沿用 12mm 安全邊界。
+      真機如果又開始鬧，只先調 @page margin，不要先動 Calendar Component。
+    */
+    .paper{
+      width:186mm;
+      min-height:273mm;
+      padding:0;
+      background:var(--paper);
+      box-shadow:0 10px 30px rgba(0,0,0,.16);
+    }
+
+    .print-heading{
+      padding:8mm 5mm 5mm;
+      border-bottom:1px solid var(--line);
+    }
+
+    .print-heading h1{
+      margin:0;
+      font-family:"Noto Serif TC","PMingLiU",serif;
+      font-size:22pt;
+      font-weight:700;
+      letter-spacing:.08em;
+    }
+
+    .print-heading p{
+      margin:3mm 0 0;
+      color:var(--muted);
+      font-size:9.5pt;
+    }
+
+    #calendar{
+      padding:5mm;
+    }
+
+    /*
+      元件本體不修改。
+      這頁只在宿主端覆寫 Slowly Calendar 的 CSS Variables。
+    */
+    #calendar .slowly-calendar{
+      --sc-bg:#fff;
+      --sc-text:#222;
+      --sc-muted:#666;
+      --sc-soft:#f6f6f6;
+      --sc-weekend:#8d3f3f;
+      --sc-lunar:#333;
+      --sc-festival:#8d3f3f;
+      --sc-solar-term:#555;
+      --sc-grid-line:#aaa;
+      --sc-selected-bg:#fff;
+      --sc-selected-text:#222;
+      --sc-selected-border:#aaa;
+      --sc-today-ring:#777;
+    }
+
+    /* A4 列印版只需要月曆格；互動工具列與選取詳情留在元件內但不顯示。 */
+    #calendar .sc-toolbar,
+    #calendar .sc-picker,
+    #calendar .sc-hero,
+    #calendar .sc-detail,
+    #calendar .sc-status{
+      display:none !important;
+    }
+
+    #calendar .sc-weekdays,
+    #calendar .sc-grid{
+      gap:0;
+    }
+
+    #calendar .sc-weekday{
+      border-top:1px solid var(--sc-grid-line);
+      border-right:1px solid var(--sc-grid-line);
+      border-radius:0;
+      background:#fff;
+      padding:2.8mm 1mm;
+      font-size:10pt;
+      font-weight:700;
+    }
+
+    #calendar .sc-weekday:first-child{
+      border-left:1px solid var(--sc-grid-line);
+    }
+
+    #calendar .sc-day{
+      min-height:31mm;
+      padding:3mm 2.5mm;
+      border-radius:0;
+      border-right:1px solid var(--sc-grid-line);
+      border-bottom:1px solid var(--sc-grid-line);
+      border-top:0;
+      border-left:0;
+      background:#fff;
+      box-shadow:none;
+      cursor:default;
+      break-inside:avoid;
+    }
+
+    #calendar .sc-day:nth-child(7n+1){
+      border-left:1px solid var(--sc-grid-line);
+    }
+
+    #calendar .sc-empty{
+      background:#fff;
+      opacity:1;
+    }
+
+    #calendar .sc-solar-date{
+      margin-bottom:1.2mm;
+      font-size:10pt;
+      line-height:1.2;
+    }
+
+    /* 農曆是這張列印版的主角。 */
+    #calendar .sc-lunar{
+      font-size:10.5pt;
+      line-height:1.45;
+      font-weight:700;
+    }
+
+    #calendar .sc-festival,
+    #calendar .sc-solar-term{
+      margin-top:.6mm;
+      font-size:8.2pt;
+      line-height:1.35;
+    }
+
+    #calendar .sc-day.is-selected{
+      background:#fff;
+      color:var(--sc-text);
+      border-color:var(--sc-grid-line);
+    }
+
+    #calendar .sc-day.is-today{
+      box-shadow:none;
+    }
+
+    @page{
+      size:A4 portrait;
+      margin:12mm;
+    }
+
+    @media print{
+      html,body{
+        width:auto;
+        min-height:auto;
+        background:#fff;
+      }
+
+      body{padding:0;}
+      .print-toolbar{display:none !important;}
+      .paper-wrap{display:block;padding:0;overflow:visible;}
+
+      .paper{
+        width:186mm;
+        min-height:273mm;
+        box-shadow:none;
+        margin:0;
+      }
+
+      /* 不依賴「列印背景圖形」也能看清楚。 */
+      #calendar .slowly-calendar{
+        --sc-bg:#fff;
+        --sc-text:#000;
+        --sc-muted:#444;
+        --sc-soft:#fff;
+        --sc-weekend:#000;
+        --sc-lunar:#000;
+        --sc-festival:#000;
+        --sc-solar-term:#333;
+        --sc-grid-line:#777;
+      }
+
+      #calendar .sc-weekday:first-child,
+      #calendar .sc-weekday:last-child,
+      #calendar .sc-day.is-weekend .sc-solar-date{
+        color:#000;
+      }
+    }
+
+    @media (max-width:780px){
+      body{padding:12px;}
+      .paper-wrap{justify-content:start;}
+      .paper{transform-origin:top left;}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-toolbar">
+    <label>
+      年份
+      <input id="yearInput" type="number" min="1901" max="2100">
+    </label>
+
+    <label>
+      月份
+      <select id="monthInput"></select>
+    </label>
+
+    <button id="goBtn" type="button">顯示</button>
+    <button id="todayBtn" type="button">本月</button>
+    <button id="printBtn" type="button">列印 A4</button>
+
+    <p class="print-note">
+      A4 直式，預留 12mm 安全邊界。列印時建議使用「實際大小 / 100%」，不要選「符合頁面」。
+    </p>
+  </div>
+
+  <div class="paper-wrap">
+    <main class="paper">
+      <header class="print-heading">
+        <h1 id="printTitle"></h1>
+        <p>國曆日期・農曆・節慶・二十四節氣</p>
+      </header>
+      <div id="calendar"></div>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const yearInput = document.getElementById("yearInput");
+      const monthInput = document.getElementById("monthInput");
+      const printTitle = document.getElementById("printTitle");
+
+      for(let month=1; month<=12; month++){
+        const option = document.createElement("option");
+        option.value = String(month);
+        option.textContent = `${month} 月`;
+        monthInput.appendChild(option);
+      }
+
+      const now = new Date();
+      yearInput.value = String(now.getFullYear());
+      monthInput.value = String(now.getMonth()+1);
+
+      const calendar = SlowlyCalendar.mount("#calendar", {
+        view:"month",
+        gridLines:true,
+        showLunar:true,
+        showFestivals:true,
+        showSolarTerms:true,
+        bold:{
+          solarDate:false,
+          weekend:true,
+          lunar:true,
+          festival:true,
+          solarTerm:false
+        },
+        date:now
+      });
+
+      function showMonth(year, month){
+        if(!Calendar?.isSupportedYear?.(year) || month<1 || month>12){
+          alert("年份請輸入 1901～2100。");
+          return;
+        }
+
+        calendar.setDate(`${year}-${String(month).padStart(2,"0")}-01`);
+        printTitle.textContent = `${year} 年 ${month} 月｜農曆月曆`;
+      }
+
+      document.getElementById("goBtn").addEventListener("click", () => {
+        showMonth(Number(yearInput.value), Number(monthInput.value));
+      });
+
+      document.getElementById("todayBtn").addEventListener("click", () => {
+        const today = new Date();
+        yearInput.value = String(today.getFullYear());
+        monthInput.value = String(today.getMonth()+1);
+        showMonth(today.getFullYear(), today.getMonth()+1);
+      });
+
+      document.getElementById("printBtn").addEventListener("click", () => {
+        window.print();
+      });
+
+      showMonth(now.getFullYear(), now.getMonth()+1);
+    })();
+  </script>
+</body>
+</html>
