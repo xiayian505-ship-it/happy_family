@@ -309,7 +309,6 @@
       gap:14px;
     }
 
-    /* Slowly Calendar：宿主頁只保留卡片需要的月曆區塊 */
     .calendar-card .slowly-calendar {
       --sc-bg:transparent;
       --sc-text:var(--text-color);
@@ -381,13 +380,19 @@
       font-variant-numeric:tabular-nums;
     }
 
-    .calendar-card .sc-day-detail {
-      max-width:100%;
-      margin-top:1px;
-      font-size:.54rem;
-      line-height:1.15;
-      text-align:center;
-    }
+.calendar-card .sc-day-detail {
+  display:block;
+  max-width:100%;
+  margin-top:1px;
+  font-size:.54rem;
+  line-height:1.15;
+  text-align:center;
+}
+
+.calendar-card .sc-day .sc-festival,
+.calendar-card .sc-day .sc-solar-term {
+  display:block;
+}
 
     .calendar-card .sc-day.is-selected,
     .calendar-card .sc-day.is-today {
@@ -553,7 +558,21 @@
     </main>
   </div>
 
+  <!-- Calendar Core：依元件說明頁順序載入 -->
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms_data.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/solar_terms.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/calendar/calendar.js"></script>
+
+  <!-- Calendar Component -->
   <script src="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.js"></script>
+
+  <!-- Storage / Change -->
   <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_storage.js"></script>
   <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_change.js"></script>
 
@@ -606,16 +625,21 @@
 
       let currentId=null;
       let mounted=[];
+      let hostCounter=0;
 
       const store = window.FictionStorage
-        ? FictionStorage.create({namespace:"slowly-calendar-card"})
-        : null;
-      const cards = store ? store.collection("cards") : null;
-      const change = window.FictionChange
-        ? FictionChange.create({name:"slowly-calendar-card"})
+        ? window.FictionStorage.create({namespace:"slowly-calendar-card"})
         : null;
 
-      function value(){
+      const cards = store
+        ? store.collection("cards")
+        : null;
+
+      const change = window.FictionChange
+        ? window.FictionChange.create({name:"slowly-calendar-card"})
+        : null;
+
+      function getValue(){
         return {
           mode:els.mode.value,
           year:Number(els.year.value)||2026,
@@ -635,23 +659,27 @@
       }
 
       function applyValue(data){
+        const colors=data.colors||{};
+
         els.mode.value=data.mode||"monthly";
         els.year.value=data.year||2026;
-        els.month.value=String(Number(data.month)||0);
+        els.month.value=String(Number.isFinite(Number(data.month)) ? Number(data.month) : 0);
         els.title.value=data.title||"";
         els.quote.value=data.quote||"";
-        els.primary.value=data.colors?.primary||PALETTES[0].primary;
-        els.bg.value=data.colors?.bg||PALETTES[0].bg;
-        els.text.value=data.colors?.text||PALETTES[0].text;
-        els.accent.value=data.colors?.accent||PALETTES[0].accent;
+        els.primary.value=colors.primary||PALETTES[0].primary;
+        els.bg.value=colors.bg||PALETTES[0].bg;
+        els.text.value=colors.text||PALETTES[0].text;
+        els.accent.value=colors.accent||PALETTES[0].accent;
         els.lunar.checked=Boolean(data.showLunar);
         els.festivals.checked=Boolean(data.showFestivals);
         els.terms.checked=Boolean(data.showSolarTerms);
+
+        syncPaletteActive();
         render();
       }
 
       function applyColors(){
-        const v=value();
+        const v=getValue();
         els.card.style.setProperty("--primary-color",v.colors.primary);
         els.card.style.setProperty("--card-bg",v.colors.bg);
         els.card.style.setProperty("--text-color",v.colors.text);
@@ -659,12 +687,18 @@
       }
 
       function destroyCalendars(){
-        mounted.forEach(instance=>instance?.destroy?.());
+        mounted.forEach(instance=>{
+          try{
+            if(instance && typeof instance.destroy==="function") instance.destroy();
+          }catch(error){
+            console.warn("Calendar destroy failed:",error);
+          }
+        });
         mounted=[];
       }
 
       function calendarOptions(year,month){
-        const v=value();
+        const v=getValue();
         return {
           view:"month",
           gridLines:false,
@@ -675,16 +709,29 @@
         };
       }
 
-      function mountCalendar(target,year,month){
-        if(!window.SlowlyCalendar){
-          target.textContent="Slowly Calendar Component 尚未載入。";
+      function mountCalendar(host,year,month){
+        if(!window.Calendar){
+          host.textContent="Calendar Core 尚未載入。";
           return;
         }
 
+        if(!window.SlowlyCalendar){
+          host.textContent="Slowly Calendar Component 尚未載入。";
+          return;
+        }
+
+        hostCounter+=1;
+        host.id=`slowlyCalendarHost_${hostCounter}`;
+
         try{
-          mounted.push(SlowlyCalendar.mount(target,calendarOptions(year,month)));
+          const instance=window.SlowlyCalendar.mount(
+            `#${host.id}`,
+            calendarOptions(year,month)
+          );
+          mounted.push(instance);
         }catch(error){
-          target.textContent=error instanceof Error ? error.message : String(error);
+          console.error("SlowlyCalendar.mount failed:",error);
+          host.textContent=error instanceof Error ? error.message : String(error);
         }
       }
 
@@ -733,12 +780,15 @@
         els.card.querySelector(".quote-text").textContent=v.quote;
 
         const wrap=els.card.querySelector(".yearly-months");
+
         for(let m=0;m<12;m++){
           const block=document.createElement("section");
           const heading=document.createElement("div");
           const host=document.createElement("div");
+
           heading.className="mini-month-title";
           heading.textContent=`${String(m+1).padStart(2,"0")} ${MONTH_NAMES[m].slice(0,3)}`;
+
           block.append(heading,host);
           wrap.appendChild(block);
           mountCalendar(host,v.year,m);
@@ -748,9 +798,11 @@
       function render(){
         destroyCalendars();
         applyColors();
-        const v=value();
+
+        const v=getValue();
         els.monthGroup.style.display=v.mode==="monthly"?"flex":"none";
         els.card.className=`calendar-card ${v.mode}`;
+
         if(v.mode==="yearly") renderYearly(v);
         else renderMonthly(v);
       }
@@ -763,16 +815,37 @@
           btn.style.background=palette.primary;
           btn.title=palette.name;
           btn.setAttribute("aria-label",palette.name);
+          btn.dataset.paletteIndex=String(index);
+
           btn.addEventListener("click",()=>{
-            els.paletteList.querySelectorAll(".palette-btn").forEach(item=>item.classList.remove("active"));
-            btn.classList.add("active");
             els.primary.value=palette.primary;
             els.bg.value=palette.bg;
             els.text.value=palette.text;
             els.accent.value=palette.accent;
+            syncPaletteActive();
             render();
           });
+
           els.paletteList.appendChild(btn);
+        });
+      }
+
+      function syncPaletteActive(){
+        const current={
+          primary:els.primary.value.toLowerCase(),
+          bg:els.bg.value.toLowerCase(),
+          text:els.text.value.toLowerCase(),
+          accent:els.accent.value.toLowerCase()
+        };
+
+        els.paletteList.querySelectorAll(".palette-btn").forEach(btn=>{
+          const palette=PALETTES[Number(btn.dataset.paletteIndex)];
+          const active=palette &&
+            palette.primary.toLowerCase()===current.primary &&
+            palette.bg.toLowerCase()===current.bg &&
+            palette.text.toLowerCase()===current.text &&
+            palette.accent.toLowerCase()===current.accent;
+          btn.classList.toggle("active",Boolean(active));
         });
       }
 
@@ -782,66 +855,91 @@
           return;
         }
 
-        const records=await cards.all();
-        els.savedList.replaceChildren();
+        try{
+          const records=await Promise.resolve(cards.all());
+          els.savedList.replaceChildren();
 
-        if(!records.length){
-          els.savedList.innerHTML='<p class="saved-empty">還沒有儲存的卡片。</p>';
-          return;
+          if(!records.length){
+            els.savedList.innerHTML='<p class="saved-empty">還沒有儲存的卡片。</p>';
+            return;
+          }
+
+          records
+            .slice()
+            .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")))
+            .forEach(record=>{
+              const item=document.createElement("div");
+              item.className="saved-item";
+
+              const load=document.createElement("button");
+              load.type="button";
+              load.className="saved-load";
+
+              const strong=document.createElement("strong");
+              strong.textContent=record.title||`${record.year} / ${Number(record.month)+1}`;
+
+              const meta=document.createElement("span");
+              meta.textContent=record.mode==="yearly"
+                ? `${record.year} · 全年卡`
+                : `${record.year} / ${Number(record.month)+1} · 單月卡`;
+
+              load.append(strong,meta);
+              load.addEventListener("click",()=>{
+                currentId=record.id;
+                applyValue(record);
+              });
+
+              const del=document.createElement("button");
+              del.type="button";
+              del.className="saved-delete";
+              del.textContent="刪除";
+
+              del.addEventListener("click",async()=>{
+                await Promise.resolve(cards.remove(record.id));
+                if(currentId===record.id) currentId=null;
+                change?.emit({type:"remove",collection:"cards",record});
+                await refreshSaved();
+              });
+
+              item.append(load,del);
+              els.savedList.appendChild(item);
+            });
+        }catch(error){
+          console.error("讀取卡片失敗:",error);
+          els.savedList.innerHTML='<p class="saved-empty">讀取卡片失敗，請看 Console。</p>';
         }
-
-        records
-          .slice()
-          .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")))
-          .forEach(record=>{
-            const item=document.createElement("div");
-            item.className="saved-item";
-
-            const load=document.createElement("button");
-            load.type="button";
-            load.className="saved-load";
-            const strong=document.createElement("strong");
-            strong.textContent=record.title||`${record.year} / ${Number(record.month)+1}`;
-            const meta=document.createElement("span");
-            meta.textContent=record.mode==="yearly"?`${record.year} · 全年卡`:`${record.year} / ${Number(record.month)+1} · 單月卡`;
-            load.append(strong,meta);
-            load.addEventListener("click",()=>{
-              currentId=record.id;
-              applyValue(record);
-            });
-
-            const del=document.createElement("button");
-            del.type="button";
-            del.className="saved-delete";
-            del.textContent="刪除";
-            del.addEventListener("click",async()=>{
-              await cards.remove(record.id);
-              if(currentId===record.id) currentId=null;
-              change?.emit({type:"remove",collection:"cards",record});
-            });
-
-            item.append(load,del);
-            els.savedList.appendChild(item);
-          });
       }
 
       async function saveCard(){
         if(!cards) return;
-        const data=value();
+
+        const data=getValue();
         let saved;
+        let eventType="add";
 
-        if(currentId && await cards.has(currentId)){
-          saved=await cards.update(currentId,data);
-        }else{
-          saved=await cards.add(data);
-          currentId=saved.id;
+        try{
+          const exists=currentId
+            ? await Promise.resolve(cards.has(currentId))
+            : false;
+
+          if(currentId && exists){
+            saved=await Promise.resolve(cards.update(currentId,data));
+            eventType="update";
+          }else{
+            saved=await Promise.resolve(cards.add(data));
+            currentId=saved.id;
+          }
+
+          change?.emit({
+            type:eventType,
+            collection:"cards",
+            record:saved
+          });
+
+          await refreshSaved();
+        }catch(error){
+          console.error("儲存卡片失敗:",error);
         }
-
-        change?.emit({
-          type:currentId?"save":"add",
-          collection:"cards",
-          record:saved
-        });
       }
 
       function newCard(){
@@ -852,24 +950,38 @@
           month:8,
           title:"慢慢",
           quote:"可以很安靜",
-          colors:PALETTES[0],
+          colors:{
+            primary:PALETTES[0].primary,
+            bg:PALETTES[0].bg,
+            text:PALETTES[0].text,
+            accent:PALETTES[0].accent
+          },
           showLunar:false,
           showFestivals:false,
           showSolarTerms:false
         });
       }
 
-      [els.mode,els.year,els.month,els.title,els.quote,els.primary,els.bg,els.text,els.accent,els.lunar,els.festivals,els.terms]
-        .forEach(el=>el.addEventListener("input",render));
+      [
+        els.mode,els.year,els.month,els.title,els.quote,
+        els.primary,els.bg,els.text,els.accent,
+        els.lunar,els.festivals,els.terms
+      ].forEach(el=>{
+        el.addEventListener("input",()=>{
+          syncPaletteActive();
+          render();
+        });
+      });
 
       els.save.addEventListener("click",saveCard);
       els.fresh.addEventListener("click",newCard);
 
       change?.subscribe(event=>{
-        if(event.collection==="cards") refreshSaved();
+        if(event && event.collection==="cards") refreshSaved();
       });
 
       initPalettes();
+      syncPaletteActive();
       render();
       refreshSaved();
     })();
