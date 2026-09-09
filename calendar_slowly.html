@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>慢慢月曆卡 | Slowly Calendar Card</title>
+
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.css">
+
+  <style>
+    :root {
+      --bg-body:#f5f5f7;
+      --card-bg:#f9f8f6;
+      --primary-color:#7b8a78;
+      --text-color:#333333;
+      --text-muted:#999999;
+      --accent-color:#b86b62;
+      --border-color:#e5e5e5;
+    }
+
+    body {
+      margin:0;
+      min-height:100vh;
+      background:var(--bg-body);
+      color:#333;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang TC","Noto Sans TC",sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font:inherit;
+    }
+
+    .app-container {
+      display:flex;
+      width:100%;
+      min-height:100vh;
+    }
+
+    .sidebar {
+      width:380px;
+      min-width:340px;
+      padding:28px 24px;
+      background:#fff;
+      border-right:1px solid var(--border-color);
+      box-shadow:2px 0 10px rgba(0,0,0,.03);
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    .sidebar h1 {
+      margin:0;
+      font-size:1.25rem;
+      font-weight:600;
+      letter-spacing:.5px;
+      color:#222;
+    }
+
+    .sidebar-note {
+      margin:-10px 0 0;
+      color:#999;
+      font-size:.78rem;
+      line-height:1.6;
+    }
+
+    .form-group {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .form-group > label,
+    .section-label {
+      font-size:.85rem;
+      font-weight:600;
+      color:#555;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border-color);
+      border-radius:8px;
+      background:#fafafa;
+      color:#333;
+    }
+
+    input:focus,
+    select:focus {
+      outline:none;
+      border-color:var(--primary-color);
+      background:#fff;
+    }
+
+    .row-2 {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .palette-list {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:4px;
+    }
+
+    .palette-btn {
+      width:32px;
+      height:32px;
+      padding:0;
+      border:2px solid transparent;
+      border-radius:50%;
+      cursor:pointer;
+    }
+
+    .palette-btn.active {
+      border-color:#222;
+      box-shadow:0 0 0 2px #fff inset;
+    }
+
+    .color-pickers {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+    }
+
+    .color-picker-item {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#666;
+      font-size:.8rem;
+    }
+
+    .color-picker-item input[type="color"] {
+      width:28px;
+      height:28px;
+      padding:0;
+      border:none;
+      border-radius:6px;
+      background:none;
+      cursor:pointer;
+    }
+
+    .data-actions,
+    .export-actions {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .btn {
+      padding:11px 12px;
+      border:1px solid #ccc;
+      border-radius:8px;
+      background:#fff;
+      color:#333;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .btn-primary {
+      border-color:#333;
+      background:#333;
+      color:#fff;
+    }
+
+    .saved-list {
+      display:grid;
+      gap:8px;
+    }
+
+    .saved-empty {
+      margin:0;
+      color:#999;
+      font-size:.8rem;
+    }
+
+    .saved-item {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:center;
+      padding:9px 10px;
+      border:1px solid var(--border-color);
+      border-radius:8px;
+      background:#fafafa;
+    }
+
+    .saved-load {
+      min-width:0;
+      padding:0;
+      border:0;
+      background:none;
+      color:#333;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .saved-load strong,
+    .saved-load span {
+      display:block;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .saved-load span {
+      margin-top:2px;
+      color:#999;
+      font-size:.74rem;
+    }
+
+    .saved-delete {
+      padding:5px 7px;
+      border:0;
+      background:none;
+      color:#999;
+      cursor:pointer;
+    }
+
+    .preview-stage {
+      flex:1;
+      min-width:0;
+      padding:40px;
+      background:var(--bg-body);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:auto;
+    }
+
+    .calendar-card {
+      width:360px;
+      min-height:520px;
+      padding:36px 32px;
+      border-radius:12px;
+      background:var(--card-bg);
+      color:var(--text-color);
+      box-shadow:0 16px 36px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.03);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .calendar-card.yearly {
+      width:min(780px,100%);
+      min-height:780px;
+    }
+
+    .card-header {
+      margin-bottom:24px;
+      padding-bottom:16px;
+      border-bottom:1.5px solid var(--border-color);
+    }
+
+    .month-large {
+      color:var(--primary-color);
+      font-family:Georgia,serif;
+      font-size:2.8rem;
+      font-weight:300;
+      letter-spacing:-1px;
+      line-height:1;
+    }
+
+    .title-row {
+      width:100%;
+      margin-top:6px;
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .title-text {
+      font-size:.9rem;
+      font-weight:600;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .year-text {
+      color:var(--text-muted);
+      font-size:.85rem;
+      font-weight:500;
+      letter-spacing:1.5px;
+    }
+
+    .calendar-host {
+      flex:1;
+      min-width:0;
+    }
+
+    .card-footer {
+      margin-top:24px;
+      padding-top:14px;
+      border-top:1px dashed var(--border-color);
+      color:var(--text-muted);
+      font-size:.75rem;
+      letter-spacing:.5px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    /* Slowly Calendar：宿主頁只保留卡片需要的月曆區塊 */
+    .calendar-card .slowly-calendar {
+      --sc-bg:transparent;
+      --sc-text:var(--text-color);
+      --sc-muted:var(--text-muted);
+      --sc-soft:transparent;
+      --sc-weekend:var(--accent-color);
+      --sc-lunar:var(--text-muted);
+      --sc-festival:var(--accent-color);
+      --sc-solar-term:var(--primary-color);
+      --sc-grid-line:transparent;
+      --sc-selected-bg:transparent;
+      --sc-selected-text:var(--text-color);
+      --sc-selected-border:transparent;
+      --sc-today-ring:transparent;
+      background:transparent;
+      font-family:inherit;
+    }
+
+    .calendar-card .sc-toolbar,
+    .calendar-card .sc-picker,
+    .calendar-card .sc-hero,
+    .calendar-card .sc-detail,
+    .calendar-card .sc-status {
+      display:none !important;
+    }
+
+    .calendar-card .sc-weekdays,
+    .calendar-card .sc-grid {
+      gap:0;
+    }
+
+    .calendar-card .sc-weekdays {
+      margin-bottom:8px;
+    }
+
+    .calendar-card .sc-weekday {
+      padding:0 0 8px;
+      border-radius:0;
+      background:transparent;
+      color:var(--text-muted);
+      font-size:.68rem;
+      font-weight:600;
+      letter-spacing:.08em;
+    }
+
+    .calendar-card .sc-day {
+      min-height:42px;
+      padding:5px 2px;
+      border:0;
+      border-radius:0;
+      background:transparent;
+      color:var(--text-color);
+      text-align:center;
+      cursor:default;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+    }
+
+    .calendar-card .sc-empty {
+      opacity:0;
+    }
+
+    .calendar-card .sc-solar-date {
+      margin:0;
+      font-size:.88rem;
+      line-height:1.4;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .calendar-card .sc-day-detail {
+      max-width:100%;
+      margin-top:1px;
+      font-size:.54rem;
+      line-height:1.15;
+      text-align:center;
+    }
+
+    .calendar-card .sc-day.is-selected,
+    .calendar-card .sc-day.is-today {
+      box-shadow:none;
+      background:transparent;
+    }
+
+    .yearly-months {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:22px 16px;
+      flex:1;
+    }
+
+    .mini-month-title {
+      margin-bottom:6px;
+      color:var(--primary-color);
+      font-size:.72rem;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .calendar-card.yearly .sc-weekday {
+      font-size:.52rem;
+      letter-spacing:0;
+      padding-bottom:4px;
+    }
+
+    .calendar-card.yearly .sc-day {
+      min-height:24px;
+      padding:2px 0;
+    }
+
+    .calendar-card.yearly .sc-solar-date {
+      font-size:.62rem;
+    }
+
+    .calendar-card.yearly .sc-day-detail {
+      display:none;
+    }
+
+    @media (max-width:768px) {
+      .sidebar {
+        width:100%;
+        min-width:0;
+        border-right:0;
+        border-bottom:1px solid var(--border-color);
+        box-shadow:none;
+      }
+
+      .preview-stage {
+        padding:24px 12px;
+      }
+
+      .calendar-card {
+        width:min(360px,100%);
+        padding:30px 24px;
+      }
+
+      .calendar-card.yearly {
+        width:100%;
+      }
+
+      .yearly-months {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
+
+    @media (max-width:520px) {
+      .row-2,
+      .data-actions,
+      .export-actions {
+        grid-template-columns:1fr;
+      }
+
+      .yearly-months {
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media print {
+      body { background:transparent; }
+      .sidebar { display:none !important; }
+      .preview-stage { padding:0; background:none; overflow:visible; }
+      .calendar-card { box-shadow:none; margin:0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container responsive-stack">
+    <aside class="sidebar">
+      <h1>慢慢月曆卡</h1>
+      <p class="sidebar-note">選一個月、調一組顏色、留一句話。卡片可儲存，之後再回來慢慢改。</p>
+
+      <div class="form-group">
+        <label for="modeSelect">模式</label>
+        <select id="modeSelect">
+          <option value="monthly">單月卡</option>
+          <option value="yearly">全年卡</option>
+        </select>
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label for="yearInput">年份</label>
+          <input type="number" id="yearInput" value="2026" min="1901" max="2100">
+        </div>
+        <div class="form-group" id="monthInputGroup">
+          <label for="monthSelect">月份</label>
+          <select id="monthSelect"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="titleInput">卡片標題 / 副標題</label>
+        <input type="text" id="titleInput" value="慢慢" placeholder="例：慢慢 / SEPTEMBER">
+      </div>
+
+      <div class="form-group">
+        <label for="quoteInput">底部備忘小語</label>
+        <input type="text" id="quoteInput" value="可以很安靜" placeholder="輸入一句想留下的話">
+      </div>
+
+      <div class="form-group">
+        <span class="section-label">色彩預設</span>
+        <div class="palette-list" id="paletteList"></div>
+      </div>
+
+      <div class="form-group">
+        <span class="section-label">顏色細調</span>
+        <div class="color-pickers">
+          <label class="color-picker-item"><input type="color" id="primaryColorPicker" value="#7b8a78"><span>主色調</span></label>
+          <label class="color-picker-item"><input type="color" id="cardBgPicker" value="#f9f8f6"><span>卡片底色</span></label>
+          <label class="color-picker-item"><input type="color" id="textColorPicker" value="#333333"><span>主文字</span></label>
+          <label class="color-picker-item"><input type="color" id="accentColorPicker" value="#b86b62"><span>週末標色</span></label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <span class="section-label">顯示內容</span>
+        <label><input type="checkbox" id="showLunar"> 農曆</label>
+        <label><input type="checkbox" id="showFestivals"> 節慶</label>
+        <label><input type="checkbox" id="showSolarTerms"> 節氣</label>
+      </div>
+
+      <div class="data-actions">
+        <button class="btn btn-primary" id="saveBtn" type="button">儲存卡片</button>
+        <button class="btn" id="newBtn" type="button">新增卡片</button>
+      </div>
+
+      <div class="form-group">
+        <span class="section-label">已儲存卡片</span>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+
+      <div class="export-actions">
+        <button class="btn" type="button" onclick="window.print()">列印 / 另存 PDF</button>
+      </div>
+    </aside>
+
+    <main class="preview-stage">
+      <article id="calendarCard" class="calendar-card monthly"></article>
+    </main>
+  </div>
+
+  <script src="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_storage.js"></script>
+  <script src="https://lib.stillnessbyslowly.com/fiction/Fiction_change.js"></script>
+
+  <script>
+    (function(){
+      "use strict";
+
+      const MONTH_NAMES = [
+        "JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
+        "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"
+      ];
+
+      const PALETTES = [
+        {name:"鼠尾草綠",primary:"#7b8a78",bg:"#f9f8f6",text:"#333333",accent:"#b86b62"},
+        {name:"霧靄藍灰",primary:"#6d7f8d",bg:"#f4f6f8",text:"#2c3338",accent:"#c27d72"},
+        {name:"陶土紅棕",primary:"#9e6759",bg:"#faf6f4",text:"#382f2d",accent:"#b85c4b"},
+        {name:"靜謐奶杏",primary:"#8a7967",bg:"#fbf9f5",text:"#36322d",accent:"#a66a5c"},
+        {name:"煙燻灰紫",primary:"#7e7387",bg:"#f7f5f9",text:"#342f38",accent:"#ad6773"},
+        {name:"純淨黑白",primary:"#1f1f1f",bg:"#ffffff",text:"#111111",accent:"#666666"}
+      ];
+
+      const els = {
+        card:document.getElementById("calendarCard"),
+        mode:document.getElementById("modeSelect"),
+        year:document.getElementById("yearInput"),
+        month:document.getElementById("monthSelect"),
+        monthGroup:document.getElementById("monthInputGroup"),
+        title:document.getElementById("titleInput"),
+        quote:document.getElementById("quoteInput"),
+        paletteList:document.getElementById("paletteList"),
+        primary:document.getElementById("primaryColorPicker"),
+        bg:document.getElementById("cardBgPicker"),
+        text:document.getElementById("textColorPicker"),
+        accent:document.getElementById("accentColorPicker"),
+        lunar:document.getElementById("showLunar"),
+        festivals:document.getElementById("showFestivals"),
+        terms:document.getElementById("showSolarTerms"),
+        save:document.getElementById("saveBtn"),
+        fresh:document.getElementById("newBtn"),
+        savedList:document.getElementById("savedList")
+      };
+
+      for(let i=0;i<12;i++){
+        const option=document.createElement("option");
+        option.value=String(i);
+        option.textContent=`${i+1} 月 · ${MONTH_NAMES[i].slice(0,3)}`;
+        if(i===8) option.selected=true;
+        els.month.appendChild(option);
+      }
+
+      let currentId=null;
+      let mounted=[];
+
+      const store = window.FictionStorage
+        ? FictionStorage.create({namespace:"slowly-calendar-card"})
+        : null;
+      const cards = store ? store.collection("cards") : null;
+      const change = window.FictionChange
+        ? FictionChange.create({name:"slowly-calendar-card"})
+        : null;
+
+      function value(){
+        return {
+          mode:els.mode.value,
+          year:Number(els.year.value)||2026,
+          month:Number(els.month.value)||0,
+          title:els.title.value.trim(),
+          quote:els.quote.value.trim(),
+          colors:{
+            primary:els.primary.value,
+            bg:els.bg.value,
+            text:els.text.value,
+            accent:els.accent.value
+          },
+          showLunar:els.lunar.checked,
+          showFestivals:els.festivals.checked,
+          showSolarTerms:els.terms.checked
+        };
+      }
+
+      function applyValue(data){
+        els.mode.value=data.mode||"monthly";
+        els.year.value=data.year||2026;
+        els.month.value=String(Number(data.month)||0);
+        els.title.value=data.title||"";
+        els.quote.value=data.quote||"";
+        els.primary.value=data.colors?.primary||PALETTES[0].primary;
+        els.bg.value=data.colors?.bg||PALETTES[0].bg;
+        els.text.value=data.colors?.text||PALETTES[0].text;
+        els.accent.value=data.colors?.accent||PALETTES[0].accent;
+        els.lunar.checked=Boolean(data.showLunar);
+        els.festivals.checked=Boolean(data.showFestivals);
+        els.terms.checked=Boolean(data.showSolarTerms);
+        render();
+      }
+
+      function applyColors(){
+        const v=value();
+        els.card.style.setProperty("--primary-color",v.colors.primary);
+        els.card.style.setProperty("--card-bg",v.colors.bg);
+        els.card.style.setProperty("--text-color",v.colors.text);
+        els.card.style.setProperty("--accent-color",v.colors.accent);
+      }
+
+      function destroyCalendars(){
+        mounted.forEach(instance=>instance?.destroy?.());
+        mounted=[];
+      }
+
+      function calendarOptions(year,month){
+        const v=value();
+        return {
+          view:"month",
+          gridLines:false,
+          showLunar:v.showLunar,
+          showFestivals:v.showFestivals,
+          showSolarTerms:v.showSolarTerms,
+          date:`${year}-${String(month+1).padStart(2,"0")}-01`
+        };
+      }
+
+      function mountCalendar(target,year,month){
+        if(!window.SlowlyCalendar){
+          target.textContent="Slowly Calendar Component 尚未載入。";
+          return;
+        }
+
+        try{
+          mounted.push(SlowlyCalendar.mount(target,calendarOptions(year,month)));
+        }catch(error){
+          target.textContent=error instanceof Error ? error.message : String(error);
+        }
+      }
+
+      function renderMonthly(v){
+        const monthNum=String(v.month+1).padStart(2,"0");
+        const title=v.title||MONTH_NAMES[v.month];
+
+        els.card.innerHTML=`
+          <header class="card-header">
+            <div class="month-large">${monthNum}</div>
+            <div class="title-row">
+              <div class="title-text"></div>
+              <div class="year-text">${v.year}</div>
+            </div>
+          </header>
+          <div class="calendar-host"></div>
+          <footer class="card-footer">
+            <span class="quote-text"></span>
+            <span>${monthNum} / 12</span>
+          </footer>
+        `;
+
+        els.card.querySelector(".title-text").textContent=title;
+        els.card.querySelector(".quote-text").textContent=v.quote;
+        mountCalendar(els.card.querySelector(".calendar-host"),v.year,v.month);
+      }
+
+      function renderYearly(v){
+        const title=v.title||`${v.year} CALENDAR`;
+
+        els.card.innerHTML=`
+          <header class="card-header">
+            <div class="title-row">
+              <div class="title-text"></div>
+              <div class="year-text">${v.year}</div>
+            </div>
+          </header>
+          <div class="yearly-months"></div>
+          <footer class="card-footer">
+            <span class="quote-text"></span>
+            <span>YEAR OF ${v.year}</span>
+          </footer>
+        `;
+
+        els.card.querySelector(".title-text").textContent=title;
+        els.card.querySelector(".quote-text").textContent=v.quote;
+
+        const wrap=els.card.querySelector(".yearly-months");
+        for(let m=0;m<12;m++){
+          const block=document.createElement("section");
+          const heading=document.createElement("div");
+          const host=document.createElement("div");
+          heading.className="mini-month-title";
+          heading.textContent=`${String(m+1).padStart(2,"0")} ${MONTH_NAMES[m].slice(0,3)}`;
+          block.append(heading,host);
+          wrap.appendChild(block);
+          mountCalendar(host,v.year,m);
+        }
+      }
+
+      function render(){
+        destroyCalendars();
+        applyColors();
+        const v=value();
+        els.monthGroup.style.display=v.mode==="monthly"?"flex":"none";
+        els.card.className=`calendar-card ${v.mode}`;
+        if(v.mode==="yearly") renderYearly(v);
+        else renderMonthly(v);
+      }
+
+      function initPalettes(){
+        PALETTES.forEach((palette,index)=>{
+          const btn=document.createElement("button");
+          btn.type="button";
+          btn.className=`palette-btn${index===0?" active":""}`;
+          btn.style.background=palette.primary;
+          btn.title=palette.name;
+          btn.setAttribute("aria-label",palette.name);
+          btn.addEventListener("click",()=>{
+            els.paletteList.querySelectorAll(".palette-btn").forEach(item=>item.classList.remove("active"));
+            btn.classList.add("active");
+            els.primary.value=palette.primary;
+            els.bg.value=palette.bg;
+            els.text.value=palette.text;
+            els.accent.value=palette.accent;
+            render();
+          });
+          els.paletteList.appendChild(btn);
+        });
+      }
+
+      async function refreshSaved(){
+        if(!cards){
+          els.savedList.innerHTML='<p class="saved-empty">FictionStorage 尚未載入。</p>';
+          return;
+        }
+
+        const records=await cards.all();
+        els.savedList.replaceChildren();
+
+        if(!records.length){
+          els.savedList.innerHTML='<p class="saved-empty">還沒有儲存的卡片。</p>';
+          return;
+        }
+
+        records
+          .slice()
+          .sort((a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||"")))
+          .forEach(record=>{
+            const item=document.createElement("div");
+            item.className="saved-item";
+
+            const load=document.createElement("button");
+            load.type="button";
+            load.className="saved-load";
+            const strong=document.createElement("strong");
+            strong.textContent=record.title||`${record.year} / ${Number(record.month)+1}`;
+            const meta=document.createElement("span");
+            meta.textContent=record.mode==="yearly"?`${record.year} · 全年卡`:`${record.year} / ${Number(record.month)+1} · 單月卡`;
+            load.append(strong,meta);
+            load.addEventListener("click",()=>{
+              currentId=record.id;
+              applyValue(record);
+            });
+
+            const del=document.createElement("button");
+            del.type="button";
+            del.className="saved-delete";
+            del.textContent="刪除";
+            del.addEventListener("click",async()=>{
+              await cards.remove(record.id);
+              if(currentId===record.id) currentId=null;
+              change?.emit({type:"remove",collection:"cards",record});
+            });
+
+            item.append(load,del);
+            els.savedList.appendChild(item);
+          });
+      }
+
+      async function saveCard(){
+        if(!cards) return;
+        const data=value();
+        let saved;
+
+        if(currentId && await cards.has(currentId)){
+          saved=await cards.update(currentId,data);
+        }else{
+          saved=await cards.add(data);
+          currentId=saved.id;
+        }
+
+        change?.emit({
+          type:currentId?"save":"add",
+          collection:"cards",
+          record:saved
+        });
+      }
+
+      function newCard(){
+        currentId=null;
+        applyValue({
+          mode:"monthly",
+          year:2026,
+          month:8,
+          title:"慢慢",
+          quote:"可以很安靜",
+          colors:PALETTES[0],
+          showLunar:false,
+          showFestivals:false,
+          showSolarTerms:false
+        });
+      }
+
+      [els.mode,els.year,els.month,els.title,els.quote,els.primary,els.bg,els.text,els.accent,els.lunar,els.festivals,els.terms]
+        .forEach(el=>el.addEventListener("input",render));
+
+      els.save.addEventListener("click",saveCard);
+      els.fresh.addEventListener("click",newCard);
+
+      change?.subscribe(event=>{
+        if(event.collection==="cards") refreshSaved();
+      });
+
+      initPalettes();
+      render();
+      refreshSaved();
+    })();
+  </script>
+</body>
+</html>
