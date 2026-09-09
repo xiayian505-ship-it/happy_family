@@ -430,9 +430,18 @@
       font-size:.62rem;
     }
 
-    .calendar-card.yearly .sc-day-detail {
-      display:none;
-    }
+.calendar-card.yearly .sc-day-detail {
+  display:block;
+  max-width:100%;
+  margin-top:0;
+  font-size:.42rem;
+  line-height:1.05;
+}
+
+.calendar-card.yearly .sc-day .sc-festival,
+.calendar-card.yearly .sc-day .sc-solar-term {
+  display:block;
+}
 
     @media (max-width:768px) {
       .sidebar {
@@ -794,6 +803,27 @@
           mountCalendar(host,v.year,m);
         }
       }
+      
+      function normalizeYearlyExtras(changedEl){
+  if(els.mode.value!=="yearly") return;
+
+  const extras=[els.lunar,els.festivals,els.terms];
+
+  if(changedEl && extras.includes(changedEl) && changedEl.checked){
+    extras.forEach(el=>{
+      if(el!==changedEl) el.checked=false;
+    });
+    return;
+  }
+
+  const checked=extras.filter(el=>el.checked);
+
+  if(checked.length>1){
+    checked.slice(1).forEach(el=>{
+      el.checked=false;
+    });
+  }
+}
 
       function render(){
         destroyCalendars();
@@ -962,16 +992,17 @@
         });
       }
 
-      [
-        els.mode,els.year,els.month,els.title,els.quote,
-        els.primary,els.bg,els.text,els.accent,
-        els.lunar,els.festivals,els.terms
-      ].forEach(el=>{
-        el.addEventListener("input",()=>{
-          syncPaletteActive();
-          render();
-        });
-      });
+[
+  els.mode,els.year,els.month,els.title,els.quote,
+  els.primary,els.bg,els.text,els.accent,
+  els.lunar,els.festivals,els.terms
+].forEach(el=>{
+  el.addEventListener("input",()=>{
+    normalizeYearlyExtras(el);
+    syncPaletteActive();
+    render();
+  });
+});
 
       els.save.addEventListener("click",saveCard);
       els.fresh.addEventListener("click",newCard);
