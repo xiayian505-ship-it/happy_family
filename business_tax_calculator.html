@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>營業稅小計算機</title>
+
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans TC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      background: #f6f6f3;
+      color: #222;
+      padding: 20px;
+    }
+
+    main {
+      width: min(100%, 420px);
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    h1 {
+      margin: 0 0 22px;
+      font-size: 1.35rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      font: inherit;
+      font-size: 1.6rem;
+      padding: 14px 16px;
+      border: 1px solid #bbb;
+      border-radius: 12px;
+      text-align: right;
+    }
+
+    input:focus {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .result {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding: 14px 0;
+      border-top: 1px solid #eee;
+    }
+
+    .result span {
+      color: #666;
+    }
+
+    .result strong {
+      font-size: 1.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hint {
+      margin: 18px 0 0;
+      color: #777;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>營業稅小計算機</h1>
+
+    <label for="rent">房租（含稅）</label>
+    <input
+      id="rent"
+      type="number"
+      inputmode="numeric"
+      min="0"
+      step="1"
+      autocomplete="off"
+      placeholder="例如 1450"
+      autofocus
+    >
+
+    <section class="results" aria-live="polite">
+      <div class="result">
+        <span>銷售額</span>
+        <strong id="sales">—</strong>
+      </div>
+
+      <div class="result">
+        <span>營業稅</span>
+        <strong id="tax">—</strong>
+      </div>
+    </section>
+
+    <p class="hint">銷售額＝房租 ÷ 1.05 四捨五入；營業稅＝房租－銷售額</p>
+  </main>
+
+  <script>
+    const rentInput = document.getElementById('rent');
+    const salesOutput = document.getElementById('sales');
+    const taxOutput = document.getElementById('tax');
+
+    const formatMoney = value =>
+      new Intl.NumberFormat('zh-TW').format(value);
+
+    function calculate() {
+      const raw = rentInput.value.trim();
+
+      if (raw === '') {
+        salesOutput.textContent = '—';
+        taxOutput.textContent = '—';
+        return;
+      }
+
+      const rent = Number(raw);
+
+      if (!Number.isFinite(rent) || rent < 0) {
+        salesOutput.textContent = '—';
+        taxOutput.textContent = '—';
+        return;
+      }
+
+      const sales = Math.round(rent / 1.05);
+      const tax = rent - sales;
+
+      salesOutput.textContent = formatMoney(sales);
+      taxOutput.textContent = formatMoney(tax);
+    }
+
+    rentInput.addEventListener('input', calculate);
+  </script>
+</body>
+</html>
