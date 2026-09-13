@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>記憶配對遊戲</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- ============ 函式庫 CSS（絕對路徑）============ -->
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/toast.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/effects/feedback/press.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/effects/reveal/fade_up.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/effects/light/glow.css">
+
+<style>
+  :root{
+    --paper:  #eef1ea;
+    --panel:  #ffffff;
+    --ink:    #263029;
+    --muted:  #6d7a71;
+    --line:   #d6ddd1;
+
+    --moss:   #4f7a5c;
+    --moss-soft: #dcece1;
+    --coral:  #c9564a;
+
+    --serif: "Noto Serif TC", serif;
+    --sans:  "Noto Sans TC", sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:720px; margin:0 auto; padding:0 24px; }
+
+  header.masthead{ padding:38px 0 0; }
+  .masthead__title{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(26px,4vw,36px);
+    margin:0;
+  }
+  .masthead__sub{ margin:6px 0 0; color:var(--muted); font-size:14.5px; max-width:52ch; }
+
+  .block-heading{
+    font-family:var(--serif);
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 14px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+
+  main{ padding-bottom:64px; }
+  .section{ margin:34px 0; }
+
+  .hint-box{
+    background:var(--moss-soft); color:#2f5b3d;
+    padding:10px 14px; font-size:13px; margin-bottom:16px;
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .hint-box button{ background:none; border:none; color:#2f5b3d; text-decoration:underline; cursor:pointer; font-size:12.5px; }
+
+  .stats-line{ display:flex; gap:20px; margin-bottom:14px; font-size:13.5px; color:var(--muted); }
+  .stats-line strong{ color:var(--ink); }
+
+  .btn{
+    font-family:var(--sans); font-size:13.5px; font-weight:500;
+    padding:8px 18px; border:1px solid var(--line); background:var(--panel);
+    color:var(--ink); cursor:pointer;
+  }
+  .btn:hover{ background:var(--paper); }
+  .btn-primary{ background:var(--moss); border-color:var(--moss); color:#fff; }
+  .btn-primary:hover{ background:#3f6449; }
+
+  /* ---------- 卡牌 ---------- */
+  #board{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .card{
+    aspect-ratio:1;
+    perspective:600px;
+    cursor:pointer;
+  }
+  .card-inner{
+    position:relative;
+    width:100%; height:100%;
+    transform-style:preserve-3d;
+    transition:transform .35s ease;
+  }
+  .card.is-flipped .card-inner{ transform:rotateY(180deg); }
+  .card-face{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px;
+    backface-visibility:hidden;
+    font-size:28px;
+  }
+  .card-face.back{ background:var(--moss); color:#fff; font-size:20px; }
+  .card-face.front{ background:var(--panel); border:1px solid var(--line); transform:rotateY(180deg); }
+  .card.matched .card-face.front{ border-color:var(--moss); }
+
+  /* ---------- 歷史紀錄 ---------- */
+  #historyList{ display:grid; gap:8px; }
+  .history-row{
+    display:flex; justify-content:space-between;
+    padding:8px 12px; background:var(--panel); border:1px solid var(--line);
+    font-size:13px;
+  }
+  .history-row.best{ border-left:3px solid var(--coral); }
+  .history-empty{ color:var(--muted); font-size:14px; }
+
+  .backup-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; }
+
+  footer{
+    border-top:1px solid var(--line);
+    padding:20px 0 40px;
+    color:var(--muted);
+    font-size:12.5px;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="masthead__title">記憶配對遊戲</p>
+    <p class="masthead__sub">16 張牌、8 對，用最少的步數把它們全部配對出來。</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hint-box" id="hintBox">
+    <span>點兩張牌，圖案一樣就配對成功；不一樣會翻回去。</span>
+    <button type="button" id="hideHintBtn">不再顯示</button>
+  </div>
+
+  <section class="section" style="margin-top:0;">
+    <div class="stats-line">
+      <span>步數 <strong id="movesCount">0</strong></span>
+      <span>已配對 <strong id="matchedCount">0</strong> / 8</span>
+    </div>
+    <div id="board"></div>
+    <button type="button" class="btn btn-primary" id="restartBtn">重新洗牌</button>
+  </section>
+
+  <section class="section">
+    <h2 class="block-heading">歷史紀錄（依步數排序，越少越好）</h2>
+    <div id="historyList"><p class="history-empty">還沒有完成過。</p></div>
+    <div class="backup-actions">
+      <button type="button" class="btn" id="exportBtn">匯出紀錄 JSON</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  記憶配對遊戲 — 由「慢慢的倉庫」共用模組組成
+</footer>
+
+<div id="toast" class="slowly-toast" role="status"
+     style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:10px 18px;background:var(--ink);color:#fff;font-size:13px;border-radius:999px;z-index:999;"></div>
+
+<!-- ============ 函式庫 JS（絕對路徑）============ -->
+<script>
+  function loadScript(src){
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = () => resolve(src);
+      s.onerror = () => reject(new Error("載入失敗：" + src));
+      document.body.appendChild(s);
+    });
+  }
+
+  function loadSequence(list){
+    return list.reduce(
+      (chain, src) => chain.then(() => loadScript(src)),
+      Promise.resolve()
+    );
+  }
+
+  const CHAIN = [
+    "https://lib.stillnessbyslowly.com/fiction/Fiction_shuffle.js",
+    "https://lib.stillnessbyslowly.com/fiction/Fiction_storage.js",
+    "https://lib.stillnessbyslowly.com/fiction/Fiction_sort.js",
+    "https://lib.stillnessbyslowly.com/data/Data_backup.js",
+    "https://lib.stillnessbyslowly.com/date/datetime.js",
+    "https://lib.stillnessbyslowly.com/state/preference/preference.js",
+    "https://lib.stillnessbyslowly.com/ui/toast.js"
+  ];
+
+  const SYMBOLS = ["🍎","🍊","🍇","🍉","🍓","🍒","🍋","🥝"];
+
+  let scoreStore = null;
+  let hintPref = null;
+  let toast = null;
+
+  let deck = [];
+  let flipped = [];
+  let matchedCount = 0;
+  let moves = 0;
+  let locked = false;
+
+  function buildDeck(){
+    const pairs = SYMBOLS.flatMap((symbol, i) => [
+      { id: "a" + i, symbol },
+      { id: "b" + i, symbol }
+    ]);
+    return FictionShuffle.shuffle(pairs);
+  }
+
+  function renderBoard(){
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+
+    deck.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.className = "card slowly-press";
+      card.dataset.index = index;
+
+      const inner = document.createElement("div");
+      inner.className = "card-inner";
+
+      const back = document.createElement("div");
+      back.className = "card-face back";
+      back.textContent = "?";
+
+      const front = document.createElement("div");
+      front.className = "card-face front";
+      front.textContent = item.symbol;
+
+      inner.append(back, front);
+      card.append(inner);
+      card.addEventListener("click", () => handleFlip(index, card));
+      board.append(card);
+    });
+  }
+
+  async function handleFlip(index, cardEl){
+    if (locked) return;
+    if (cardEl.classList.contains("is-flipped") || cardEl.classList.contains("matched")) return;
+
+    cardEl.classList.add("is-flipped");
+    flipped.push({ index, el: cardEl });
+
+    if (flipped.length < 2) return;
+
+    locked = true;
+    moves += 1;
+    document.getElementById("movesCount").textContent = moves;
+
+    const [a, b] = flipped;
+
+    if (deck[a.index].symbol === deck[b.index].symbol){
+      await new Promise(r => setTimeout(r, 250));
+
+      [a.el, b.el].forEach(el => {
+        el.classList.add("matched", "slowly-glow", "is-active", "slowly-fade-up");
+        requestAnimationFrame(() => el.classList.add("is-visible"));
+      });
+
+      matchedCount += 1;
+      document.getElementById("matchedCount").textContent = matchedCount;
+      toast.show("配對成功！");
+
+      if (matchedCount === SYMBOLS.length){
+        await finishGame();
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 700));
+      [a.el, b.el].forEach(el => el.classList.remove("is-flipped"));
+    }
+
+    flipped = [];
+    locked = false;
+  }
+
+  async function finishGame(){
+    toast.show(`完成了！用了 ${moves} 步。`);
+    await scoreStore.add({ moves, date: DateTime.dateKey() });
+    await renderHistory();
+  }
+
+  function startNewGame(){
+    deck = buildDeck();
+    flipped = [];
+    matchedCount = 0;
+    moves = 0;
+    locked = false;
+    document.getElementById("movesCount").textContent = "0";
+    document.getElementById("matchedCount").textContent = "0";
+    renderBoard();
+  }
+
+  async function renderHistory(){
+    const list = document.getElementById("historyList");
+    const scores = await scoreStore.all();
+
+    if (scores.length === 0){
+      list.innerHTML = '<p class="history-empty">還沒有完成過。</p>';
+      return;
+    }
+
+    const sorted = FictionSort.sort(scores, { field: "moves", type: "number", direction: "asc" }).slice(0, 5);
+    const best = sorted[0];
+
+    list.innerHTML = "";
+    sorted.forEach(record => {
+      const row = document.createElement("div");
+      row.className = "history-row" + (record.id === best.id ? " best" : "");
+      row.innerHTML = `<span>${DateTime.formatDate(record.date)}</span><span>${record.moves} 步</span>`;
+      list.append(row);
+    });
+  }
+
+  function bindHint(){
+    const box = document.getElementById("hintBox");
+    box.style.display = hintPref.get() ? "flex" : "none";
+
+    document.getElementById("hideHintBtn").addEventListener("click", () => {
+      hintPref.set(false);
+      box.style.display = "none";
+    });
+  }
+
+  function bindBackup(){
+    document.getElementById("exportBtn").addEventListener("click", async () => {
+      const scores = await scoreStore.all();
+      const payload = DataBackup.createPayload({
+        app: "slowly-memory-game",
+        data: scores.map(s => ({ moves: s.moves, date: s.date }))
+      });
+      DataBackup.downloadJson(`memory-game-scores-${DataBackup.todayISO()}.json`, payload);
+    });
+  }
+
+  function boot(){
+    const mount = document.getElementById("board");
+
+    loadSequence(CHAIN)
+      .then(async () => {
+        const store = FictionStorage.create({ namespace: "memory_game" });
+        scoreStore = store.collection("scores");
+
+        hintPref = Preference.create({ key: "memory_game:show_hint", defaultValue: true });
+        toast = SlowlyToast.create("#toast", { duration: 1600 });
+
+        bindHint();
+        bindBackup();
+        document.getElementById("restartBtn").addEventListener("click", startNewGame);
+
+        startNewGame();
+        await renderHistory();
+      })
+      .catch(err => {
+        console.error(err);
+        mount.innerHTML =
+          '<p style="color:var(--muted);font-size:14px;">元件載入失敗（可能是網路暫時不穩）。' +
+          '<button type="button" id="bootRetry" style="margin-left:8px;">重試</button></p>';
+        document.getElementById("bootRetry").onclick = boot;
+      });
+  }
+
+  boot();
+</script>
+
+</body>
+</html>
