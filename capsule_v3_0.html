@@ -1,0 +1,430 @@
+<!-- capsule_v3_0.html -->
+
+<!doctype html>
+
+<html lang="zh-Hant">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>慢 慢｜邁向未來</title>
+
+<!-- 慢慢的倉庫｜Responsive Base -->
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css">
+
+<!-- 慢慢的倉庫｜Custom UI / Toast -->
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/custom_date.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/custom_select.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/toast.css">
+<link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/confirm/confirm.css">
+
+<!-- Capsule host style -->
+<link rel="stylesheet" href="./capsule_v3_0.css">
+
+</head>
+
+
+
+<body>
+
+<div class="wrap">
+
+
+
+<div class="header">
+
+  <h1>慢 慢｜邁向未來</h1>
+
+  <div class="appSubtitle">Stillness by Slowly</div>
+
+</div>
+
+
+
+  <div class="card">
+
+
+
+    <div class="tabs">
+
+      <div class="tab active" data-tab="diary">寫信</div>
+
+      <div class="tab" data-tab="search">信箱</div>
+
+      <div class="tab" data-tab="dev">歲月側寫</div>
+
+    </div>
+
+
+
+    <!-- ✉️ 寫信頁 -->
+
+<div class="page active preload" id="diary">
+
+
+
+      <!-- 今天 -->
+
+      <div class="calendar">
+
+        <div class="calHead">
+
+          <div class="calTitle">
+
+            <div class="month" id="todayMonth">—</div>
+
+            <div class="year" id="todayYear">—</div>
+
+          </div>
+
+          <div class="bigDate" id="todayDate">—</div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ✉️ 信紙（現在） -->
+
+      <div class="diary withLeftLine">
+
+        <div class="diaryTitle">寄 給 未 來</div>
+
+        <div class="diaryContent">信件在時間裡沉澱</div>
+
+      </div>
+
+
+
+      <!-- 投遞設定 -->
+
+      <div class="deliveryCard">
+
+        <div class="deliveryTitle">投遞時間設定</div>
+
+
+
+        <div class="modeGroup">
+
+          <label class="modeItem">
+
+            <input type="radio" name="deliverMode" value="custom" checked>
+
+            <span>自訂抵達日</span>
+
+          </label>
+
+          <div class="modeBlock">
+
+            <input type="date" class="deliveryDateInput" id="deliveryDateInput" data-slowly-date>
+
+            <div class="modeHint">最快明天抵達</div>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="modeGroup">
+
+          <label class="modeItem">
+
+            <input type="radio" name="deliverMode" value="meaningful">
+
+            <span>時光慢慢</span>
+
+          </label>
+
+          <div class="modeBlock">
+
+            <select class="meaningfulSelect" data-slowly-select aria-label="時光慢慢投遞時間">
+
+              <option value="7">七天</option>
+
+              <option value="30">三十天</option>
+
+              <option value="100">一百天</option>
+
+              <option value="180">半年</option>
+
+              <option value="365">一年</option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+
+        <div class="modeGroup">
+
+          <label class="modeItem">
+
+            <input type="radio" name="deliverMode" value="random">
+
+            <span>都可以</span>
+
+          </label>
+
+          <div class="modeBlock">
+
+            <div class="modeHint">未來365天內抵達</div>
+
+          </div>
+
+        </div>
+
+
+
+<div class="modeGroup">
+
+  <label class="modeItem">
+
+    <input type="radio" name="deliverMode" value="birthday">
+
+    <span>誕生日</span>
+
+  </label>
+
+  <div class="modeBlock">
+
+    <input type="date" class="birthdayInput" data-slowly-date>
+
+    <div class="modeHint">生日抵達</div>
+
+  </div>
+
+</div>
+
+
+
+        <div class="modeGroup">
+
+          <label class="modeItem">
+
+            <input type="radio" name="deliverMode" value="festival">
+
+            <span>挑一天</span>
+
+          </label>
+
+          <div class="modeBlock">
+
+<select class="festivalSelect" data-slowly-select aria-label="挑一天投遞">
+
+  <option value="01-01">新年第一天</option>
+
+  <option value="03-20">春分</option>
+
+  <option value="06-21">夏至</option>
+
+  <option value="09-22">秋分</option>
+
+  <option value="12-21">冬至</option>
+
+</select>
+
+            <div class="modeHint">節日抵達</div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="diaryActions diaryWriteActions">
+
+        <div class="btn" id="sealBtn">寄信</div>
+
+        <div class="btn" id="editBtn">寫信</div>
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <!-- 📬 信箱 -->
+
+<div class="page" id="search">
+
+
+
+  <!-- 📬 信箱清單區 -->
+
+  <div class="mailGrid">
+
+    <div class="mailCol">
+
+      <div class="mailTitle">抵達</div>
+
+      <div class="monthList openedList"></div>
+
+    </div>
+
+    <div class="mailCol">
+
+      <div class="mailTitle">行走</div>
+
+      <div class="monthList sealedList"></div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ✉️ 信紙預覽區（新） -->
+
+  <div class="mailPreviewWrap">
+
+    <div class="mailPreviewPaper withLeftLine">
+
+      <div class="mailPreviewTitle">開啟信件</div>
+
+      <div class="mailPreviewContent">在這裡閱讀</div>
+
+    </div>
+
+<div class="capsuleLawHint">
+
+  信件會隨時間消散<br>時光膠囊僅保存12天或12封
+
+</div>
+
+    <div class="mailPreviewActions">
+
+      <div class="btn danger" id="deleteBtn">消散</div>
+
+      <div class="btn primary" id="exportBtn">保存時光明信片</div>
+
+    </div>
+
+  </div>
+
+
+
+</div>
+
+
+
+<div class="page" id="dev">
+
+  <div id="mm_time_layer_scene" class="mm_time_layer_scene"></div>
+
+</div>
+
+
+
+  </div>
+
+</div>
+
+
+
+<!-- 🕰️ PNG 匯出卡片 -->
+
+<div id="capsuleExportCard" class="capsuleCard">
+
+  <div class="capsuleInner">
+
+<div class="capsuleMeta">
+
+  <div class="toText">Welcome to 誕生</div>
+
+</div>
+
+
+
+<div class="capsuleContent">
+
+  <div class="exportTitle">寄 給 未 來</div>
+
+  <div class="exportBody">信件在時間裡沉澱</div>
+
+  <div class="fromText">from 2026/01/26</div> <!-- ⭐ 搬到正文裡 -->
+
+</div>
+
+  </div>
+
+</div>
+
+<!-- 🪟 明信片預覽視窗 -->
+
+<div id="exportPreviewModal" class="exportPreviewModal">
+
+  <div class="exportPreviewBox">
+
+    <div id="exportPreviewMount"></div>
+
+
+
+    <div class="exportPreviewActions">
+
+      <div class="btn" id="cancelExportBtn">返回</div>
+
+      <div class="btn primary" id="confirmExportBtn">下載圖片</div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="capsuleToast" class="slowly-toast capsuleToast" role="status" aria-live="polite"></div>
+
+<!-- 慢慢的倉庫｜底層零件 -->
+<script defer src="https://lib.stillnessbyslowly.com/state/navigation/hash.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/date/datetime.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/date/timer/ticker.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/date/timer/frame_loop.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_storage.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_filter.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_sort.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_shuffle.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_paginate.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/fiction/Fiction_change.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/data/validation/data_validation.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/data/diff/data_diff.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/data/random/random.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/state/form_draft.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/state/queue/serial_queue.js"></script>
+
+<!-- 慢慢的倉庫｜Custom UI + Toast -->
+<script defer src="https://lib.stillnessbyslowly.com/ui/custom_date.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/ui/custom_select.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/ui/toast.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/ui/confirm/confirm.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/ui/contenteditable/contenteditable_insert.js"></script>
+
+<!-- 慢慢的倉庫｜Canvas 文字排版 -->
+<script defer src="https://lib.stillnessbyslowly.com/Image/canvas/wrapped_text.js"></script>
+
+<!-- 慢慢的倉庫｜PNG 輸出 -->
+<script defer src="https://lib.stillnessbyslowly.com/Image/png/canvas_png.js"></script>
+<script defer src="https://lib.stillnessbyslowly.com/Image/png/png_download.js"></script>
+
+<!-- Capsule host logic -->
+<script defer src="./capsule_v3_0.js"></script>
+
+</body>
+
+
+
+</html>
+
+
+
+
+
