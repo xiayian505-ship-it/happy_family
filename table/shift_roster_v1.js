@@ -6,6 +6,7 @@ const printButton = document.getElementById('printButton');
 const blockModeButton = document.getElementById('blockModeButton');
 const specialModeButton = document.getElementById('specialModeButton');
 const nightModeButton = document.getElementById('nightModeButton');
+const clearMonthButton = document.getElementById('clearMonthButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -13,6 +14,13 @@ const summaryGrid = document.getElementById('summaryGrid');
 const titleYear = document.getElementById('titleYear');
 const titleMonth = document.getElementById('titleMonth');
 const publicLeaveInput = document.getElementById('publicLeaveInput');
+const rowFillOverlay = document.getElementById('rowFillOverlay');
+const rowFillTitle = document.getElementById('rowFillTitle');
+const rowFillQuickLetters = document.getElementById('rowFillQuickLetters');
+const rowFillCustomInput = document.getElementById('rowFillCustomInput');
+const rowFillApplyCustom = document.getElementById('rowFillApplyCustom');
+const rowFillClearRow = document.getElementById('rowFillClearRow');
+const rowFillClose = document.getElementById('rowFillClose');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 const shifts = [
@@ -33,6 +41,7 @@ const nightShiftOverrides = new Map();
 let blockModeEnabled = false;
 let specialModeEnabled = false;
 let nightModeEnabled = false;
+let selectedRowFillShiftIndex = null;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -195,6 +204,83 @@ function setNightGrayState(year, month, day, shiftIndex, enabled) {
   }
 }
 
+
+function getCurrentYearMonth() {
+  return {
+    year: Number(yearInput.value),
+    month: Number(monthSelect.value)
+  };
+}
+
+function clearMapKeysForMonth(map, year, month) {
+  const prefix = `${year}-${month}-`;
+  for (const key of [...map.keys()]) {
+    if (String(key).startsWith(prefix)) map.delete(key);
+  }
+}
+
+function clearSetKeysForMonth(set, year, month) {
+  const prefix = `${year}-${month}-`;
+  for (const key of [...set]) {
+    if (String(key).startsWith(prefix)) set.delete(key);
+  }
+}
+
+function clearCurrentMonth() {
+  const { year, month } = getCurrentYearMonth();
+  const ok = window.confirm(`${year} 年 ${month} 月的排班與手動標記都要清空嗎？\n姓名與公休／特休數字會保留。`);
+  if (!ok) return;
+
+  clearMapKeysForMonth(rosterValues, year, month);
+  clearMapKeysForMonth(blockedVacationOverrides, year, month);
+  clearMapKeysForMonth(nightShiftOverrides, year, month);
+  clearSetKeysForMonth(specialShiftCells, year, month);
+  closeRowFillPanel();
+  render();
+}
+
+function applyLetterToShiftRow(shiftIndex, letter) {
+  const { year, month } = getCurrentYearMonth();
+  const cleaned = cleanEnglishLetter(letter);
+  if (shiftIndex == null || shiftIndex < 0 || shiftIndex >= shifts.length) return;
+
+  const days = getDaysInMonth(year, month);
+  for (let day = 1; day <= days; day += 1) {
+    const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
+    if (cleaned) rosterValues.set(key, cleaned);
+    else rosterValues.delete(key);
+  }
+
+  closeRowFillPanel();
+  renderSchedule(year, month);
+}
+
+function openRowFillPanel(shiftIndex) {
+  selectedRowFillShiftIndex = shiftIndex;
+  rowFillTitle.textContent = `${shifts[shiftIndex].label} 整列填入`;
+  rowFillCustomInput.value = '';
+  rowFillOverlay.hidden = false;
+}
+
+function closeRowFillPanel() {
+  rowFillOverlay.hidden = true;
+  selectedRowFillShiftIndex = null;
+}
+
+function buildRowFillQuickLetters() {
+  rowFillQuickLetters.innerHTML = '';
+  for (const letter of ['A', 'B', 'C', 'D', 'E', 'F']) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = letter;
+    button.addEventListener('click', () => {
+      if (selectedRowFillShiftIndex == null) return;
+      applyLetterToShiftRow(selectedRowFillShiftIndex, letter);
+    });
+    rowFillQuickLetters.appendChild(button);
+  }
+}
+
 function cleanEnglishLetter(value) {
   const letters = value.toUpperCase().replace(/[^A-Z]/g, '');
   return letters.slice(0, 1);
@@ -292,6 +378,17 @@ function renderSchedule(year, month) {
     const label = document.createElement('th');
     label.className = 'shift-label';
     label.textContent = shift.label;
+    label.title = '點一下可整列填入同一個英文字母';
+    label.tabIndex = 0;
+    label.setAttribute('role', 'button');
+    label.setAttribute('aria-label', `${shift.label} 整列填入`);
+    label.addEventListener('click', () => openRowFillPanel(shiftIndex));
+    label.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openRowFillPanel(shiftIndex);
+      }
+    });
     row.appendChild(label);
 
     const code = document.createElement('td');
@@ -580,7 +677,37 @@ nextMonthButton.addEventListener('click', () => changeMonth(1));
 blockModeButton.addEventListener('click', () => setBlockMode(!blockModeEnabled));
 specialModeButton.addEventListener('click', () => setSpecialMode(!specialModeEnabled));
 nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled));
+clearMonthButton.addEventListener('click', clearCurrentMonth);
 printButton.addEventListener('click', () => window.print());
+
+rowFillClose.addEventListener('click', closeRowFillPanel);
+rowFillOverlay.addEventListener('click', (event) => {
+  if (event.target === rowFillOverlay) closeRowFillPanel();
+});
+rowFillApplyCustom.addEventListener('click', () => {
+  if (selectedRowFillShiftIndex == null) return;
+  const letter = cleanEnglishLetter(rowFillCustomInput.value);
+  if (!letter) return;
+  applyLetterToShiftRow(selectedRowFillShiftIndex, letter);
+});
+rowFillClearRow.addEventListener('click', () => {
+  if (selectedRowFillShiftIndex == null) return;
+  applyLetterToShiftRow(selectedRowFillShiftIndex, '');
+});
+rowFillCustomInput.addEventListener('input', () => {
+  const cleaned = cleanEnglishLetter(rowFillCustomInput.value);
+  if (rowFillCustomInput.value !== cleaned) rowFillCustomInput.value = cleaned;
+});
+rowFillCustomInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && rowFillCustomInput.value) {
+    event.preventDefault();
+    rowFillApplyCustom.click();
+  }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !rowFillOverlay.hidden) closeRowFillPanel();
+});
+
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
 publicLeaveInput.addEventListener('blur', () => {
   if (!publicLeaveCount) {
@@ -590,4 +717,5 @@ publicLeaveInput.addEventListener('blur', () => {
   }
 });
 
+buildRowFillQuickLetters();
 render();

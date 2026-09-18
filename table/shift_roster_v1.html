@@ -24,7 +24,27 @@
     <button id="blockModeButton" type="button" aria-pressed="false">禁休</button>
     <button id="specialModeButton" type="button" aria-pressed="false">特殊</button>
     <button id="nightModeButton" type="button" aria-pressed="false">大夜</button>
+    <button id="clearMonthButton" type="button">本月清空</button>
     <button id="printButton" type="button">列印</button>
+  </div>
+
+  <div id="rowFillOverlay" class="row-fill-overlay" hidden>
+    <div class="row-fill-panel" role="dialog" aria-modal="true" aria-labelledby="rowFillTitle">
+      <div class="row-fill-head">
+        <strong id="rowFillTitle">整列填入</strong>
+        <button id="rowFillClose" class="row-fill-close" type="button" aria-label="關閉">×</button>
+      </div>
+
+      <div id="rowFillQuickLetters" class="row-fill-quick" aria-label="快速選擇英文字母"></div>
+
+      <div class="row-fill-custom">
+        <label>其他
+          <input id="rowFillCustomInput" type="text" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="其他英文字母">
+        </label>
+        <button id="rowFillApplyCustom" type="button">套用</button>
+        <button id="rowFillClearRow" type="button">清空整列</button>
+      </div>
+    </div>
   </div>
 
   <main class="sheet" id="sheet">

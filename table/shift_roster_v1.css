@@ -821,3 +821,141 @@ table {
     width: 3.4em;
   }
 }
+
+
+/* ===== 整列快速填入 ===== */
+.shift-label[role="button"] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.shift-label[role="button"]:hover,
+.shift-label[role="button"]:focus-visible {
+  background: var(--focus);
+  outline: none;
+}
+
+.row-fill-overlay[hidden] {
+  display: none;
+}
+
+.row-fill-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.row-fill-panel {
+  width: min(360px, calc(100vw - 36px));
+  padding: 14px;
+  border: 1px solid #777;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.24);
+}
+
+.row-fill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.row-fill-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.row-fill-quick {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.row-fill-quick button {
+  min-height: 40px;
+  border: 1px solid #999;
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.row-fill-custom {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.row-fill-custom label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+}
+
+.row-fill-custom input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #999;
+  border-radius: 8px;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 16px;
+}
+
+.row-fill-custom button {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid #999;
+  border-radius: 8px;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .controls {
+    gap: 2px;
+  }
+
+  .controls button,
+  .controls input,
+  .controls select {
+    min-height: 32px;
+    font-size: 9px;
+  }
+
+  .controls button {
+    padding: 0 2px;
+  }
+
+  .controls label {
+    gap: 1px;
+    font-size: 10px;
+  }
+
+  .controls input {
+    width: 48px;
+    padding: 0 2px;
+  }
+
+  .controls select {
+    width: 45px;
+    padding: 0 12px 0 2px;
+  }
+}
+
+@media print {
+  .row-fill-overlay {
+    display: none !important;
+  }
+}
