@@ -9,6 +9,7 @@ const lowerTable = document.getElementById('lowerTable');
 const summaryGrid = document.getElementById('summaryGrid');
 const titleYear = document.getElementById('titleYear');
 const titleMonth = document.getElementById('titleMonth');
+const publicLeaveInput = document.getElementById('publicLeaveInput');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 const shifts = [
@@ -20,6 +21,8 @@ const shifts = [
 ];
 
 const names = Array(6).fill('');
+const specialLeaveValues = Array(6).fill('');
+let publicLeaveCount = '8';
 const rosterValues = new Map();
 
 for (let month = 1; month <= 12; month += 1) {
@@ -74,6 +77,26 @@ function makeRosterKey(year, month, day, type, index = '') {
 function cleanEnglishLetter(value) {
   const letters = value.toUpperCase().replace(/[^A-Z]/g, '');
   return letters.slice(0, 1);
+}
+
+function cleanTwoDigits(value) {
+  return String(value).replace(/\D/g, '').slice(0, 2);
+}
+
+function handlePublicLeaveInput() {
+  const cleaned = cleanTwoDigits(publicLeaveInput.textContent);
+  publicLeaveCount = cleaned;
+
+  if (publicLeaveInput.textContent !== cleaned) {
+    publicLeaveInput.textContent = cleaned;
+    const selection = window.getSelection();
+    if (selection) {
+      selection.selectAllChildren(publicLeaveInput);
+      selection.collapseToEnd();
+    }
+  }
+
+  renderSummary();
 }
 
 function createLetterInput({ value = '', ariaLabel, onChange, className }) {
@@ -258,7 +281,18 @@ function renderLower(year, month) {
     input.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 姓名`);
     input.addEventListener('input', handleNameInput);
 
-    row.append(letter, input);
+    const leaveInput = document.createElement('input');
+    leaveInput.className = 'special-leave-input';
+    leaveInput.type = 'text';
+    leaveInput.inputMode = 'numeric';
+    leaveInput.maxLength = 2;
+    leaveInput.value = specialLeaveValues[index];
+    leaveInput.dataset.index = index;
+    leaveInput.autocomplete = 'off';
+    leaveInput.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 特休天數`);
+    leaveInput.addEventListener('input', handleSpecialLeaveInput);
+
+    row.append(letter, input, leaveInput);
     namesPanel.appendChild(row);
   });
 
@@ -307,11 +341,11 @@ function renderSummary() {
 
     const publicLeave = document.createElement('span');
     publicLeave.className = 'summary-count';
-    publicLeave.textContent = '公休：　';
+    publicLeave.textContent = `公休：${publicLeaveCount}`;
 
     const specialLeave = document.createElement('span');
     specialLeave.className = 'summary-count';
-    specialLeave.textContent = '特休：　';
+    specialLeave.textContent = `特休：${specialLeaveValues[index]}`;
 
     item.append(nameSpan, publicLeave, specialLeave);
     summaryGrid.appendChild(item);
@@ -322,6 +356,14 @@ function handleNameInput(event) {
   const index = Number(event.target.dataset.index);
   names[index] = event.target.value.slice(0, 3);
   if (event.target.value !== names[index]) event.target.value = names[index];
+  renderSummary();
+}
+
+function handleSpecialLeaveInput(event) {
+  const index = Number(event.target.dataset.index);
+  const cleaned = cleanTwoDigits(event.target.value);
+  specialLeaveValues[index] = cleaned;
+  if (event.target.value !== cleaned) event.target.value = cleaned;
   renderSummary();
 }
 
@@ -371,5 +413,13 @@ monthSelect.addEventListener('change', render);
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
 printButton.addEventListener('click', () => window.print());
+publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
+publicLeaveInput.addEventListener('blur', () => {
+  if (!publicLeaveCount) {
+    publicLeaveCount = '8';
+    publicLeaveInput.textContent = publicLeaveCount;
+    renderSummary();
+  }
+});
 
 render();

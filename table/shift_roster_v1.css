@@ -9,6 +9,8 @@
 
 * {
   box-sizing: border-box;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 html,
@@ -128,11 +130,36 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   padding: 6px 4px;
   font-family: "Noto Serif TC", "PMingLiU", serif;
   font-size: 15px;
   letter-spacing: 0.1em;
   line-height: 1.45;
+}
+
+.side-note-text {
+  white-space: nowrap;
+}
+
+.side-note-number {
+  min-width: 1.4em;
+  min-height: 1.6em;
+  padding: 1px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  outline: 0;
+  background: transparent;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  cursor: text;
+}
+
+.side-note-number:focus {
+  background: var(--focus);
 }
 
 table {
@@ -242,7 +269,8 @@ table {
 
 .shift-input:focus,
 .vacation-input:focus,
-.name-input:focus {
+.name-input:focus,
+.special-leave-input:focus {
   background: var(--focus);
 }
 
@@ -308,7 +336,8 @@ table {
 }
 
 .vacation-input + .vacation-input {
-  border-top: 1px solid rgba(27, 27, 27, 0.35);
+  /* 上下兩格仍是兩個獨立輸入框，但中間不顯示橫線。 */
+  border-top: 1px solid transparent;
 }
 
 .lower-table {
@@ -341,7 +370,7 @@ table {
 .name-row {
   min-height: 0;
   display: grid;
-  grid-template-columns: 27px minmax(0, 1fr);
+  grid-template-columns: 27px minmax(0, 1fr) 30px;
   align-items: center;
   border-bottom: 1px solid var(--line);
   padding: 0 4px 0 2px;
@@ -370,6 +399,20 @@ table {
   padding: 3px 0;
   font: 17px/1.2 "Noto Serif TC", "PMingLiU", serif;
   text-align: left;
+}
+
+.special-leave-input {
+  width: 30px;
+  max-width: 30px;
+  height: 100%;
+  justify-self: end;
+  border: 0;
+  border-left: 1px solid var(--line);
+  outline: 0;
+  background: transparent;
+  padding: 3px 1px;
+  font: 16px/1.2 Arial, sans-serif;
+  text-align: center;
 }
 
 .lower-date-label {
@@ -436,6 +479,45 @@ table {
 }
 
 @media print {
+  /* 列印必須保留螢幕上的黑白日期帶、週末灰底等底色。 */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .date-band-light {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .date-band-dark {
+    background: #4b4b4b !important;
+    color: #fff !important;
+  }
+
+  .saturday {
+    background: var(--weekend-sat) !important;
+  }
+
+  .sunday {
+    background: var(--weekend-sun) !important;
+  }
+
+  .vacation-cell.saturday,
+  .vacation-cell.sunday {
+    background: #fff !important;
+  }
+
+  .vacation-cell.saturday .mini-weekday {
+    background: var(--weekend-sat) !important;
+  }
+
+  .vacation-cell.sunday .mini-weekday {
+    background: var(--weekend-sun) !important;
+  }
+
   html,
   body {
     width: auto;
@@ -569,7 +651,7 @@ table {
   }
 
   .name-row {
-    grid-template-columns: 7mm minmax(0, 1fr);
+    grid-template-columns: 7mm minmax(0, 1fr) 8mm;
     padding: 0 1mm 0 0.5mm;
   }
 
@@ -582,6 +664,18 @@ table {
     width: 3.2em;
     max-width: 3.2em;
     font-size: 3.7mm;
+  }
+
+  .special-leave-input {
+    width: 8mm;
+    max-width: 8mm;
+    font-size: 3.5mm;
+  }
+
+  .side-note-number {
+    min-width: 1.3em;
+    min-height: 1.5em;
+    font-size: 3mm;
   }
 
   .lower-date-label {
