@@ -2,9 +2,12 @@
   --ink: #111;
   --paper: #fff;
   --line: #1b1b1b;
-  /* 依使用者提供的 JPG 取樣；原始 Excel 色碼無法由壓縮圖 100% 還原。 */
+  /* 六、日使用參考表的粉紅底；23～07 週六維持灰底。 */
   --weekend-sat: #f586c0;
   --weekend-sun: #f586c0;
+  --night-gray: #b7b7b7;
+  /* 特殊標記沿用同一個粉紅底。 */
+  --special-pink: #f586c0;
   --focus: #fffbe8;
 }
 
@@ -227,8 +230,8 @@ table {
 }
 
 .date-band-dark {
-  background: #4b4b4b;
-  color: #fff;
+  background: #b7b7b7;
+  color: #111;
 }
 
 .weekday-cell {
@@ -286,9 +289,23 @@ table {
   touch-action: manipulation;
 }
 
-/* 「特殊」模式：單一排班格可切換成與六、日相同的粉紅底。 */
+/* 「大夜」：23～07 這列的週六預設灰底；可逐格取消或手動補灰底。 */
+.shift-cell.is-night-gray {
+  background: var(--night-gray);
+}
+
+.night-mode .shift-cell[data-shift-index="3"] {
+  cursor: crosshair;
+}
+
+.night-mode .shift-cell[data-shift-index="3"] .shift-input {
+  pointer-events: none;
+}
+
+/* 「特殊」模式：單一排班格切換為粉紅底。
+   規則放在大夜灰底之後，因此同一格若被標成特殊，粉紅會覆蓋灰底。 */
 .shift-cell.is-special {
-  background: var(--weekend-sat);
+  background: var(--special-pink);
 }
 
 .shift-cell.is-special .shift-input {
@@ -532,7 +549,7 @@ table {
     width: calc(100vw - 16px);
     margin: 0 0 8px;
     padding: 6px 4px;
-    gap: 4px;
+    gap: 3px;
     justify-content: space-between;
   }
 
@@ -541,12 +558,12 @@ table {
   .controls select {
     min-width: 0;
     min-height: 36px;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .controls button {
     flex: 0 1 auto;
-    padding: 0 5px;
+    padding: 0 4px;
   }
 
   .controls label {
@@ -576,7 +593,7 @@ table {
 }
 
 @media print {
-  /* 列印必須保留螢幕上的黑白日期帶、週末粉紅底等底色。 */
+  /* 列印必須保留螢幕上的白灰日期帶、週末粉紅底等底色。 */
   *,
   *::before,
   *::after {
@@ -590,8 +607,8 @@ table {
   }
 
   .date-band-dark {
-    background: #4b4b4b !important;
-    color: #fff !important;
+    background: #b7b7b7 !important;
+    color: #111 !important;
   }
 
   .saturday {
@@ -613,6 +630,14 @@ table {
 
   .vacation-cell.sunday .mini-weekday {
     background: var(--weekend-sun) !important;
+  }
+
+  .shift-cell.is-night-gray {
+    background: var(--night-gray) !important;
+  }
+
+  .shift-cell.is-special {
+    background: var(--special-pink) !important;
   }
 
   html,

@@ -5,6 +5,7 @@ const nextMonthButton = document.getElementById('nextMonth');
 const printButton = document.getElementById('printButton');
 const blockModeButton = document.getElementById('blockModeButton');
 const specialModeButton = document.getElementById('specialModeButton');
+const nightModeButton = document.getElementById('nightModeButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -28,8 +29,10 @@ let publicLeaveCount = '8';
 const rosterValues = new Map();
 const blockedVacationOverrides = new Map();
 const specialShiftCells = new Set();
+const nightShiftOverrides = new Map();
 let blockModeEnabled = false;
 let specialModeEnabled = false;
+let nightModeEnabled = false;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -112,9 +115,12 @@ function setVacationBlockedState(year, month, day, blocked) {
 function setBlockMode(enabled) {
   blockModeEnabled = Boolean(enabled);
 
-  // 兩種點格模式互斥，避免同一次點擊同時改到兩種狀態。
+  // 點格模式互斥，避免同一次點擊同時改到兩種狀態。
   if (blockModeEnabled && specialModeEnabled) {
     setSpecialMode(false);
+  }
+  if (blockModeEnabled && nightModeEnabled) {
+    setNightMode(false);
   }
 
   blockModeButton.classList.toggle('is-active', blockModeEnabled);
@@ -126,10 +132,10 @@ function setSpecialMode(enabled) {
   specialModeEnabled = Boolean(enabled);
 
   if (specialModeEnabled && blockModeEnabled) {
-    blockModeEnabled = false;
-    blockModeButton.classList.remove('is-active');
-    blockModeButton.setAttribute('aria-pressed', 'false');
-    document.body.classList.remove('block-mode');
+    setBlockMode(false);
+  }
+  if (specialModeEnabled && nightModeEnabled) {
+    setNightMode(false);
   }
 
   specialModeButton.classList.toggle('is-active', specialModeEnabled);
@@ -137,8 +143,56 @@ function setSpecialMode(enabled) {
   document.body.classList.toggle('special-mode', specialModeEnabled);
 }
 
+function setNightMode(enabled) {
+  nightModeEnabled = Boolean(enabled);
+
+  if (nightModeEnabled && blockModeEnabled) {
+    setBlockMode(false);
+  }
+  if (nightModeEnabled && specialModeEnabled) {
+    setSpecialMode(false);
+  }
+
+  nightModeButton.classList.toggle('is-active', nightModeEnabled);
+  nightModeButton.setAttribute('aria-pressed', String(nightModeEnabled));
+  document.body.classList.toggle('night-mode', nightModeEnabled);
+}
+
 function makeSpecialShiftKey(year, month, day, shiftIndex) {
   return `${year}-${month}-${day}-shift-${shiftIndex}`;
+}
+
+function makeNightShiftKey(year, month, day) {
+  return `${year}-${month}-${day}-night`;
+}
+
+// 23～07（shiftIndex 3）的週六預設灰底。
+function getDefaultNightGrayState(year, month, day, shiftIndex) {
+  return shiftIndex === 3 && getDayInfo(year, month, day).weekdayIndex === 6;
+}
+
+function isNightGray(year, month, day, shiftIndex) {
+  if (shiftIndex !== 3) return false;
+
+  const key = makeNightShiftKey(year, month, day);
+  if (nightShiftOverrides.has(key)) {
+    return nightShiftOverrides.get(key);
+  }
+
+  return getDefaultNightGrayState(year, month, day, shiftIndex);
+}
+
+function setNightGrayState(year, month, day, shiftIndex, enabled) {
+  if (shiftIndex !== 3) return;
+
+  const key = makeNightShiftKey(year, month, day);
+  const defaultState = getDefaultNightGrayState(year, month, day, shiftIndex);
+
+  if (enabled === defaultState) {
+    nightShiftOverrides.delete(key);
+  } else {
+    nightShiftOverrides.set(key, enabled);
+  }
 }
 
 function cleanEnglishLetter(value) {
@@ -248,6 +302,9 @@ function renderSchedule(year, month) {
     for (let day = 1; day <= days; day += 1) {
       const td = document.createElement('td');
       td.className = 'shift-cell';
+      td.dataset.shiftIndex = String(shiftIndex);
+
+      td.classList.toggle('is-night-gray', isNightGray(year, month, day, shiftIndex));
 
       const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
       td.classList.toggle('is-special', specialShiftCells.has(specialKey));
@@ -266,6 +323,14 @@ function renderSchedule(year, month) {
       td.appendChild(input);
 
       td.addEventListener('click', (event) => {
+        if (nightModeEnabled && shiftIndex === 3) {
+          event.preventDefault();
+          const nextGrayState = !isNightGray(year, month, day, shiftIndex);
+          setNightGrayState(year, month, day, shiftIndex, nextGrayState);
+          td.classList.toggle('is-night-gray', nextGrayState);
+          return;
+        }
+
         if (!specialModeEnabled) return;
 
         event.preventDefault();
@@ -514,6 +579,7 @@ prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
 blockModeButton.addEventListener('click', () => setBlockMode(!blockModeEnabled));
 specialModeButton.addEventListener('click', () => setSpecialMode(!specialModeEnabled));
+nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled));
 printButton.addEventListener('click', () => window.print());
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
 publicLeaveInput.addEventListener('blur', () => {
