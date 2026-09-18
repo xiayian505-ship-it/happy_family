@@ -140,7 +140,7 @@ const leaveTypeValues = new Map();
 const specialShiftTimes = new Map();
 const nightShiftTimes = new Map();
 const meetingDays = new Set();
-const primaryShiftValues = new Map();
+const personnelShiftValues = new Map();
 
 let blockModeEnabled = false;
 let specialModeEnabled = false;
@@ -301,9 +301,10 @@ function makeNightShiftKey(year, month, day) {
 function makeMeetingDayKey(year, month, day) {
   return `${year}-${month}-${day}-meeting`;
 }
-function makePrimaryShiftKey(year, month, letter) {
-  return `${year}-${month}-${letter}-primary`;
+function makePersonnelShiftKey(year, month, letter) {
+  return `${year}-${month}-${letter}-personnel-shifts`;
 }
+
 
 function getCurrentYearMonth() {
   return { year: Number(yearInput.value), month: Number(monthSelect.value) };
@@ -446,13 +447,23 @@ function removeShiftLetterForDay(year, month, day, letter) {
   });
 }
 
-function getPrimaryShift(year, month, letter) {
-  return primaryShiftValues.get(makePrimaryShiftKey(year, month, letter)) ?? '';
+const PERSONNEL_SHIFT_GROUPS = Object.freeze([
+  { key: 'early', label: '早班', detail: '07～15' },
+  { key: 'middle', label: '中班', detail: '15～23／16～00' },
+  { key: 'night', label: '夜班', detail: '23～07／00～08' }
+]);
+
+function getPersonnelShifts(year, month, letter) {
+  const value = personnelShiftValues.get(makePersonnelShiftKey(year, month, letter));
+  return new Set(Array.isArray(value) ? value : value instanceof Set ? [...value] : []);
 }
-function setPrimaryShift(year, month, letter, shiftIndex) {
-  const key = makePrimaryShiftKey(year, month, letter);
-  if (shiftIndex === '' || shiftIndex == null) primaryShiftValues.delete(key);
-  else primaryShiftValues.set(key, Number(shiftIndex));
+function setPersonnelShift(year, month, letter, groupKey, enabled) {
+  const key = makePersonnelShiftKey(year, month, letter);
+  const current = getPersonnelShifts(year, month, letter);
+  if (enabled) current.add(groupKey);
+  else current.delete(groupKey);
+  if (current.size) personnelShiftValues.set(key, [...current]);
+  else personnelShiftValues.delete(key);
 }
 
 function deactivateOtherModes(except) {
@@ -658,7 +669,7 @@ function clearCurrentMonth() {
   clearMapKeysForMonth(leaveTypeValues, year, month);
   clearMapKeysForMonth(specialShiftTimes, year, month);
   clearMapKeysForMonth(nightShiftTimes, year, month);
-  clearMapKeysForMonth(primaryShiftValues, year, month);
+  clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
   closeRowFillPanel();
@@ -753,30 +764,40 @@ function renderShiftConfigPanel() {
   shiftConfigGrid.innerHTML = '';
   for (let index = 0; index < names.length; index += 1) {
     const letter = String.fromCharCode(65 + index);
-    const row = document.createElement('label');
+    const row = document.createElement('div');
     row.className = 'shift-config-row';
 
     const person = document.createElement('span');
     person.className = 'shift-config-person';
     person.textContent = names[index] ? `${letter}. ${names[index]}` : `${letter}.`;
 
-    const select = document.createElement('select');
-    select.setAttribute('aria-label', `${letter} 本月主要班別`);
-    const empty = document.createElement('option');
-    empty.value = '';
-    empty.textContent = '未設定';
-    select.appendChild(empty);
-    shifts.forEach((shift, shiftIndex) => {
-      const option = document.createElement('option');
-      option.value = String(shiftIndex);
-      option.textContent = shift.label;
-      select.appendChild(option);
-    });
-    const current = getPrimaryShift(year, month, letter);
-    select.value = current === '' ? '' : String(current);
-    select.addEventListener('change', () => setPrimaryShift(year, month, letter, select.value));
+    const options = document.createElement('div');
+    options.className = 'shift-config-options';
+    options.setAttribute('aria-label', `${letter} 人員班別，可複選`);
 
-    row.append(person, select);
+    const current = getPersonnelShifts(year, month, letter);
+    PERSONNEL_SHIFT_GROUPS.forEach((group) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'shift-config-option';
+      button.setAttribute('aria-pressed', current.has(group.key) ? 'true' : 'false');
+      button.setAttribute('aria-label', `${letter} ${group.label} ${group.detail}`);
+
+      const label = document.createElement('strong');
+      label.textContent = group.label;
+      const detail = document.createElement('small');
+      detail.textContent = group.detail;
+      button.append(label, detail);
+
+      button.addEventListener('click', () => {
+        const next = button.getAttribute('aria-pressed') !== 'true';
+        setPersonnelShift(year, month, letter, group.key, next);
+        button.setAttribute('aria-pressed', next ? 'true' : 'false');
+      });
+      options.appendChild(button);
+    });
+
+    row.append(person, options);
     shiftConfigGrid.appendChild(row);
   }
 }
@@ -1344,7 +1365,7 @@ function buildRuleModel() {
     },
     employees: names.map((name, index) => {
       const letter = String.fromCharCode(65 + index);
-      return { letter, name, primaryShiftIndex: getPrimaryShift(year, month, letter) };
+      return { letter, name, shiftGroups: [...getPersonnelShifts(year, month, letter)] };
     }),
     getShiftLetter(day, shiftIndex) {
       return rosterValues.get(makeRosterKey(year, month, day, 'shift', shiftIndex)) || '';

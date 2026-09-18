@@ -121,15 +121,19 @@
     }
   }
 
+  function getShiftGroups(employee) {
+    return new Set(Array.isArray(employee?.shiftGroups) ? employee.shiftGroups : []);
+  }
+
   function collectMissingAssignmentIssues(model, issues, activeLetters) {
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
     for (const letter of activeLetters) {
       const employee = employeeMap.get(letter);
-      if (!employee || employee.primaryShiftIndex === '' || employee.primaryShiftIndex == null) {
+      if (!employee || getShiftGroups(employee).size === 0) {
         issues.push({
-          code: 'missing-primary-shift',
-          title: '尚未設定主要班別',
-          message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 尚未設定本月主要班別。\n同組排休與相鄰排休順序將無法完整檢查。`
+          code: 'missing-personnel-shift',
+          title: '尚未設定人員班別',
+          message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 尚未設定人員班別。\n同組排休與相鄰排休順序將無法完整檢查。`
         });
       }
     }
@@ -137,9 +141,11 @@
 
   function collectSameGroupLeaveIssues(model, issues) {
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
+    // 早班與中班仍屬同一個日／中班排休群組；夜班獨立一組。
+    // 人員班別可複選，只要屬於該群組就會納入同日排休檢查。
     const groups = [
-      { name: '日／晚班組', shiftIndexes: new Set([0, 1, 2]) },
-      { name: '大夜組', shiftIndexes: new Set([3, 4]) }
+      { name: '早／中班組', groupKeys: new Set(['early', 'middle']) },
+      { name: '夜班組', groupKeys: new Set(['night']) }
     ];
 
     for (let day = 1; day <= model.days; day += 1) {
@@ -149,8 +155,8 @@
         for (const leave of leaves) {
           const employee = employeeMap.get(leave.letter);
           if (!employee) continue;
-          const shiftIndex = Number(employee.primaryShiftIndex);
-          if (group.shiftIndexes.has(shiftIndex)) members.push(leave.letter);
+          const employeeGroups = getShiftGroups(employee);
+          if ([...group.groupKeys].some((key) => employeeGroups.has(key))) members.push(leave.letter);
         }
         const unique = [...new Set(members)];
         if (unique.length > 1) {
@@ -171,15 +177,15 @@
       const todayLeaves = model.getLeaveEntries(day).filter((entry) => entry.letter);
       const nextLeaves = model.getLeaveEntries(day + 1).filter((entry) => entry.letter);
 
-      const todayMiddle = todayLeaves.filter((entry) => Number(employeeMap.get(entry.letter)?.primaryShiftIndex) === 1);
-      const nextEarly = nextLeaves.filter((entry) => Number(employeeMap.get(entry.letter)?.primaryShiftIndex) === 0);
+      const todayMiddle = todayLeaves.filter((entry) => getShiftGroups(employeeMap.get(entry.letter)).has('middle'));
+      const nextEarly = nextLeaves.filter((entry) => getShiftGroups(employeeMap.get(entry.letter)).has('early'));
 
       for (const first of todayMiddle) {
         for (const second of nextEarly) {
           issues.push({
             code: 'adjacent-leave-order',
             title: '相鄰排休順序',
-            message: `${formatDate(model.month, day)} ${first.letter}（15~23）休假，${formatDate(model.month, day + 1)} ${second.letter}（07~15）休假。\n目前順序為「中班 → 早班」，原則上應避免。`
+            message: `${formatDate(model.month, day)} ${first.letter}（中班）休假，${formatDate(model.month, day + 1)} ${second.letter}（早班）休假。\n目前順序為「中班 → 早班」，原則上應避免。`
           });
         }
       }

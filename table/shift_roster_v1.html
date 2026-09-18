@@ -36,7 +36,7 @@
     </div>
 
     <div class="controls-row controls-check-row" aria-label="設定與檢查">
-      <button id="shiftConfigButton" type="button" aria-expanded="false">班別設定</button>
+      <button id="shiftConfigButton" type="button" aria-expanded="false">人員班別</button>
       <button id="leaveCheckButton" type="button">排假檢查</button>
       <button id="ruleCheckButton" type="button">規則檢查</button>
     </div>
@@ -66,9 +66,9 @@
 
   <div id="shiftConfigPanel" class="shift-config-panel" hidden aria-live="polite">
     <div class="shift-config-head">
-      <strong>本月主要班別</strong>
-      <span>供同組排休／排休順序檢查使用</span>
-      <button id="shiftConfigClose" type="button" aria-label="關閉班別設定">×</button>
+      <strong>人員班別</strong>
+      <span>可複選：早班 07～15／中班 15～23、16～00／夜班 23～07、00～08</span>
+      <button id="shiftConfigClose" type="button" aria-label="關閉人員班別">×</button>
     </div>
     <div id="shiftConfigGrid" class="shift-config-grid"></div>
   </div>
@@ -232,14 +232,14 @@
         <details class="guide-details">
           <summary>
             <span class="guide-summary-title">基本資料怎麼填</span>
-            <span class="guide-summary-note">年月、姓名、特休、班別設定</span>
+            <span class="guide-summary-note">年月、姓名、特休、人員班別</span>
           </summary>
           <div class="guide-details-body">
             <ul>
               <li>最上方可用「上月／下月」切換月份，也可直接輸入年份、選擇月份。</li>
               <li>A～F 是固定的人員代號，目前 F 可作預留欄；只有填入姓名的人員才會進入排假與排班規則檢查。</li>
               <li>姓名右側的小數字欄用來填當月特休天數；班表右側的數字則是每人當月應排的公休天數。</li>
-              <li>「班別設定」用來指定每位員工當月主要班別，供同組排休與相鄰排休順序檢查使用。</li>
+              <li>「人員班別」用來設定每位員工可負責的班別，可複選：早班（07～15）、中班（15～23、16～00）、夜班（23～07、00～08），供同組排休與相鄰排休順序檢查使用。</li>
             </ul>
           </div>
         </details>
@@ -284,7 +284,7 @@
           <div class="guide-details-body">
             <ul>
               <li><strong>排假檢查：</strong>確認每位有效員工的公休天數是否符合目前設定；特休、請假不會拿來補公休。</li>
-              <li><strong>規則檢查：</strong>依序檢查禁休日排休、班別設定、同組同日排休、相鄰排休順序、特殊班時間、連續上班與轉班間隔。</li>
+              <li><strong>規則檢查：</strong>依序檢查禁休日排休、人員班別、同組同日排休、相鄰排休順序、特殊班時間、連續上班與轉班間隔。</li>
               <li>檢查結果一次顯示一項；遇到現場已協調好的特殊情況，可選「例外安排」，否則選「回去修改」。</li>
             </ul>
           </div>
@@ -383,7 +383,7 @@
             <ul>
               <li><strong>A～F 是人員代號，不是班別順序。</strong>所有排休與轉班判斷都依當月實際班別，不依字母順序。</li>
               <li>人數不一定固定為 6 人；規則檢查只處理當月實際有姓名、班別、排班或休假的人員。</li>
-              <li>固定班別為：07~15、15~23、16~24、23~07、00~08。</li>
+              <li>班別分類為：早班（07~15）、中班（15~23、16~00）、夜班（23~07、00~08）；同一人可複選多個班別。</li>
               <li>每人每月先排 <strong><span data-rule-public-leave>8</span> 天公休</strong>；特休、請假都不計入這個公休數量。</li>
               <li>例如 8 天公休＋1 天特休，共休 9 天是正常狀況。</li>
             </ul>
