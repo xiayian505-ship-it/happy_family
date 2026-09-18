@@ -107,6 +107,28 @@
     </div>
   </div>
 
+  <div id="batchLeaveDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel batch-leave-panel" role="dialog" aria-modal="true" aria-labelledby="batchLeaveMessage">
+      <p id="batchLeaveMessage" class="app-dialog-message batch-leave-message"></p>
+      <div class="batch-leave-meta">
+        <strong id="batchLeaveCount">已選 0 / 8 天</strong>
+        <span id="batchLeaveHint">點日期可複選；特休／請假請回班表單格輸入。</span>
+      </div>
+      <div id="batchLeaveDates" class="batch-leave-dates" aria-label="當月批次排休日期"></div>
+      <div class="app-dialog-actions batch-leave-actions">
+        <button id="batchLeaveApply" type="button">套用</button>
+        <button id="batchLeaveCancel" type="button">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="batchLeaveResultDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="batchLeaveResultMessage">
+      <p id="batchLeaveResultMessage" class="app-dialog-message"></p>
+      <button id="batchLeaveResultClose" class="app-dialog-wide-button" type="button">回班表修改</button>
+    </div>
+  </div>
+
   <div id="specialTimeDialog" class="app-dialog" hidden>
     <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="specialTimeMessage">
       <p id="specialTimeMessage" class="app-dialog-message"></p>
@@ -254,7 +276,9 @@
               <li>班別格與休假格都輸入單一英文字母，輸入小寫會自動轉成大寫。</li>
               <li>點班別左側的時間，例如「07~15」，可開啟整列填入，一次把 A～F 的員工代號套到整月；套用後仍可逐格修改。</li>
               <li>休假列每一天有兩個位置，可填當天休假的員工代號。</li>
-              <li>同一人同一天若已排班又輸入休假，系統會詢問要保留「排班」或「休假」，不會直接替使用者決定。</li>
+              <li>點下方姓名區的 A～F 代號，可開啟當月「批次排公休」日期選單；一次可選 1～8 天，既有公休會預先勾選，特休／請假仍用休假格單獨處理。</li>
+              <li>批次排休若遇到某天兩個休假位置都已有人，該日不會覆蓋原資料；其他日期仍會照常排入，最後再提醒回班表單獨調整。</li>
+              <li>同一人同一天若已排班又輸入休假，系統會詢問要保留「排班」或「休假」，不會直接替使用者決定；批次排休遇到已排班日期則先略過，留給單格調整。</li>
             </ul>
           </div>
         </details>

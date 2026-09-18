@@ -512,10 +512,23 @@ table {
 
 .name-letter {
   width: 27px;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
   font-family: Arial, sans-serif;
   font-size: 17px;
   text-align: center;
   user-select: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.name-letter:hover,
+.name-letter:focus-visible {
+  background: var(--focus);
 }
 
 .name-input {
@@ -2290,6 +2303,93 @@ textarea,
 
 .rule-check-message {
   text-align: left;
+}
+
+/* ===== 批次排公休 ===== */
+.batch-leave-panel {
+  width: min(520px, 100%);
+}
+
+.batch-leave-message {
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.batch-leave-meta {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.batch-leave-meta strong {
+  font-size: 16px;
+}
+
+.batch-leave-meta span {
+  min-height: 1.5em;
+  color: #666;
+  font-size: 13px;
+}
+
+.batch-leave-dates {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+  max-height: min(55vh, 430px);
+  overflow-y: auto;
+  padding: 2px;
+  margin-bottom: 14px;
+}
+
+.app-dialog .batch-leave-date {
+  min-width: 0;
+  min-height: 50px;
+  padding: 5px 2px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  border-color: #c8c8c8;
+  background: #fff;
+  color: #222;
+}
+
+.batch-leave-date strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.batch-leave-date small {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  color: #777;
+}
+
+.app-dialog .batch-leave-date[aria-pressed="true"] {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+.app-dialog .batch-leave-date[aria-pressed="true"] small {
+  color: #eee;
+}
+
+.batch-leave-actions button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.vacation-cell.is-batch-leave-missed {
+  outline: 3px solid #111;
+  outline-offset: -3px;
+  animation: batch-leave-missed-pulse .75s ease-in-out 2;
+}
+
+@keyframes batch-leave-missed-pulse {
+  0%, 100% { outline-width: 3px; }
+  50% { outline-width: 6px; }
 }
 
 /* ===== 假別 ===== */

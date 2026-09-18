@@ -47,6 +47,17 @@ const rowFillQuickLetters = document.getElementById('rowFillQuickLetters');
 const rowFillClearRow = document.getElementById('rowFillClearRow');
 const rowFillClose = document.getElementById('rowFillClose');
 
+const batchLeaveDialog = document.getElementById('batchLeaveDialog');
+const batchLeaveMessage = document.getElementById('batchLeaveMessage');
+const batchLeaveCount = document.getElementById('batchLeaveCount');
+const batchLeaveHint = document.getElementById('batchLeaveHint');
+const batchLeaveDates = document.getElementById('batchLeaveDates');
+const batchLeaveApply = document.getElementById('batchLeaveApply');
+const batchLeaveCancel = document.getElementById('batchLeaveCancel');
+const batchLeaveResultDialog = document.getElementById('batchLeaveResultDialog');
+const batchLeaveResultMessage = document.getElementById('batchLeaveResultMessage');
+const batchLeaveResultClose = document.getElementById('batchLeaveResultClose');
+
 const shiftConfigPanel = document.getElementById('shiftConfigPanel');
 const shiftConfigGrid = document.getElementById('shiftConfigGrid');
 const shiftConfigClose = document.getElementById('shiftConfigClose');
@@ -160,6 +171,11 @@ let leaveCheckCompleteMode = false;
 let ruleCheckItems = [];
 let ruleCheckIndex = 0;
 let ruleCheckCompleteMode = false;
+
+const BATCH_PUBLIC_LEAVE_MAX = 8;
+let batchLeaveLetter = null;
+let batchLeaveSelectedDays = new Set();
+let batchLeaveFailedDays = [];
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -421,6 +437,18 @@ function hasVacationLetter(year, month, day, letter) {
 function removeVacationLetter(year, month, day, letter) {
   getVacationLettersForDay(year, month, day).forEach((entry) => {
     if (entry.value === letter) {
+      rosterValues.delete(entry.key);
+      leaveTypeValues.delete(entry.key);
+    }
+  });
+}
+
+function isBatchPublicLeaveType(type) {
+  return ['public', 'exceptionPublic'].includes(type || 'public');
+}
+function removeBatchPublicVacationLetter(year, month, day, letter) {
+  getVacationLettersForDay(year, month, day).forEach((entry) => {
+    if (entry.value === letter && isBatchPublicLeaveType(entry.type)) {
       rosterValues.delete(entry.key);
       leaveTypeValues.delete(entry.key);
     }
@@ -873,6 +901,172 @@ async function handleVacationChange({ year, month, day, key, letter, inputElemen
   render();
 }
 
+function renderBatchLeaveDates() {
+  if (!batchLeaveLetter) return;
+  const { year, month } = getCurrentYearMonth();
+  const days = getDaysInMonth(year, month);
+
+  batchLeaveDates.innerHTML = '';
+  for (let day = 1; day <= days; day += 1) {
+    const info = getDayInfo(year, month, day);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'batch-leave-date';
+    button.dataset.day = String(day);
+    button.setAttribute('aria-pressed', batchLeaveSelectedDays.has(day) ? 'true' : 'false');
+    button.setAttribute('aria-label', `${month}月${day}日（${info.weekday}）`);
+
+    const number = document.createElement('strong');
+    number.textContent = String(day);
+    const weekday = document.createElement('small');
+    weekday.textContent = info.weekday;
+    button.append(number, weekday);
+
+    button.addEventListener('click', () => {
+      if (batchLeaveSelectedDays.has(day)) {
+        batchLeaveSelectedDays.delete(day);
+        batchLeaveHint.textContent = '點日期可複選；特休／請假請回班表單格輸入。';
+      } else {
+        if (batchLeaveSelectedDays.size >= BATCH_PUBLIC_LEAVE_MAX) {
+          batchLeaveHint.textContent = `最多只能選 ${BATCH_PUBLIC_LEAVE_MAX} 天。`;
+          return;
+        }
+        batchLeaveSelectedDays.add(day);
+        batchLeaveHint.textContent = '點日期可複選；特休／請假請回班表單格輸入。';
+      }
+      renderBatchLeaveDates();
+    });
+
+    batchLeaveDates.appendChild(button);
+  }
+
+  batchLeaveCount.textContent = `已選 ${batchLeaveSelectedDays.size} / ${BATCH_PUBLIC_LEAVE_MAX} 天`;
+  batchLeaveApply.disabled = batchLeaveSelectedDays.size < 1 || batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX;
+}
+
+function openBatchLeaveDialog(letter) {
+  const { year, month } = getCurrentYearMonth();
+  batchLeaveLetter = cleanEnglishLetter(letter);
+  if (!batchLeaveLetter) return;
+
+  closeRowFillPanel();
+  closeShiftConfigPanel();
+  batchLeaveSelectedDays = new Set(getPublicVacationDatesForLetter(year, month, batchLeaveLetter));
+  batchLeaveFailedDays = [];
+  batchLeaveMessage.textContent = `${batchLeaveLetter}｜${year} 年 ${month} 月批次排公休`;
+  batchLeaveHint.textContent = batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX
+    ? `目前已有 ${batchLeaveSelectedDays.size} 天公休；批次最多 ${BATCH_PUBLIC_LEAVE_MAX} 天，請先取消日期。`
+    : '點日期可複選；特休／請假請回班表單格輸入。';
+  renderBatchLeaveDates();
+  batchLeaveDialog.hidden = false;
+  requestAnimationFrame(() => batchLeaveDates.querySelector('button[aria-pressed="true"], button')?.focus());
+}
+
+function closeBatchLeaveDialog() {
+  batchLeaveDialog.hidden = true;
+  batchLeaveLetter = null;
+  batchLeaveSelectedDays = new Set();
+}
+
+function getBatchLeaveFailureText(month, failure) {
+  const date = `${month}/${failure.day}`;
+  if (failure.reason === 'full') {
+    return `${date} 已有 ${failure.occupants.join('、')} 排休，所以 ${failure.letter} 未排進去。`;
+  }
+  if (failure.reason === 'shift') {
+    return `${date} ${failure.letter} 已排班，所以未自動改成排休。`;
+  }
+  if (failure.reason === 'other-leave') {
+    return `${date} ${failure.letter} 已有特休／請假，所以未改成公休。`;
+  }
+  return `${date} ${failure.letter} 未排進去。`;
+}
+
+function focusBatchLeaveFailure(day) {
+  const cell = scheduleTable.querySelector(`.vacation-cell[data-day="${day}"]`);
+  if (!cell) return;
+  cell.classList.add('is-batch-leave-missed');
+  cell.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+  const input = cell.querySelector('.vacation-input');
+  requestAnimationFrame(() => input?.focus({ preventScroll: true }));
+  window.setTimeout(() => cell.classList.remove('is-batch-leave-missed'), 2200);
+}
+
+function closeBatchLeaveResult() {
+  const firstFailure = batchLeaveFailedDays[0];
+  batchLeaveResultDialog.hidden = true;
+  if (firstFailure) focusBatchLeaveFailure(firstFailure.day);
+  batchLeaveFailedDays = [];
+}
+
+function applyBatchLeave() {
+  if (!batchLeaveLetter) return;
+  if (batchLeaveSelectedDays.size < 1) {
+    batchLeaveHint.textContent = '至少要選 1 天。';
+    return;
+  }
+  if (batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX) {
+    batchLeaveHint.textContent = `最多只能選 ${BATCH_PUBLIC_LEAVE_MAX} 天。`;
+    return;
+  }
+
+  const { year, month } = getCurrentYearMonth();
+  const letter = batchLeaveLetter;
+  const selected = new Set(batchLeaveSelectedDays);
+  const days = getDaysInMonth(year, month);
+  const failures = [];
+
+  // 批次視為「這位員工的公休日期編輯器」：取消勾選時只移除公休／例外排休，
+  // 不碰特休、請假等手動假別。
+  for (let day = 1; day <= days; day += 1) {
+    if (!selected.has(day)) removeBatchPublicVacationLetter(year, month, day, letter);
+  }
+
+  for (const day of [...selected].sort((a, b) => a - b)) {
+    const entries = getVacationLettersForDay(year, month, day);
+    const ownEntry = entries.find((entry) => entry.value === letter);
+
+    if (ownEntry) {
+      if (isBatchPublicLeaveType(ownEntry.type)) continue;
+      failures.push({ day, letter, reason: 'other-leave' });
+      continue;
+    }
+
+    if (hasShiftLetterForDay(year, month, day, letter)) {
+      failures.push({ day, letter, reason: 'shift' });
+      continue;
+    }
+
+    const occupied = entries.filter((entry) => entry.value);
+    if (occupied.length >= 2) {
+      failures.push({ day, letter, reason: 'full', occupants: occupied.map((entry) => entry.value) });
+      continue;
+    }
+
+    const emptyEntry = entries.find((entry) => !entry.value);
+    if (!emptyEntry) {
+      failures.push({ day, letter, reason: 'full', occupants: occupied.map((entry) => entry.value) });
+      continue;
+    }
+
+    rosterValues.set(emptyEntry.key, letter);
+    setLeaveType(emptyEntry.key, 'public');
+  }
+
+  const requestedCount = selected.size;
+  closeBatchLeaveDialog();
+  render();
+
+  if (failures.length) {
+    batchLeaveFailedDays = failures;
+    const actualCount = getPublicVacationDatesForLetter(year, month, letter).length;
+    const details = failures.map((failure) => `・${getBatchLeaveFailureText(month, failure)}`).join('\n');
+    batchLeaveResultMessage.textContent = `${letter} 批次排休完成 ${actualCount} / ${requestedCount} 天。\n\n${details}\n\n未排入的日期請回班表單獨調整，不用重選其他日期。`;
+    batchLeaveResultDialog.hidden = false;
+    requestAnimationFrame(() => batchLeaveResultClose.focus());
+  }
+}
+
 function makeTimeNoteLines(letter, value) {
   const { start, end } = splitHourRange(value);
   if (!letter || !start || !end) return [];
@@ -1125,12 +1319,16 @@ function renderLower(year, month) {
   namesPanel.className = 'names-panel';
 
   names.forEach((name, index) => {
-    const row = document.createElement('label');
+    const row = document.createElement('div');
     row.className = 'name-row';
-    const letter = document.createElement('span');
+    const personLetter = String.fromCharCode(65 + index);
+    const letter = document.createElement('button');
+    letter.type = 'button';
     letter.className = 'name-letter';
-    letter.textContent = `${String.fromCharCode(65 + index)}.`;
-    letter.setAttribute('aria-hidden', 'true');
+    letter.textContent = `${personLetter}.`;
+    letter.setAttribute('aria-label', `${personLetter} 批次排公休`);
+    letter.title = `${personLetter} 批次排公休`;
+    letter.addEventListener('click', () => openBatchLeaveDialog(personLetter));
 
     const input = document.createElement('input');
     input.className = 'name-input';
@@ -1538,6 +1736,9 @@ shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
 leaveCheckButton.addEventListener('click', startLeaveCheck);
 ruleCheckButton.addEventListener('click', startRuleCheck);
+batchLeaveApply.addEventListener('click', applyBatchLeave);
+batchLeaveCancel.addEventListener('click', closeBatchLeaveDialog);
+batchLeaveResultClose.addEventListener('click', closeBatchLeaveResult);
 clearMonthButton.addEventListener('click', openClearMonthDialog);
 printButton.addEventListener('click', async () => {
   const cleanup = await prepareOutputTimestamp();
@@ -1598,6 +1799,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
   if (!ruleSettingsEditor.hidden) return closeRuleSettingsEditor();
   if (!outputTimeDialog.hidden) return resolveOutputTimeChoice(false);
+  if (!batchLeaveResultDialog.hidden) return closeBatchLeaveResult();
+  if (!batchLeaveDialog.hidden) return closeBatchLeaveDialog();
   if (!leaveTypeDialog.hidden) return resolveLeaveTypeChoice(null);
   if (!blockedLeaveDialog.hidden) return resolveBlockedLeaveChoice('back');
   if (!specialTimeDialog.hidden) return closeSpecialTimeDialog();
