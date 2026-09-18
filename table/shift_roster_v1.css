@@ -265,6 +265,8 @@ table {
 .shift-input {
   padding: 0;
   font-size: 18px;
+  cursor: text;
+  touch-action: manipulation;
 }
 
 .shift-input:focus,
