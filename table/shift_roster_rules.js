@@ -2,7 +2,7 @@
   'use strict';
 
   const PUBLIC_LEAVE_TYPES = new Set(['public', 'exceptionPublic']);
-  const FORMAL_LEAVE_TYPES = new Set(['personal', 'bereavement', 'other']);
+  const FORMAL_LEAVE_TYPES = new Set(['leave', 'personal', 'bereavement', 'other']);
 
   function pad2(value) {
     return String(value).padStart(2, '0');
@@ -81,19 +81,23 @@
   }
 
   function getActiveLetters(model) {
-    const active = new Set();
+    // 只有有姓名的人員才進入規則檢查。
+    // A～F 都保留為可用代號；F 可作預留欄，未填姓名時完全忽略。
+    const active = new Set(
+      (model.employees || [])
+        .filter((employee) => String(employee.name || '').trim())
+        .map((employee) => employee.letter)
+    );
 
-    for (const employee of model.employees || []) {
-      if (employee.name || employee.primaryShiftIndex !== '' && employee.primaryShiftIndex != null) active.add(employee.letter);
-    }
+    const namedLetters = new Set(active);
 
     for (let day = 1; day <= model.days; day += 1) {
       for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
         const letter = model.getShiftLetter(day, shiftIndex);
-        if (letter) active.add(letter);
+        if (letter && namedLetters.has(letter)) active.add(letter);
       }
       for (const leave of model.getLeaveEntries(day)) {
-        if (leave.letter) active.add(leave.letter);
+        if (leave.letter && namedLetters.has(leave.letter)) active.add(leave.letter);
       }
     }
 
@@ -191,7 +195,7 @@
     }
 
     if (shiftIndex === 3 && model.isNightGray(day, shiftIndex)) {
-      return model.getNightTime(day, shiftIndex) || '22~06';
+      return model.getNightTime(day, shiftIndex) || model.settings?.normalNightRange || '22~06';
     }
 
     return shift.label.replace(/\s+/g, '');
@@ -235,7 +239,7 @@
             issues.push({
               code: 'special-time-missing',
               title: '特殊班缺少時間',
-              message: `${formatDate(model.month, day)} ${letter} 的特殊班沒有有效實際時間。\n請補上例如 12~20。`
+              message: `${formatDate(model.month, day)} ${letter} 的特殊班沒有有效實際時間。\n請補上開始與結束小時，例如 12、20。`
             });
           }
         }
@@ -255,6 +259,7 @@
 
   function collectConsecutiveWorkIssues(model, issues) {
     const activeLetters = getActiveLetters(model);
+    const maxDays = Math.max(1, Number(model.settings?.maxConsecutiveDays) || 6);
 
     for (const letter of activeLetters) {
       const workDays = [];
@@ -274,13 +279,13 @@
         let end = start;
         while (end + 1 < workDays.length && workDays[end + 1] === workDays[end] + 1) end += 1;
         const length = end - start + 1;
-        if (length > 6) {
+        if (length > maxDays) {
           const first = workDays[start];
           const last = workDays[end];
           issues.push({
             code: 'consecutive-work',
-            title: '連續上班超過 6 天',
-            message: `${letter} 於 ${formatDate(model.month, first)}～${formatDate(model.month, last)} 連續上班 ${length} 天。\n原則上第 7 天應休假。`
+            title: `連續上班超過 ${maxDays} 天`,
+            message: `${letter} 於 ${formatDate(model.month, first)}～${formatDate(model.month, last)} 連續上班 ${length} 天。\n原則上第 ${maxDays + 1} 天應休假。`
           });
         }
         start = end + 1;
@@ -290,18 +295,20 @@
 
   function collectRestGapIssues(model, issues) {
     const byLetter = buildWorkIntervals(model);
+    const configuredRestHours = Number(model.settings?.minTurnaroundHours);
+    const minRestHours = Number.isFinite(configuredRestHours) ? Math.max(0, configuredRestHours) : 12;
 
     for (const [letter, intervals] of byLetter.entries()) {
       for (let index = 0; index < intervals.length - 1; index += 1) {
         const current = intervals[index];
         const next = intervals[index + 1];
         const gapMs = next.start - current.end;
-        if (gapMs >= 12 * 3600000) continue;
+        if (gapMs >= minRestHours * 3600000) continue;
 
         issues.push({
           code: 'rest-gap',
-          title: '轉班間隔低於 12 小時',
-          message: `${letter}：${formatDate(model.month, current.day)} ${current.rangeText} → ${formatDate(model.month, next.day)} ${next.rangeText}\n中間休息約 ${formatDurationHours(gapMs)} 小時，低於 12 小時。`
+          title: `轉班間隔低於 ${formatDurationHours(minRestHours * 3600000)} 小時`,
+          message: `${letter}：${formatDate(model.month, current.day)} ${current.rangeText} → ${formatDate(model.month, next.day)} ${next.rangeText}\n中間休息約 ${formatDurationHours(gapMs)} 小時，低於 ${formatDurationHours(minRestHours * 3600000)} 小時。`
         });
       }
     }

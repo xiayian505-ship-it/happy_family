@@ -339,7 +339,7 @@ table {
   touch-action: manipulation;
 }
 
-/* 「大夜」：23～07 這列的週六預設灰底；可逐格取消或手動補灰底。 */
+/* 「灰底」：23～07 這列的週六預設灰底；可逐格取消或手動補灰底。 */
 .shift-cell.is-night-gray {
   background: var(--night-gray);
 }
@@ -352,7 +352,7 @@ table {
   pointer-events: none;
 }
 
-/* 「特殊」模式：單一排班格切換為粉紅底。
+/* 「粉底」模式：單一排班格切換為粉紅底。
    規則放在大夜灰底之後，因此同一格若被標成特殊，粉紅會覆蓋灰底。 */
 .shift-cell.is-special {
   background: var(--special-pink);
@@ -1028,7 +1028,7 @@ table {
   }
 
   .row-fill-quick {
-    grid-template-columns: repeat(6, minmax(30px, 1fr));
+    grid-template-columns: repeat(5, minmax(30px, 1fr));
   }
 
   .row-fill-quick button,
@@ -1332,6 +1332,176 @@ table {
 }
 
 /* 平板／窄視窗：按鈕保持好按，操作區自行換行。 */
+
+
+/* =========================================================
+   說明頁｜大標收合
+   - 首頁只直接展示「目前生效的基本值」。
+   - 其他操作與排假規則用 details / summary 收合，避免一次灌滿畫面。
+========================================================= */
+.guide-group {
+  margin-top: 34px;
+}
+
+.guide-group + .guide-group {
+  margin-top: 42px;
+  padding-top: 34px;
+  border-top: 2px solid #111;
+}
+
+.guide-group-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.guide-group-head h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.2;
+}
+
+.guide-group-head > p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.guide-group-kicker {
+  margin: 0 0 5px;
+  color: #777;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.guide-accordion {
+  border-top: 1px solid #bbb;
+}
+
+.guide-details {
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.guide-details > summary {
+  list-style: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  min-height: 68px;
+  padding: 16px 42px 16px 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.guide-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-details > summary::after {
+  content: '＋';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #aaa;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.guide-details[open] > summary::after {
+  content: '−';
+}
+
+.guide-details > summary:hover .guide-summary-title,
+.guide-details > summary:focus-visible .guide-summary-title {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.guide-details > summary:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 3px;
+}
+
+.guide-summary-title {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.guide-summary-note {
+  color: #777;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.guide-details-body {
+  padding: 0 36px 22px 2px;
+}
+
+.guide-details-body ul {
+  margin: 0;
+  padding-left: 1.35em;
+  display: grid;
+  gap: 9px;
+}
+
+.guide-details-body li {
+  padding-left: .2em;
+  line-height: 1.8;
+}
+
+.guide-details-body code {
+  padding: 1px 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f5f5f5;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important;
+  font-size: .92em;
+}
+
+.guide-rules-group .rules-live-settings {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.rules-section-head {
+  align-items: center;
+}
+
+.rules-section-head > div {
+  min-width: 0;
+}
+
+.rules-section-head h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.rules-section-head > div > p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.rules-accordion {
+  margin-top: 4px;
+}
+
 @media screen and (max-width: 900px) {
   body {
     padding: 8px;
@@ -1890,9 +2060,20 @@ textarea,
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .controls-data-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .controls-action-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+.controls button:disabled {
+  cursor: default;
+  opacity: .55;
+  background: #f6f6f6;
+  color: #666;
 }
 
 /* ===== 班別設定 ===== */
@@ -2055,6 +2236,24 @@ textarea,
   font-size: 16px;
 }
 
+.time-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.time-pair input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.rule-time-pair {
+  width: 100%;
+}
+
 .rule-check-message {
   text-align: left;
 }
@@ -2157,6 +2356,7 @@ textarea,
 
   .controls-mark-row button,
   .controls-check-row button,
+  .controls-data-row button,
   .controls-action-row button {
     padding-inline: 3px;
     font-size: clamp(12px, 3.2vw, 14px);
@@ -2199,4 +2399,337 @@ textarea,
     gap: .3mm;
     font-size: 2.3mm;
   }
+}
+
+
+/* =========================================================
+   班表 / 說明分頁與使用說明
+   - 說明頁只供螢幕閱讀，不進 A4 列印與 PNG。
+   - 視覺維持基礎黑白，不另外引入字型或外部資源。
+========================================================= */
+.page-tabs {
+  width: min(1120px, calc(100vw - 36px));
+  margin: 0 auto 12px;
+  display: flex;
+  gap: 18px;
+  border-bottom: 1px solid #c8c8c8;
+}
+
+.page-tab {
+  appearance: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #666;
+  padding: 10px 2px 9px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.page-tab.is-active {
+  color: #111;
+  border-bottom-color: #111;
+}
+
+.page-view[hidden],
+.rules-view[hidden] {
+  display: none !important;
+}
+
+.rules-view {
+  width: min(1120px, calc(100vw - 36px));
+  margin: 0 auto 48px;
+  padding: clamp(22px, 4vw, 46px);
+  background: #fff;
+  border: 1px solid #d4d4d4;
+  box-shadow: 0 6px 24px rgba(0,0,0,.08);
+}
+
+.rules-page-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #111;
+}
+
+.rules-page-kicker {
+  margin: 0 0 8px;
+  color: #777;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+
+.rules-page-head h1 {
+  margin: 0;
+  font-size: clamp(26px, 4vw, 40px);
+  line-height: 1.15;
+}
+
+.rules-page-intro {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: #555;
+  line-height: 1.8;
+}
+
+.rules-edit-button,
+.rule-editor-actions button {
+  min-height: 44px;
+  border: 1px solid #999;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  padding: 0 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rules-edit-button:hover,
+.rule-editor-actions button:hover {
+  border-color: #111;
+}
+
+.rules-live-settings {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid #d8d8d8;
+  background: #fafafa;
+}
+
+.rules-section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.rules-section-head h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.rules-section-head p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.rules-value-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rules-value-item {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.rules-value-item span:first-child {
+  color: #666;
+  font-size: 13px;
+}
+
+.rules-value-item strong {
+  font-size: 18px;
+}
+
+.rule-settings-editor[hidden] {
+  display: none !important;
+}
+
+.rule-settings-editor {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #d7d7d7;
+}
+
+.rule-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.rule-editor-grid > label {
+  display: grid;
+  gap: 7px;
+  color: #333;
+  font-weight: 700;
+}
+
+.rule-editor-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-editor-field input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #aaa;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 10px;
+}
+
+.rule-editor-note {
+  margin: 12px 0 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.rule-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rule-editor-actions button:last-child {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.rules-copy-section {
+  padding: 28px 0 0;
+}
+
+.rules-copy-section + .rules-copy-section {
+  margin-top: 4px;
+  border-top: 1px solid #e2e2e2;
+}
+
+.rules-copy-section h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.rules-copy-section ul {
+  margin: 0;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 9px;
+}
+
+.rules-copy-section li {
+  padding-left: .2em;
+  line-height: 1.8;
+}
+
+.rules-copy-section code {
+  padding: 1px 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f5f5f5;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important;
+  font-size: .92em;
+}
+
+.rules-json-section {
+  border-top-color: #bbb !important;
+}
+
+.rules-page-footnote {
+  margin: 32px 0 0;
+  padding: 16px 18px;
+  border-left: 4px solid #111;
+  background: #f4f4f4;
+  line-height: 1.75;
+  font-weight: 700;
+}
+
+@media screen and (max-width: 900px) {
+  .page-tabs,
+  .rules-view {
+    width: calc(100vw - 16px);
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .rules-view {
+    padding: 22px 16px 34px;
+  }
+
+  .rules-value-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .page-tabs {
+    gap: 24px;
+  }
+
+  .page-tab {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .rules-page-head {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .rules-edit-button {
+    width: 100%;
+  }
+
+  .rules-section-head,
+  .guide-group-head {
+    display: grid;
+    align-items: start;
+  }
+
+  .guide-details > summary {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    min-height: 64px;
+    padding-right: 40px;
+  }
+
+  .guide-summary-note {
+    text-align: left;
+  }
+
+  .guide-details-body {
+    padding-right: 4px;
+  }
+
+  .rules-value-grid,
+  .rule-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-editor-actions button {
+    flex: 1 1 0;
+  }
+}
+
+@media print {
+  .page-tabs,
+  .rules-view {
+    display: none !important;
+  }
+}
+
+/* 說明頁結構微調：頁首只有標題；基本值標題與編輯按鈕同行。 */
+.rules-page-head {
+  grid-template-columns: 1fr;
+}
+
+.guide-rules-group .rules-section-head {
+  align-items: center;
 }

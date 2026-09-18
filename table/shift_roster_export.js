@@ -285,7 +285,7 @@
       if ((element.textContent || '').trim()) drawElementText(context, element, rootRect, null, { center: true });
     });
 
-    // 下方長條備註：特殊班／特殊大夜／特休／請假／8點開會。
+    // 下方長條備註：特殊班／特殊大夜／特休／請假／8點櫃檯開會。
     table.querySelectorAll('.day-note-line').forEach(element => {
       const style = getComputedStyle(element);
       if ((style.writingMode || '').startsWith('vertical')) {

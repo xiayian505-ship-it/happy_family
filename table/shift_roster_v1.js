@@ -1,5 +1,23 @@
 'use strict';
 
+const rosterViewTab = document.getElementById('rosterViewTab');
+const rulesViewTab = document.getElementById('rulesViewTab');
+const rosterView = document.getElementById('rosterView');
+const rulesView = document.getElementById('rulesView');
+const editRuleSettingsButton = document.getElementById('editRuleSettingsButton');
+const ruleSettingsEditor = document.getElementById('ruleSettingsEditor');
+const rulePublicLeaveText = document.getElementById('rulePublicLeaveText');
+const ruleConsecutiveText = document.getElementById('ruleConsecutiveText');
+const ruleTurnaroundText = document.getElementById('ruleTurnaroundText');
+const ruleNightText = document.getElementById('ruleNightText');
+const rulePublicLeaveSettingInput = document.getElementById('rulePublicLeaveInput');
+const ruleConsecutiveInput = document.getElementById('ruleConsecutiveInput');
+const ruleTurnaroundInput = document.getElementById('ruleTurnaroundInput');
+const ruleNightStartInput = document.getElementById('ruleNightStartInput');
+const ruleNightEndInput = document.getElementById('ruleNightEndInput');
+const ruleSettingsCancel = document.getElementById('ruleSettingsCancel');
+const ruleSettingsApply = document.getElementById('ruleSettingsApply');
+
 const yearInput = document.getElementById('yearInput');
 const monthSelect = document.getElementById('monthSelect');
 const prevMonthButton = document.getElementById('prevMonth');
@@ -26,8 +44,6 @@ const publicLeaveInput = document.getElementById('publicLeaveInput');
 const rowFillBar = document.getElementById('rowFillBar');
 const rowFillTitle = document.getElementById('rowFillTitle');
 const rowFillQuickLetters = document.getElementById('rowFillQuickLetters');
-const rowFillCustomInput = document.getElementById('rowFillCustomInput');
-const rowFillApplyCustom = document.getElementById('rowFillApplyCustom');
 const rowFillClearRow = document.getElementById('rowFillClearRow');
 const rowFillClose = document.getElementById('rowFillClose');
 
@@ -53,14 +69,16 @@ const leaveTypeCancel = document.getElementById('leaveTypeCancel');
 
 const specialTimeDialog = document.getElementById('specialTimeDialog');
 const specialTimeMessage = document.getElementById('specialTimeMessage');
-const specialTimeInput = document.getElementById('specialTimeInput');
+const specialTimeStartInput = document.getElementById('specialTimeStartInput');
+const specialTimeEndInput = document.getElementById('specialTimeEndInput');
 const specialTimeApply = document.getElementById('specialTimeApply');
 const specialTimeRemove = document.getElementById('specialTimeRemove');
 const specialTimeBack = document.getElementById('specialTimeBack');
 
 const nightTimeDialog = document.getElementById('nightTimeDialog');
 const nightTimeMessage = document.getElementById('nightTimeMessage');
-const nightTimeInput = document.getElementById('nightTimeInput');
+const nightTimeStartInput = document.getElementById('nightTimeStartInput');
+const nightTimeEndInput = document.getElementById('nightTimeEndInput');
 const nightTimeNormal = document.getElementById('nightTimeNormal');
 const nightTimeSpecial = document.getElementById('nightTimeSpecial');
 const nightTimeRemove = document.getElementById('nightTimeRemove');
@@ -99,17 +117,21 @@ const shifts = [
 const LEAVE_TYPE_LABELS = Object.freeze({
   public: '公休',
   annual: '特休',
-  personal: '事假',
-  bereavement: '喪假',
-  other: '其他請假',
+  leave: '請假',
+  personal: '請假',
+  bereavement: '請假',
+  other: '請假',
   exceptionPublic: '例外排休'
 });
-const FORMAL_LEAVE_TYPES = new Set(['personal', 'bereavement', 'other']);
+const FORMAL_LEAVE_TYPES = new Set(['leave', 'personal', 'bereavement', 'other']);
 
 // ===== 目前先用前端記憶體保存；未來接資料庫時可從這一層搬出去。 =====
 const names = Array(6).fill('');
 const specialLeaveValues = Array(6).fill('');
 let publicLeaveCount = '8';
+let maxConsecutiveWorkDays = 6;
+let minTurnaroundHours = 12;
+let normalNightRange = '22~06';
 const rosterValues = new Map();
 const blockedVacationOverrides = new Map();
 const specialShiftCells = new Set();
@@ -146,6 +168,88 @@ for (let month = 1; month <= 12; month += 1) {
   monthSelect.appendChild(option);
 }
 monthSelect.value = '11';
+
+function setMainView(view) {
+  const showRules = view === 'rules';
+  rosterView.hidden = showRules;
+  rulesView.hidden = !showRules;
+  rosterViewTab.classList.toggle('is-active', !showRules);
+  rulesViewTab.classList.toggle('is-active', showRules);
+  rosterViewTab.setAttribute('aria-selected', String(!showRules));
+  rulesViewTab.setAttribute('aria-selected', String(showRules));
+  if (showRules) {
+    closeRowFillPanel();
+    closeShiftConfigPanel();
+    renderRuleSettingsPage();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function formatRuleNumber(value) {
+  const number = Number(value);
+  return Number.isInteger(number) ? String(number) : String(number).replace(/\.0+$/, '');
+}
+
+function renderRuleSettingsPage() {
+  const publicLeave = publicLeaveCount || '8';
+  rulePublicLeaveText.textContent = publicLeave;
+  ruleConsecutiveText.textContent = String(maxConsecutiveWorkDays);
+  ruleTurnaroundText.textContent = formatRuleNumber(minTurnaroundHours);
+  ruleNightText.textContent = normalNightRange;
+
+  document.querySelectorAll('[data-rule-public-leave]').forEach((node) => { node.textContent = publicLeave; });
+  document.querySelectorAll('[data-rule-consecutive]').forEach((node) => { node.textContent = String(maxConsecutiveWorkDays); });
+  document.querySelectorAll('[data-rule-turnaround]').forEach((node) => { node.textContent = formatRuleNumber(minTurnaroundHours); });
+  document.querySelectorAll('[data-rule-night]').forEach((node) => { node.textContent = normalNightRange; });
+}
+
+function openRuleSettingsEditor() {
+  rulePublicLeaveSettingInput.value = publicLeaveCount || '8';
+  ruleConsecutiveInput.value = String(maxConsecutiveWorkDays);
+  ruleTurnaroundInput.value = formatRuleNumber(minTurnaroundHours);
+  fillHourPair(ruleNightStartInput, ruleNightEndInput, normalNightRange);
+  ruleSettingsEditor.hidden = false;
+  editRuleSettingsButton.hidden = true;
+  requestAnimationFrame(() => rulePublicLeaveSettingInput.focus());
+}
+
+function closeRuleSettingsEditor() {
+  ruleSettingsEditor.hidden = true;
+  editRuleSettingsButton.hidden = false;
+}
+
+function applyRuleSettings() {
+  const nextPublicLeave = Number.parseInt(rulePublicLeaveSettingInput.value, 10);
+  const nextConsecutive = Number.parseInt(ruleConsecutiveInput.value, 10);
+  const nextTurnaround = Number(ruleTurnaroundInput.value);
+  const nextNight = buildHourRange(ruleNightStartInput, ruleNightEndInput);
+
+  if (!Number.isInteger(nextPublicLeave) || nextPublicLeave < 1 || nextPublicLeave > 31) {
+    window.alert('每月公休請輸入 1～31 天。');
+    return;
+  }
+  if (!Number.isInteger(nextConsecutive) || nextConsecutive < 1 || nextConsecutive > 31) {
+    window.alert('連續上班上限請輸入 1～31 天。');
+    return;
+  }
+  if (!Number.isFinite(nextTurnaround) || nextTurnaround < 0 || nextTurnaround > 24) {
+    window.alert('轉班最低間隔請輸入 0～24 小時。');
+    return;
+  }
+  if (!window.ShiftRosterRules?.parseTimeRange(nextNight)) {
+    window.alert('一般大夜時間請分別輸入開始與結束小時，例如 22、06。');
+    return;
+  }
+
+  publicLeaveCount = String(nextPublicLeave);
+  maxConsecutiveWorkDays = nextConsecutive;
+  minTurnaroundHours = nextTurnaround;
+  normalNightRange = nextNight;
+  publicLeaveInput.textContent = publicLeaveCount;
+  renderSummary();
+  renderRuleSettingsPage();
+  closeRuleSettingsEditor();
+}
 
 function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
@@ -206,13 +310,52 @@ function getCurrentYearMonth() {
 }
 
 function cleanEnglishLetter(value) {
-  return String(value || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+  return String(value || '').toUpperCase().replace(/[^A-E]/g, '').slice(0, 1);
 }
 function cleanTwoDigits(value) {
   return String(value || '').replace(/\D/g, '').slice(0, 2);
 }
 function normalizeTimeInput(value) {
   return String(value || '').trim().replace(/[～〜—–－]/g, '~').replace(/\s+/g, '');
+}
+function cleanHourInput(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, 2);
+}
+function splitHourRange(value) {
+  const parsed = window.ShiftRosterRules?.parseTimeRange(normalizeTimeInput(value));
+  if (!parsed) return { start: '', end: '' };
+  return { start: String(parsed.start.hour).padStart(2, '0'), end: String(parsed.end.hour).padStart(2, '0') };
+}
+function buildHourRange(startInput, endInput) {
+  const startText = cleanHourInput(startInput.value);
+  const endText = cleanHourInput(endInput.value);
+  startInput.value = startText;
+  endInput.value = endText;
+  if (!startText || !endText) return '';
+  const start = Number(startText);
+  const end = Number(endText);
+  if (!Number.isInteger(start) || start < 0 || start > 23) return '';
+  if (!Number.isInteger(end) || end < 0 || end > 24) return '';
+  return `${String(start).padStart(2, '0')}~${String(end).padStart(2, '0')}`;
+}
+function fillHourPair(startInput, endInput, value) {
+  const { start, end } = splitHourRange(value);
+  startInput.value = start;
+  endInput.value = end;
+}
+function bindHourPair(startInput, endInput, onSubmit) {
+  const sanitize = (input) => { input.value = cleanHourInput(input.value); };
+  startInput.addEventListener('input', () => {
+    sanitize(startInput);
+    if (startInput.value.length >= 2) endInput.focus();
+  });
+  endInput.addEventListener('input', () => sanitize(endInput));
+  startInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); endInput.focus(); }
+  });
+  endInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); onSubmit(); }
+  });
 }
 
 function clearMapKeysForMonth(map, year, month) {
@@ -425,9 +568,9 @@ function openSpecialTimeDialog(year, month, day, shiftIndex) {
   const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
   specialTimeContext = { year, month, day, shiftIndex, key, specialKey, letter };
   specialTimeMessage.textContent = `${month}/${day}　${letter}　特殊班實際時間`;
-  specialTimeInput.value = specialShiftTimes.get(specialKey) || '';
+  fillHourPair(specialTimeStartInput, specialTimeEndInput, specialShiftTimes.get(specialKey) || '');
   specialTimeDialog.hidden = false;
-  requestAnimationFrame(() => specialTimeInput.focus());
+  requestAnimationFrame(() => specialTimeStartInput.focus());
 }
 function closeSpecialTimeDialog() {
   specialTimeDialog.hidden = true;
@@ -435,10 +578,10 @@ function closeSpecialTimeDialog() {
 }
 function applySpecialTime() {
   if (!specialTimeContext) return;
-  const value = normalizeTimeInput(specialTimeInput.value);
+  const value = buildHourRange(specialTimeStartInput, specialTimeEndInput);
   if (!window.ShiftRosterRules?.parseTimeRange(value)) {
-    window.alert('時間格式請輸入例如 12~20、12:30~20:30。');
-    specialTimeInput.focus();
+    window.alert('請分別輸入開始與結束小時，例如 12、20。');
+    specialTimeStartInput.focus();
     return;
   }
   specialShiftCells.add(specialTimeContext.specialKey);
@@ -460,7 +603,7 @@ function openNightTimeDialog(year, month, day, shiftIndex) {
   const letter = rosterValues.get(key) || '';
   nightTimeContext = { year, month, day, shiftIndex, key, letter };
   nightTimeMessage.textContent = `${month}/${day}${letter ? `　${letter}` : ''}　大夜設定`;
-  nightTimeInput.value = nightShiftTimes.get(makeNightShiftKey(year, month, day)) || '';
+  fillHourPair(nightTimeStartInput, nightTimeEndInput, nightShiftTimes.get(makeNightShiftKey(year, month, day)) || '');
   nightTimeDialog.hidden = false;
   requestAnimationFrame(() => nightTimeNormal.focus());
 }
@@ -478,10 +621,10 @@ function setNormalNight() {
 }
 function setSpecialNight() {
   if (!nightTimeContext) return;
-  const value = normalizeTimeInput(nightTimeInput.value);
+  const value = buildHourRange(nightTimeStartInput, nightTimeEndInput);
   if (!window.ShiftRosterRules?.parseTimeRange(value)) {
-    window.alert('時間格式請輸入例如 21~05、21:30~05:30。');
-    nightTimeInput.focus();
+    window.alert('請分別輸入開始與結束小時，例如 21、05。');
+    nightTimeStartInput.focus();
     return;
   }
   const { year, month, day, shiftIndex } = nightTimeContext;
@@ -569,7 +712,6 @@ async function applyLetterToShiftRow(shiftIndex, letter) {
 function openRowFillPanel(shiftIndex) {
   selectedRowFillShiftIndex = shiftIndex;
   rowFillTitle.textContent = `${shifts[shiftIndex].label} 整列填入`;
-  rowFillCustomInput.value = '';
   rowFillBar.hidden = false;
   closeShiftConfigPanel();
   rowFillBar.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -609,7 +751,7 @@ function toggleShiftConfigPanel() {
 function renderShiftConfigPanel() {
   const { year, month } = getCurrentYearMonth();
   shiftConfigGrid.innerHTML = '';
-  for (let index = 0; index < 6; index += 1) {
+  for (let index = 0; index < names.length; index += 1) {
     const letter = String.fromCharCode(65 + index);
     const row = document.createElement('label');
     row.className = 'shift-config-row';
@@ -695,16 +837,7 @@ async function handleVacationChange({ year, month, day, key, letter, inputElemen
     if (blockedChoice === 'exception') {
       setLeaveType(key, 'exceptionPublic');
     } else if (blockedChoice === 'formal') {
-      const formalType = await showLeaveTypeChoice({
-        message: `${month}/${day}　${letter} 請選擇假別`,
-        allowedTypes: ['personal', 'bereavement', 'other']
-      });
-      if (!formalType) {
-        restoreVacationEntry(key, inputElement, previousLetter, previousType);
-        render();
-        return;
-      }
-      setLeaveType(key, formalType);
+      setLeaveType(key, 'leave');
     } else {
       restoreVacationEntry(key, inputElement, previousLetter, previousType);
       render();
@@ -739,13 +872,11 @@ function buildDayNotes(year, month, day) {
   for (const entry of getVacationLettersForDay(year, month, day)) {
     if (!entry.value) continue;
     if (entry.type === 'annual') notes.push({ kind: 'leave', lines: [entry.value, '特', '休'] });
-    if (entry.type === 'personal') notes.push({ kind: 'leave', lines: [entry.value, '事', '假'] });
-    if (entry.type === 'bereavement') notes.push({ kind: 'leave', lines: [entry.value, '喪', '假'] });
-    if (entry.type === 'other') notes.push({ kind: 'leave', lines: [entry.value, '請', '假'] });
+    if (isFormalLeaveType(entry.type)) notes.push({ kind: 'leave', lines: [entry.value, '請', '假'] });
   }
 
   if (meetingDays.has(makeMeetingDayKey(year, month, day))) {
-    notes.push({ kind: 'meeting', lines: ['8', '點', '開', '會'] });
+    notes.push({ kind: 'meeting', lines: ['8', '點', '櫃', '檯', '開', '會'] });
   }
 
   return notes;
@@ -1104,6 +1235,7 @@ function handlePublicLeaveInput() {
     }
   }
   renderSummary();
+  renderRuleSettingsPage();
 }
 
 function getActiveLettersForCurrentMonth() {
@@ -1198,6 +1330,11 @@ function buildRuleModel() {
     month,
     days,
     shifts,
+    settings: {
+      maxConsecutiveDays: maxConsecutiveWorkDays,
+      minTurnaroundHours,
+      normalNightRange
+    },
     employees: names.map((name, index) => {
       const letter = String.fromCharCode(65 + index);
       return { letter, name, primaryShiftIndex: getPrimaryShift(year, month, letter) };
@@ -1350,6 +1487,12 @@ function changeMonth(offset) {
 }
 
 // ===== 事件 =====
+rosterViewTab.addEventListener('click', () => setMainView('roster'));
+rulesViewTab.addEventListener('click', () => setMainView('rules'));
+editRuleSettingsButton.addEventListener('click', openRuleSettingsEditor);
+ruleSettingsCancel.addEventListener('click', closeRuleSettingsEditor);
+ruleSettingsApply.addEventListener('click', applyRuleSettings);
+
 yearInput.addEventListener('change', render);
 monthSelect.addEventListener('change', () => {
   closeRowFillPanel();
@@ -1406,49 +1549,26 @@ outputTimeYes.addEventListener('click', () => resolveOutputTimeChoice(true));
 outputTimeNo.addEventListener('click', () => resolveOutputTimeChoice(false));
 
 rowFillClose.addEventListener('click', closeRowFillPanel);
-rowFillApplyCustom.addEventListener('click', () => {
-  if (selectedRowFillShiftIndex == null) return;
-  const letter = cleanEnglishLetter(rowFillCustomInput.value);
-  if (letter) applyLetterToShiftRow(selectedRowFillShiftIndex, letter);
-});
 rowFillClearRow.addEventListener('click', () => {
   if (selectedRowFillShiftIndex != null) applyLetterToShiftRow(selectedRowFillShiftIndex, '');
 });
-rowFillCustomInput.addEventListener('input', () => {
-  const cleaned = cleanEnglishLetter(rowFillCustomInput.value);
-  if (rowFillCustomInput.value !== cleaned) rowFillCustomInput.value = cleaned;
-});
-rowFillCustomInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && rowFillCustomInput.value) {
-    event.preventDefault();
-    rowFillApplyCustom.click();
-  }
-});
-
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
 publicLeaveInput.addEventListener('blur', () => {
   if (!publicLeaveCount) {
     publicLeaveCount = '8';
     publicLeaveInput.textContent = publicLeaveCount;
     renderSummary();
+    renderRuleSettingsPage();
   }
 });
 
-specialTimeInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    applySpecialTime();
-  }
-});
-nightTimeInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    setSpecialNight();
-  }
-});
+bindHourPair(specialTimeStartInput, specialTimeEndInput, applySpecialTime);
+bindHourPair(nightTimeStartInput, nightTimeEndInput, setSpecialNight);
+bindHourPair(ruleNightStartInput, ruleNightEndInput, applyRuleSettings);
 
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
+  if (!ruleSettingsEditor.hidden) return closeRuleSettingsEditor();
   if (!outputTimeDialog.hidden) return resolveOutputTimeChoice(false);
   if (!leaveTypeDialog.hidden) return resolveLeaveTypeChoice(null);
   if (!blockedLeaveDialog.hidden) return resolveBlockedLeaveChoice('back');
@@ -1468,3 +1588,4 @@ window.ShiftRosterOutput = Object.freeze({
 
 buildRowFillQuickLetters();
 render();
+renderRuleSettingsPage();
