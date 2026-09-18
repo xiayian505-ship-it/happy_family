@@ -42,9 +42,17 @@
     </div>
 
     <div class="controls-row controls-data-row" aria-label="資料檔案">
-      <button id="importJsonButton" type="button" disabled title="JSON 匯入功能尚未啟用">匯入 JSON</button>
-      <button id="downloadJsonButton" type="button" disabled title="JSON 下載功能尚未啟用">下載 JSON</button>
+      <button id="importJsonButton" type="button">匯入 JSON</button>
+      <button id="downloadJsonButton" type="button">下載 JSON</button>
+      <input id="importJsonInput" type="file" accept=".json,application/json" hidden>
     </div>
+
+    <details class="advanced-data-tools">
+      <summary>進階資料管理</summary>
+      <div class="advanced-data-tools-body">
+        <button id="cleanupHistoryButton" type="button">清除歷史月份</button>
+      </div>
+    </details>
 
     <div class="controls-row controls-action-row" aria-label="其他操作">
       <button id="clearMonthButton" type="button">本月清空</button>
@@ -206,6 +214,29 @@
     </div>
   </div>
 
+  <div id="importConfirmDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="importConfirmMessage">
+      <p id="importConfirmMessage" class="app-dialog-message"></p>
+      <div class="app-dialog-actions">
+        <button id="importConfirmCancel" type="button">取消</button>
+        <button id="importConfirmApply" type="button">確認匯入</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cleanupHistoryDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="cleanupMessage">
+      <p id="cleanupMessage" class="app-dialog-message">選定月份以前的歷史班表會被刪除。建議先下載 JSON 備份。</p>
+      <label class="dialog-field">清除月份以前
+        <input id="cleanupBeforeMonth" type="month" aria-label="清除歷史資料截止月份">
+      </label>
+      <div class="app-dialog-actions">
+        <button id="cleanupCancel" type="button">取消</button>
+        <button id="cleanupConfirm" type="button">確認清除</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
     <main class="sheet" id="sheet">
       <header class="sheet-title">
@@ -258,8 +289,8 @@
           </summary>
           <div class="guide-details-body">
             <ul>
-              <li>最上方可用「上月／下月」切換月份，也可直接輸入年份、選擇月份。</li>
-              <li>A～F 是固定的人員代號，目前 F 可作預留欄；只有填入姓名的人員才會進入排假與排班規則檢查。</li>
+              <li>開啟時會依裝置日期預設顯示下個月；最上方仍可用「上月／下月」切換，也可直接輸入年份、選擇月份。</li>
+              <li>A～F 是當月班表代號，不是永久人員身分；跨月會由系統用內部人員 ID 銜接。F 仍可作預留欄，只有填入姓名的人員才會進入排假與排班規則檢查。</li>
               <li>姓名右側的小數字欄用來填當月特休天數；班表右側的數字則是每人當月應排的公休天數。</li>
               <li>「人員班別」用來設定每位員工可負責的班別，可複選：早班（07～15）、中班（15～23、16～00）、夜班（23～07、00～08），供同組排休與相鄰排休順序檢查使用。</li>
             </ul>
@@ -321,9 +352,10 @@
           </summary>
           <div class="guide-details-body">
             <ul>
-              <li>「匯入 JSON」與「下載 JSON」目前先保留按鈕位置，<strong>這一版尚未啟用實際匯入／下載。</strong></li>
-              <li>之後匯入時，請選擇副檔名為 <code>.json</code> 的班表資料檔。JSON 不是 Excel、PDF 或圖片檔。</li>
-              <li>「下載 JSON」之後會得到一份 <code>.json</code> 班表資料備份，用來保存可再次匯入的班表資料與設定；它不是可直接列印的班表。</li>
+              <li>班表資料會自動保存在本機瀏覽器，不需要另外按「儲存」。</li>
+              <li>「下載 JSON」會得到完整班表資料備份；「匯入 JSON」只接受本工具可辨識的備份格式，格式不符時不會修改現有資料。</li>
+              <li>格式正確的 JSON 匯入會先提醒「將覆蓋目前所有本機班表資料與設定」，並提供取消／確認；確認後採整包覆蓋，不做合併。</li>
+              <li>「進階資料管理」預設收合，可手動清除指定月份以前的歷史資料；建議清除前先下載 JSON 備份。</li>
               <li>若要把整套單機程式搬到另一台電腦，應複製整個班表資料夾或 ZIP；JSON 只負責資料備份，不包含 HTML、CSS、JS 程式本體。</li>
               <li>「本月清空」會先跳出確認；目前設計會保留姓名與公休／特休數字，再清除當月排班與標記資料。</li>
             </ul>
@@ -389,7 +421,7 @@
               </span>
             </label>
           </div>
-          <p class="rule-editor-note">目前修改只套用這次開啟的頁面；之後接上本機 JSON 儲存時，再一起保存。</p>
+          <p class="rule-editor-note">這些基本值會自動保存在本機，之後開啟仍會沿用。</p>
           <div class="rule-editor-actions">
             <button id="ruleSettingsCancel" type="button">取消</button>
             <button id="ruleSettingsApply" type="button">套用</button>
@@ -405,7 +437,7 @@
           </summary>
           <div class="guide-details-body">
             <ul>
-              <li><strong>A～F 是人員代號，不是班別順序。</strong>所有排休與轉班判斷都依當月實際班別，不依字母順序。</li>
+              <li><strong>A～F 是當月班表代號，不是永久人員 ID，也不是班別順序。</strong>跨月時會用內部人員 ID 銜接；排休與轉班判斷仍依實際班別。</li>
               <li>人數不一定固定為 6 人；規則檢查只處理當月實際有姓名、班別、排班或休假的人員。</li>
               <li>班別分類為：早班（07~15）、中班（15~23、16~00）、夜班（23~07、00~08）；同一人可複選多個班別。</li>
               <li>每人每月先排 <strong><span data-rule-public-leave>8</span> 天公休</strong>；特休、請假都不計入這個公休數量。</li>
@@ -455,6 +487,8 @@
               <li>同一人原則上不得連續上班超過 <strong><span data-rule-consecutive>6</span> 天</strong>；超過時規則檢查會提醒。</li>
               <li>若一次連續上班 10 天，系統會顯示一個完整區間，例如「11/1～11/10 連續上班 10 天」，不會從第 7 天開始每天重複跳提醒。</li>
               <li><strong>轉班不能低於 <span data-rule-turnaround>12</span> 小時。</strong>例如前一天 15~23、隔天 07~15，中間只有 8 小時，會提醒。</li>
+              <li>月初檢查會往前讀前月月底資料；月份切換不會把連續上班天數歸零，前月最後一班也會參與本月第一班的轉班間隔檢查。</li>
+              <li>第一次使用時前月不必整月補齊，可只補月底銜接需要的日期；若需要的日期仍是空白，規則檢查會提醒資料不足，不會把空白當休假。</li>
               <li>跨午夜班依實際日期與時間計算；特殊班及特殊大夜會使用登記的實際時間參與轉班檢查。</li>
               <li>因人力或其他協調而出現特殊安排時，可人工確認為例外。</li>
             </ul>
@@ -481,8 +515,10 @@
 
     <p class="rules-page-footnote">這份工具的定位是排班／排假檢查器：先把可能有問題的地方提醒出來，最後仍由使用者依實際狀況決定。</p>
   </section>
+  <script src="shift_roster_storage.js"></script>
   <script src="shift_roster_rules.js"></script>
   <script src="shift_roster_v1.js"></script>
+  <script src="shift_roster_backup.js"></script>
   <script src="shift_roster_export.js"></script>
 </body>
 </html>

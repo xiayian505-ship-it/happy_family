@@ -66,6 +66,11 @@
     return `${month}/${day}`;
   }
 
+  function formatDateRef(ref) {
+    if (!ref) return '';
+    return `${ref.month}/${ref.day}`;
+  }
+
   function formatDurationHours(ms) {
     const hours = ms / 3600000;
     if (Number.isInteger(hours)) return String(hours);
@@ -218,6 +223,8 @@
         if (!rangeText) continue;
         const interval = buildInterval(model.year, model.month, day, rangeText);
         if (!interval) continue;
+        interval.year = model.year;
+        interval.month = model.month;
         interval.day = day;
         interval.shiftIndex = shiftIndex;
         interval.letter = letter;
@@ -263,12 +270,57 @@
     }
   }
 
+  function collectPreviousMonthDataIssues(model, issues, activeLetters) {
+    if (!activeLetters.length || typeof model.getPreviousMonthHistory !== 'function') return;
+
+    if (model.previousMonthExists === false) {
+      const previous = model.previousMonth;
+      const label = previous ? `${previous.year} 年 ${previous.month} 月` : '前一個月';
+      issues.push({
+        code: 'previous-month-missing',
+        title: '前月銜接資料不存在',
+        message: `找不到${label}的班表資料。\n本月月初的跨月連勤與轉班間隔無法完整檢查；第一次使用時可切回前月，只補月底需要的幾天。`
+      });
+      return;
+    }
+
+    for (const letter of activeLetters) {
+      const history = model.getPreviousMonthHistory(letter);
+      if (!history?.employeeFound || !history.incomplete) continue;
+      const employee = (model.employees || []).find((item) => item.letter === letter);
+      issues.push({
+        code: 'previous-month-incomplete',
+        title: '前月月底資料不完整',
+        message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 的前月月底銜接資料有空白。\n跨月連勤／轉班間隔可能無法完整判斷；請回前月補上最近的排班或休假。`
+      });
+    }
+  }
+
   function collectConsecutiveWorkIssues(model, issues) {
     const activeLetters = getActiveLetters(model);
     const maxDays = Math.max(1, Number(model.settings?.maxConsecutiveDays) || 6);
 
     for (const letter of activeLetters) {
-      const workDays = [];
+      const history = typeof model.getPreviousMonthHistory === 'function' ? model.getPreviousMonthHistory(letter) : null;
+      const carryDays = history && history.employeeFound ? history.carryWorkDays : 0;
+
+      let runLength = 0;
+      let runStart = null;
+      let runEnd = null;
+
+      const flushRun = () => {
+        if (runLength > maxDays && runStart && runEnd) {
+          issues.push({
+            code: 'consecutive-work',
+            title: `連續上班超過 ${maxDays} 天`,
+            message: `${letter} 於 ${formatDateRef(runStart)}～${formatDateRef(runEnd)} 連續上班 ${runLength} 天。\n原則上第 ${maxDays + 1} 天應休假。`
+          });
+        }
+        runLength = 0;
+        runStart = null;
+        runEnd = null;
+      };
+
       for (let day = 1; day <= model.days; day += 1) {
         let works = false;
         for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
@@ -277,25 +329,26 @@
             break;
           }
         }
-        if (works) workDays.push(day);
-      }
 
-      let start = 0;
-      while (start < workDays.length) {
-        let end = start;
-        while (end + 1 < workDays.length && workDays[end + 1] === workDays[end] + 1) end += 1;
-        const length = end - start + 1;
-        if (length > maxDays) {
-          const first = workDays[start];
-          const last = workDays[end];
-          issues.push({
-            code: 'consecutive-work',
-            title: `連續上班超過 ${maxDays} 天`,
-            message: `${letter} 於 ${formatDate(model.month, first)}～${formatDate(model.month, last)} 連續上班 ${length} 天。\n原則上第 ${maxDays + 1} 天應休假。`
-          });
+        if (!works) {
+          flushRun();
+          continue;
         }
-        start = end + 1;
+
+        if (runLength === 0) {
+          if (day === 1 && carryDays > 0) {
+            runLength = carryDays + 1;
+            runStart = history.carryStart || { year: model.year, month: model.month, day };
+          } else {
+            runLength = 1;
+            runStart = { year: model.year, month: model.month, day };
+          }
+        } else {
+          runLength += 1;
+        }
+        runEnd = { year: model.year, month: model.month, day };
       }
+      flushRun();
     }
   }
 
@@ -304,18 +357,36 @@
     const configuredRestHours = Number(model.settings?.minTurnaroundHours);
     const minRestHours = Number.isFinite(configuredRestHours) ? Math.max(0, configuredRestHours) : 12;
 
-    for (const [letter, intervals] of byLetter.entries()) {
-      for (let index = 0; index < intervals.length - 1; index += 1) {
-        const current = intervals[index];
-        const next = intervals[index + 1];
-        const gapMs = next.start - current.end;
-        if (gapMs >= minRestHours * 3600000) continue;
+    function pushGapIssue(letter, current, next) {
+      const gapMs = next.start - current.end;
+      if (gapMs >= minRestHours * 3600000) return;
+      issues.push({
+        code: 'rest-gap',
+        title: `轉班間隔低於 ${formatDurationHours(minRestHours * 3600000)} 小時`,
+        message: `${letter}：${formatDate(current.month, current.day)} ${current.rangeText} → ${formatDate(next.month, next.day)} ${next.rangeText}\n中間休息約 ${formatDurationHours(gapMs)} 小時，低於 ${formatDurationHours(minRestHours * 3600000)} 小時。`
+      });
+    }
 
-        issues.push({
-          code: 'rest-gap',
-          title: `轉班間隔低於 ${formatDurationHours(minRestHours * 3600000)} 小時`,
-          message: `${letter}：${formatDate(model.month, current.day)} ${current.rangeText} → ${formatDate(model.month, next.day)} ${next.rangeText}\n中間休息約 ${formatDurationHours(gapMs)} 小時，低於 ${formatDurationHours(minRestHours * 3600000)} 小時。`
-        });
+    const activeLetters = getActiveLetters(model);
+    for (const letter of activeLetters) {
+      const intervals = byLetter.get(letter) || [];
+      const history = typeof model.getPreviousMonthHistory === 'function' ? model.getPreviousMonthHistory(letter) : null;
+
+      if (intervals.length && history?.employeeFound && history.restGapKnown !== false && Array.isArray(history.previousWorkIntervals)) {
+        const previousIntervals = history.previousWorkIntervals
+          .map((entry) => {
+            const interval = buildInterval(entry.year, entry.month, entry.day, entry.rangeText);
+            if (!interval) return null;
+            return { ...interval, ...entry };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.end - b.end);
+        const previousLast = previousIntervals.at(-1);
+        if (previousLast) pushGapIssue(letter, previousLast, intervals[0]);
+      }
+
+      for (let index = 0; index < intervals.length - 1; index += 1) {
+        pushGapIssue(letter, intervals[index], intervals[index + 1]);
       }
     }
   }
@@ -329,6 +400,7 @@
     collectSameGroupLeaveIssues(model, issues);
     collectAdjacentLeaveOrderIssues(model, issues);
     collectSpecialTimeIssues(model, issues);
+    collectPreviousMonthDataIssues(model, issues, activeLetters);
     collectConsecutiveWorkIssues(model, issues);
     collectRestGapIssues(model, issues);
 

@@ -392,10 +392,10 @@
     });
   }
 
-  function getFileName() {
-    const year = document.getElementById('yearInput')?.value || '';
-    const month = String(document.getElementById('monthSelect')?.value || '').padStart(2, '0');
-    return `${year}-${month}_櫃檯人員排班紀錄表.png`;
+  function getFileName(date = new Date()) {
+    const pad2 = (value) => String(value).padStart(2, '0');
+    const stamp = `${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}_${pad2(date.getHours())}${pad2(date.getMinutes())}`;
+    return `EliteHotel_${stamp}.png`;
   }
 
   async function createPngBlob() {

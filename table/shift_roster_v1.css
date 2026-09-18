@@ -2879,3 +2879,59 @@ textarea,
 .guide-rules-group .rules-section-head {
   align-items: center;
 }
+
+/* ===== 本機資料／JSON：進階功能預設收合，不干擾主操作區 ===== */
+.advanced-data-tools {
+  width: 100%;
+  border: 1px solid #cfcfcf;
+  border-radius: 10px;
+  background: #f8f8f8;
+}
+
+.advanced-data-tools > summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  cursor: pointer;
+  color: #555;
+  font-size: 14px;
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.advanced-data-tools-body {
+  padding: 0 10px 10px;
+}
+
+.advanced-data-tools-body button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#importConfirmCancel,
+#cleanupCancel {
+  border-color: #aaa;
+  background: #fff;
+  color: #222;
+}
+
+#importConfirmApply,
+#cleanupConfirm {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+@media print {
+  .advanced-data-tools {
+    display: none !important;
+  }
+}

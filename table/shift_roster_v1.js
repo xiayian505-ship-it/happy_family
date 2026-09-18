@@ -136,8 +136,17 @@ const LEAVE_TYPE_LABELS = Object.freeze({
 });
 const FORMAL_LEAVE_TYPES = new Set(['leave', 'personal', 'bereavement', 'other']);
 
-// ===== 目前先用前端記憶體保存；未來接資料庫時可從這一層搬出去。 =====
+const storage = window.ShiftRosterStorage || null;
+const DEFAULT_SETTINGS = Object.freeze({
+  publicLeaveCount: 8,
+  maxConsecutiveWorkDays: 6,
+  minTurnaroundHours: 12,
+  normalNightRange: '22~06'
+});
+
+// ===== 畫面工作狀態：月份切換時由本機資料層載入／保存。 =====
 const names = Array(6).fill('');
+const employeeIds = Array(6).fill('');
 const specialLeaveValues = Array(6).fill('');
 let publicLeaveCount = '8';
 let maxConsecutiveWorkDays = 6;
@@ -183,7 +192,6 @@ for (let month = 1; month <= 12; month += 1) {
   option.textContent = `${month} 月`;
   monthSelect.appendChild(option);
 }
-monthSelect.value = '11';
 
 function setMainView(view) {
   const showRules = view === 'rules';
@@ -264,6 +272,7 @@ function applyRuleSettings() {
   publicLeaveInput.textContent = publicLeaveCount;
   renderSummary();
   renderRuleSettingsPage();
+  persistGlobalSettings();
   closeRuleSettingsEditor();
 }
 
@@ -324,6 +333,223 @@ function makePersonnelShiftKey(year, month, letter) {
 
 function getCurrentYearMonth() {
   return { year: Number(yearInput.value), month: Number(monthSelect.value) };
+}
+
+function getDefaultNextYearMonth(date = new Date()) {
+  const next = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  return { year: next.getFullYear(), month: next.getMonth() + 1 };
+}
+
+function getMonthMemoryPrefix(year, month) {
+  return `${year}-${month}-`;
+}
+
+function serializeMapForMonth(map, year, month) {
+  const prefix = getMonthMemoryPrefix(year, month);
+  const output = {};
+  for (const [key, value] of map.entries()) {
+    const textKey = String(key);
+    if (!textKey.startsWith(prefix)) continue;
+    output[textKey.slice(prefix.length)] = value;
+  }
+  return output;
+}
+
+function serializeSetForMonth(set, year, month) {
+  const prefix = getMonthMemoryPrefix(year, month);
+  return [...set]
+    .map((key) => String(key))
+    .filter((key) => key.startsWith(prefix))
+    .map((key) => key.slice(prefix.length));
+}
+
+function restoreMapForMonth(map, year, month, values) {
+  if (!values || typeof values !== 'object' || Array.isArray(values)) return;
+  const prefix = getMonthMemoryPrefix(year, month);
+  for (const [suffix, value] of Object.entries(values)) map.set(`${prefix}${suffix}`, value);
+}
+
+function restoreSetForMonth(set, year, month, values) {
+  if (!Array.isArray(values)) return;
+  const prefix = getMonthMemoryPrefix(year, month);
+  values.forEach((suffix) => set.add(`${prefix}${suffix}`));
+}
+
+function clearMonthMemory(year, month) {
+  clearMapKeysForMonth(rosterValues, year, month);
+  clearMapKeysForMonth(blockedVacationOverrides, year, month);
+  clearMapKeysForMonth(nightShiftOverrides, year, month);
+  clearMapKeysForMonth(leaveTypeValues, year, month);
+  clearMapKeysForMonth(specialShiftTimes, year, month);
+  clearMapKeysForMonth(nightShiftTimes, year, month);
+  clearMapKeysForMonth(personnelShiftValues, year, month);
+  clearSetKeysForMonth(specialShiftCells, year, month);
+  clearSetKeysForMonth(meetingDays, year, month);
+}
+
+function buildCurrentMonthSnapshot() {
+  const { year, month } = getCurrentYearMonth();
+  const monthId = storage?.makeMonthId(year, month) || `${year}-${String(month).padStart(2, '0')}`;
+  const people = {};
+
+  for (let index = 0; index < 6; index += 1) {
+    const letter = String.fromCharCode(65 + index);
+    const displayName = names[index] || '';
+    const employeeId = employeeIds[index] || '';
+    const shiftGroups = [...getPersonnelShifts(year, month, letter)];
+    if (!displayName && !employeeId && !shiftGroups.length) continue;
+    people[letter] = { employeeId, displayName, shiftGroups };
+  }
+
+  return {
+    month: monthId,
+    people,
+    specialLeaveValues: [...specialLeaveValues],
+    rosterValues: serializeMapForMonth(rosterValues, year, month),
+    blockedVacationOverrides: serializeMapForMonth(blockedVacationOverrides, year, month),
+    specialShiftCells: serializeSetForMonth(specialShiftCells, year, month),
+    nightShiftOverrides: serializeMapForMonth(nightShiftOverrides, year, month),
+    leaveTypeValues: serializeMapForMonth(leaveTypeValues, year, month),
+    specialShiftTimes: serializeMapForMonth(specialShiftTimes, year, month),
+    nightShiftTimes: serializeMapForMonth(nightShiftTimes, year, month),
+    meetingDays: serializeSetForMonth(meetingDays, year, month)
+      .map((suffix) => Number(String(suffix).replace(/-meeting$/, '')))
+      .filter((day) => Number.isInteger(day))
+  };
+}
+
+function persistCurrentMonth() {
+  if (!storage) return;
+  const { year, month } = getCurrentYearMonth();
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return;
+  storage.saveMonth(buildCurrentMonthSnapshot());
+}
+
+function persistGlobalSettings() {
+  if (!storage) return;
+  storage.saveSettings({
+    publicLeaveCount: Number.parseInt(publicLeaveCount || '8', 10) || 8,
+    maxConsecutiveWorkDays,
+    minTurnaroundHours,
+    normalNightRange
+  });
+}
+
+function loadGlobalSettings() {
+  if (!storage) return;
+  const saved = storage.getSettings(DEFAULT_SETTINGS);
+  publicLeaveCount = String(Number.parseInt(saved.publicLeaveCount, 10) || DEFAULT_SETTINGS.publicLeaveCount);
+  maxConsecutiveWorkDays = Number.parseInt(saved.maxConsecutiveWorkDays, 10) || DEFAULT_SETTINGS.maxConsecutiveWorkDays;
+  minTurnaroundHours = Number.isFinite(Number(saved.minTurnaroundHours)) ? Number(saved.minTurnaroundHours) : DEFAULT_SETTINGS.minTurnaroundHours;
+  normalNightRange = String(saved.normalNightRange || DEFAULT_SETTINGS.normalNightRange);
+}
+
+function loadMonthIntoMemory(year, month, data) {
+  clearMonthMemory(year, month);
+  names.fill('');
+  employeeIds.fill('');
+  specialLeaveValues.fill('');
+
+  const people = data?.people && typeof data.people === 'object' ? data.people : {};
+  for (let index = 0; index < 6; index += 1) {
+    const letter = String.fromCharCode(65 + index);
+    const person = people[letter] || {};
+    names[index] = typeof person.displayName === 'string' ? person.displayName : '';
+    employeeIds[index] = typeof person.employeeId === 'string' ? person.employeeId : '';
+    const groups = Array.isArray(person.shiftGroups) ? person.shiftGroups.filter((item) => ['early', 'middle', 'night'].includes(item)) : [];
+    if (groups.length) personnelShiftValues.set(makePersonnelShiftKey(year, month, letter), [...new Set(groups)]);
+  }
+
+  const leaveValues = Array.isArray(data?.specialLeaveValues) ? data.specialLeaveValues : [];
+  for (let index = 0; index < 6; index += 1) specialLeaveValues[index] = String(leaveValues[index] || '');
+
+  restoreMapForMonth(rosterValues, year, month, data?.rosterValues);
+  restoreMapForMonth(blockedVacationOverrides, year, month, data?.blockedVacationOverrides);
+  restoreSetForMonth(specialShiftCells, year, month, data?.specialShiftCells);
+  restoreMapForMonth(nightShiftOverrides, year, month, data?.nightShiftOverrides);
+  restoreMapForMonth(leaveTypeValues, year, month, data?.leaveTypeValues);
+  restoreMapForMonth(specialShiftTimes, year, month, data?.specialShiftTimes);
+  restoreMapForMonth(nightShiftTimes, year, month, data?.nightShiftTimes);
+
+  if (Array.isArray(data?.meetingDays)) {
+    data.meetingDays.forEach((day) => {
+      if (Number.isInteger(day) && day >= 1 && day <= 31) meetingDays.add(makeMeetingDayKey(year, month, day));
+    });
+  }
+}
+
+function loadMonth(year, month) {
+  if (!storage) return;
+  const data = storage.ensureMonth(year, month);
+  loadMonthIntoMemory(year, month, data);
+}
+
+function trimDisplayName(value) {
+  return Array.from(String(value || '')).slice(0, 3).join('');
+}
+
+function findShiftGroupsForEmployee(employeeId, targetIndex) {
+  if (!employeeId) return [];
+  const { year, month } = getCurrentYearMonth();
+
+  for (let index = 0; index < employeeIds.length; index += 1) {
+    if (index === targetIndex || employeeIds[index] !== employeeId) continue;
+    const letter = String.fromCharCode(65 + index);
+    return [...getPersonnelShifts(year, month, letter)];
+  }
+
+  if (storage) {
+    const previous = storage.getPreviousYearMonth(year, month);
+    const previousMonth = storage.getMonth(previous.year, previous.month);
+    for (const person of Object.values(previousMonth?.people || {})) {
+      if (person?.employeeId === employeeId && Array.isArray(person.shiftGroups)) {
+        return person.shiftGroups.filter((item) => ['early', 'middle', 'night'].includes(item));
+      }
+    }
+  }
+  return [];
+}
+
+function setPersonnelGroupsForIndex(index, groups) {
+  const { year, month } = getCurrentYearMonth();
+  const letter = String.fromCharCode(65 + index);
+  const key = makePersonnelShiftKey(year, month, letter);
+  const cleaned = [...new Set((groups || []).filter((item) => ['early', 'middle', 'night'].includes(item)))];
+  if (cleaned.length) personnelShiftValues.set(key, cleaned);
+  else personnelShiftValues.delete(key);
+}
+
+function commitNameAtIndex(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= 6) return;
+  const displayName = names[index] || '';
+  const previousEmployeeId = employeeIds[index] || '';
+
+  if (!displayName.trim()) {
+    names[index] = '';
+    employeeIds[index] = '';
+    setPersonnelGroupsForIndex(index, []);
+    persistCurrentMonth();
+    return;
+  }
+
+  if (storage) {
+    const nextEmployeeId = storage.resolveEmployee(displayName, previousEmployeeId);
+    if (nextEmployeeId !== previousEmployeeId) {
+      setPersonnelGroupsForIndex(index, findShiftGroupsForEmployee(nextEmployeeId, index));
+    }
+    employeeIds[index] = nextEmployeeId;
+  }
+  persistCurrentMonth();
+}
+
+function commitAllVisibleNames() {
+  document.querySelectorAll('.name-input').forEach((input) => {
+    const index = Number(input.dataset.index);
+    if (!Number.isInteger(index)) return;
+    names[index] = trimDisplayName(input.value);
+    input.value = names[index];
+    commitNameAtIndex(index);
+  });
 }
 
 function cleanEnglishLetter(value) {
@@ -820,6 +1046,7 @@ function renderShiftConfigPanel() {
       button.addEventListener('click', () => {
         const next = button.getAttribute('aria-pressed') !== 'true';
         setPersonnelShift(year, month, letter, group.key, next);
+        persistCurrentMonth();
         button.setAttribute('aria-pressed', next ? 'true' : 'false');
       });
       options.appendChild(button);
@@ -1293,6 +1520,7 @@ function renderSchedule(year, month) {
       event.preventDefault();
       const nextBlockedState = !isVacationBlocked(year, month, day);
       setVacationBlockedState(year, month, day, nextBlockedState);
+      persistCurrentMonth();
       inputs.classList.toggle('is-blocked', nextBlockedState);
     });
     vacationRow.appendChild(td);
@@ -1333,12 +1561,23 @@ function renderLower(year, month) {
     const input = document.createElement('input');
     input.className = 'name-input';
     input.type = 'text';
-    input.maxLength = 3;
     input.value = name;
     input.dataset.index = index;
     input.autocomplete = 'off';
     input.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 姓名`);
+    input.addEventListener('compositionstart', () => { input.dataset.composing = 'true'; });
+    input.addEventListener('compositionend', (event) => {
+      input.dataset.composing = 'false';
+      handleNameInput(event);
+    });
     input.addEventListener('input', handleNameInput);
+    input.addEventListener('blur', handleNameCommit);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        input.blur();
+      }
+    });
 
     const leaveInput = document.createElement('input');
     leaveInput.className = 'special-leave-input';
@@ -1414,6 +1653,7 @@ function renderLower(year, month) {
 
   tbody.append(mainRow, dateRow);
   lowerTable.appendChild(tbody);
+  persistCurrentMonth();
 }
 
 function renderSummary() {
@@ -1437,16 +1677,29 @@ function renderSummary() {
 
 function handleNameInput(event) {
   const index = Number(event.target.dataset.index);
-  names[index] = event.target.value.slice(0, 3);
-  if (event.target.value !== names[index]) event.target.value = names[index];
+  if (event.target.dataset.composing === 'true') {
+    names[index] = trimDisplayName(event.target.value);
+    persistCurrentMonth();
+    return;
+  }
+  const cleaned = trimDisplayName(event.target.value);
+  names[index] = cleaned;
+  if (event.target.value !== cleaned) event.target.value = cleaned;
+  persistCurrentMonth();
   renderSummary();
   if (!shiftConfigPanel.hidden) renderShiftConfigPanel();
+}
+function handleNameCommit(event) {
+  if (event.target.dataset.composing === 'true') return;
+  handleNameInput(event);
+  commitNameAtIndex(Number(event.target.dataset.index));
 }
 function handleSpecialLeaveInput(event) {
   const index = Number(event.target.dataset.index);
   const cleaned = cleanTwoDigits(event.target.value);
   specialLeaveValues[index] = cleaned;
   if (event.target.value !== cleaned) event.target.value = cleaned;
+  persistCurrentMonth();
   renderSummary();
 }
 function handlePublicLeaveInput() {
@@ -1462,6 +1715,7 @@ function handlePublicLeaveInput() {
   }
   renderSummary();
   renderRuleSettingsPage();
+  persistGlobalSettings();
 }
 
 function getActiveLettersForCurrentMonth() {
@@ -1548,6 +1802,108 @@ function handleLeaveCheckIncorrect() {
   leaveCheckIndex = 0;
 }
 
+function getStoredRosterValue(monthData, day, type, index) {
+  return String(monthData?.rosterValues?.[`${day}-${type}-${index}`] || '');
+}
+
+function getStoredActualRange(monthData, year, month, day, shiftIndex) {
+  const specialKey = `${day}-shift-${shiftIndex}`;
+  if (Array.isArray(monthData?.specialShiftCells) && monthData.specialShiftCells.includes(specialKey)) {
+    return monthData?.specialShiftTimes?.[specialKey] || null;
+  }
+
+  if (shiftIndex === 3) {
+    const nightKey = `${day}-night`;
+    const defaultGray = getDayInfo(year, month, day).weekdayIndex === 6;
+    const hasOverride = Object.prototype.hasOwnProperty.call(monthData?.nightShiftOverrides || {}, nightKey);
+    const gray = hasOverride ? Boolean(monthData.nightShiftOverrides[nightKey]) : defaultGray;
+    if (gray) return monthData?.nightShiftTimes?.[nightKey] || normalNightRange || '22~06';
+  }
+
+  return shifts[shiftIndex]?.label.replace(/\s+/g, '') || null;
+}
+
+function getStoredDayStatus(monthData, year, month, day, letter) {
+  const workIntervals = [];
+  for (let shiftIndex = 0; shiftIndex < shifts.length; shiftIndex += 1) {
+    if (getStoredRosterValue(monthData, day, 'shift', shiftIndex) !== letter) continue;
+    const rangeText = getStoredActualRange(monthData, year, month, day, shiftIndex);
+    if (rangeText) workIntervals.push({ year, month, day, shiftIndex, rangeText });
+  }
+  if (workIntervals.length) return { status: 'work', workIntervals };
+
+  for (let slot = 0; slot < 2; slot += 1) {
+    if (getStoredRosterValue(monthData, day, 'vacation', slot) === letter) {
+      return { status: 'leave', workIntervals: [] };
+    }
+  }
+  return { status: 'unknown', workIntervals: [] };
+}
+
+function getPreviousMonthHistory(letter) {
+  const index = String(letter || '').charCodeAt(0) - 65;
+  const employeeId = index >= 0 && index < employeeIds.length ? employeeIds[index] : '';
+  const { year, month } = getCurrentYearMonth();
+  const previous = storage?.getPreviousYearMonth(year, month) || (() => {
+    const date = new Date(year, month - 2, 1);
+    return { year: date.getFullYear(), month: date.getMonth() + 1 };
+  })();
+  const monthData = storage?.getMonth(previous.year, previous.month) || null;
+
+  if (!employeeId) {
+    return { employeeId: '', monthMissing: false, employeeFound: false, incomplete: false, carryWorkDays: 0, carryStart: null, previousWorkIntervals: [], restGapKnown: true };
+  }
+  if (!monthData) {
+    return { employeeId, monthMissing: true, employeeFound: false, incomplete: true, carryWorkDays: 0, carryStart: null, previousWorkIntervals: [], restGapKnown: false };
+  }
+
+  let previousLetter = '';
+  for (const [candidateLetter, person] of Object.entries(monthData.people || {})) {
+    if (person?.employeeId === employeeId) {
+      previousLetter = candidateLetter;
+      break;
+    }
+  }
+  if (!previousLetter) {
+    return { employeeId, monthMissing: false, employeeFound: false, incomplete: false, carryWorkDays: 0, carryStart: null, previousWorkIntervals: [], restGapKnown: true };
+  }
+
+  const previousDays = getDaysInMonth(previous.year, previous.month);
+  const maxLookback = Math.max(1, Number(maxConsecutiveWorkDays) || 6);
+  let carryWorkDays = 0;
+  let carryStart = null;
+  let incomplete = false;
+
+  for (let offset = 0; offset < maxLookback; offset += 1) {
+    const day = previousDays - offset;
+    if (day < 1) break;
+    const info = getStoredDayStatus(monthData, previous.year, previous.month, day, previousLetter);
+    if (info.status === 'work') {
+      carryWorkDays += 1;
+      carryStart = { year: previous.year, month: previous.month, day };
+      continue;
+    }
+    if (info.status === 'leave') break;
+    incomplete = true;
+    break;
+  }
+
+  const lastDayInfo = getStoredDayStatus(monthData, previous.year, previous.month, previousDays, previousLetter);
+  if (lastDayInfo.status === 'unknown') incomplete = true;
+
+  return {
+    employeeId,
+    previousLetter,
+    monthMissing: false,
+    employeeFound: true,
+    incomplete,
+    carryWorkDays,
+    carryStart,
+    restGapKnown: lastDayInfo.status !== 'unknown',
+    previousWorkIntervals: lastDayInfo.status === 'work' ? lastDayInfo.workIntervals : []
+  };
+}
+
 function buildRuleModel() {
   const { year, month } = getCurrentYearMonth();
   const days = getDaysInMonth(year, month);
@@ -1563,8 +1919,11 @@ function buildRuleModel() {
     },
     employees: names.map((name, index) => {
       const letter = String.fromCharCode(65 + index);
-      return { letter, name, shiftGroups: [...getPersonnelShifts(year, month, letter)] };
+      return { letter, name, employeeId: employeeIds[index] || '', shiftGroups: [...getPersonnelShifts(year, month, letter)] };
     }),
+    previousMonth: storage?.getPreviousYearMonth(year, month) || null,
+    previousMonthExists: storage ? Boolean(storage.getMonth((storage.getPreviousYearMonth(year, month)).year, (storage.getPreviousYearMonth(year, month)).month)) : false,
+    getPreviousMonthHistory,
     getShiftLetter(day, shiftIndex) {
       return rosterValues.get(makeRosterKey(year, month, day, 'shift', shiftIndex)) || '';
     },
@@ -1591,6 +1950,8 @@ function buildRuleModel() {
   };
 }
 function startRuleCheck() {
+  commitAllVisibleNames();
+  persistCurrentMonth();
   closeRowFillPanel();
   closeShiftConfigPanel();
   if (!window.ShiftRosterRules) {
@@ -1679,12 +2040,13 @@ async function prepareOutputTimestamp() {
 function render() {
   let year = Number(yearInput.value);
   let month = Number(monthSelect.value);
+  const fallback = getDefaultNextYearMonth();
   if (!Number.isInteger(year) || year < 2000 || year > 2100) {
-    year = 2026;
+    year = fallback.year;
     yearInput.value = year;
   }
   if (!Number.isInteger(month) || month < 1 || month > 12) {
-    month = 11;
+    month = fallback.month;
     monthSelect.value = month;
   }
   titleYear.textContent = year;
@@ -1695,6 +2057,8 @@ function render() {
   if (!shiftConfigPanel.hidden) renderShiftConfigPanel();
 }
 function changeMonth(offset) {
+  commitAllVisibleNames();
+  persistCurrentMonth();
   let year = Number(yearInput.value);
   let month = Number(monthSelect.value) + offset;
   if (month < 1) {
@@ -1709,6 +2073,7 @@ function changeMonth(offset) {
   monthSelect.value = month;
   closeRowFillPanel();
   closeShiftConfigPanel();
+  loadMonth(year, month);
   render();
 }
 
@@ -1719,10 +2084,20 @@ editRuleSettingsButton.addEventListener('click', openRuleSettingsEditor);
 ruleSettingsCancel.addEventListener('click', closeRuleSettingsEditor);
 ruleSettingsApply.addEventListener('click', applyRuleSettings);
 
-yearInput.addEventListener('change', render);
-monthSelect.addEventListener('change', () => {
+yearInput.addEventListener('change', () => {
+  const year = Number(yearInput.value);
+  const month = Number(monthSelect.value);
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) return render();
   closeRowFillPanel();
   closeShiftConfigPanel();
+  loadMonth(year, month);
+  render();
+});
+monthSelect.addEventListener('change', () => {
+  const { year, month } = getCurrentYearMonth();
+  closeRowFillPanel();
+  closeShiftConfigPanel();
+  loadMonth(year, month);
   render();
 });
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
@@ -1788,6 +2163,7 @@ publicLeaveInput.addEventListener('blur', () => {
     publicLeaveInput.textContent = publicLeaveCount;
     renderSummary();
     renderRuleSettingsPage();
+    persistGlobalSettings();
   }
 });
 
@@ -1817,6 +2193,36 @@ window.ShiftRosterOutput = Object.freeze({
   formatTimestamp: formatOutputTimestamp
 });
 
+window.ShiftRosterApp = Object.freeze({
+  saveCurrentMonth: () => {
+    commitAllVisibleNames();
+    persistCurrentMonth();
+    persistGlobalSettings();
+  },
+  reloadFromStorage: () => {
+    loadGlobalSettings();
+    publicLeaveInput.textContent = publicLeaveCount;
+    const { year, month } = getCurrentYearMonth();
+    loadMonth(year, month);
+    render();
+    renderRuleSettingsPage();
+  },
+  getCurrentYearMonth
+});
+
+loadGlobalSettings();
+persistGlobalSettings();
+const initialMonth = getDefaultNextYearMonth();
+yearInput.value = initialMonth.year;
+monthSelect.value = String(initialMonth.month);
+publicLeaveInput.textContent = publicLeaveCount;
+loadMonth(initialMonth.year, initialMonth.month);
 buildRowFillQuickLetters();
 render();
 renderRuleSettingsPage();
+
+if (storage && !storage.isPersistent()) {
+  window.setTimeout(() => {
+    window.alert('目前瀏覽器無法使用本機自動保存。班表仍可操作，但重新整理後資料可能消失；請使用「下載 JSON」備份。');
+  }, 0);
+}
