@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>櫃檯人員排班紀錄表</title>
+  <link rel="stylesheet" href="shift_roster_v1.css">
+</head>
+<body>
+  <div class="controls" aria-label="月份控制">
+    <button id="prevMonth" type="button">‹ 上個月</button>
+
+    <label>
+      年
+      <input id="yearInput" type="number" min="2000" max="2100" value="2026" inputmode="numeric">
+    </label>
+
+    <label>
+      月
+      <select id="monthSelect"></select>
+    </label>
+
+    <button id="nextMonth" type="button">下個月 ›</button>
+    <button id="printButton" type="button">列印</button>
+  </div>
+
+  <main class="sheet" id="sheet">
+    <header class="sheet-title">
+      <div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
+      <h1>櫃檯人員排班紀錄表</h1>
+      <div class="sheet-spacer" aria-hidden="true"></div>
+    </header>
+
+    <div class="sheet-body">
+      <div class="sheet-main">
+        <table class="schedule-table" id="scheduleTable" aria-label="排班表"></table>
+        <table class="lower-table" id="lowerTable" aria-label="姓名與月曆空白表"></table>
+        <div class="summary-grid" id="summaryGrid" aria-label="休假統計"></div>
+      </div>
+
+      <aside class="side-note">請每人先各排 8 天月假，等大家全部都排完再排特休。</aside>
+    </div>
+  </main>
+
+  <script src="shift_roster_v1.js"></script>
+</body>
+</html>
