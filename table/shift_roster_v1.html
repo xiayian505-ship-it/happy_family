@@ -7,26 +7,35 @@
   <link rel="stylesheet" href="shift_roster_v1.css">
 </head>
 <body>
-  <div class="controls" aria-label="月份控制">
-    <button id="prevMonth" type="button">‹ 上月</button>
+  <div class="controls" aria-label="排班表操作">
+    <div class="controls-row controls-date-row" aria-label="月份控制">
+      <button id="prevMonth" type="button">‹ 上月</button>
 
-    <label>
-      年
-      <input id="yearInput" type="number" min="2000" max="2100" value="2026" inputmode="numeric">
-    </label>
+      <label class="date-control">
+        <span>年</span>
+        <input id="yearInput" type="number" min="2000" max="2100" value="2026" inputmode="numeric">
+      </label>
 
-    <label>
-      月
-      <select id="monthSelect"></select>
-    </label>
+      <label class="date-control">
+        <span>月</span>
+        <select id="monthSelect"></select>
+      </label>
 
-    <button id="nextMonth" type="button">下月 ›</button>
-    <button id="blockModeButton" type="button" aria-pressed="false">禁休</button>
-    <button id="specialModeButton" type="button" aria-pressed="false">特殊</button>
-    <button id="nightModeButton" type="button" aria-pressed="false">大夜</button>
-    <button id="clearMonthButton" type="button">本月清空</button>
-    <button id="printButton" type="button">列印</button>
-    <button id="exportPngButton" type="button">匯出 PNG</button>
+      <button id="nextMonth" type="button">下月 ›</button>
+    </div>
+
+    <div class="controls-row controls-mode-row" aria-label="標記與檢查">
+      <button id="blockModeButton" type="button" aria-pressed="false">禁休</button>
+      <button id="specialModeButton" type="button" aria-pressed="false">特殊</button>
+      <button id="nightModeButton" type="button" aria-pressed="false">大夜</button>
+      <button id="leaveCheckButton" type="button">排假檢查</button>
+    </div>
+
+    <div class="controls-row controls-action-row" aria-label="其他操作">
+      <button id="clearMonthButton" type="button">本月清空</button>
+      <button id="printButton" type="button">列印</button>
+      <button id="exportPngButton" type="button">匯出 PNG</button>
+    </div>
   </div>
 
   <div id="rowFillBar" class="row-fill-bar" hidden aria-live="polite">
@@ -52,6 +61,27 @@
       <div class="conflict-dialog-actions">
         <button id="conflictChooseSchedule" type="button">排班</button>
         <button id="conflictChooseVacation" type="button">休假</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="clearMonthDialog" class="clear-month-dialog" hidden>
+    <div class="clear-month-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="clearMonthDialogMessage">
+      <p id="clearMonthDialogMessage" class="clear-month-dialog-message"></p>
+      <div class="clear-month-dialog-actions">
+        <button id="clearMonthCancel" type="button">取消</button>
+        <button id="clearMonthConfirm" type="button">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveCheckDialog" class="leave-check-dialog" hidden>
+    <div class="leave-check-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="leaveCheckMessage">
+      <p id="leaveCheckMessage" class="leave-check-message"></p>
+      <div id="leaveCheckActions" class="leave-check-actions">
+        <button id="leaveCheckCorrect" type="button">正確</button>
+        <button id="leaveCheckIncorrect" type="button">不正確</button>
       </div>
     </div>
   </div>

@@ -38,36 +38,52 @@ select {
 }
 
 .controls {
-  /* 操作列不屬於 A4 紙面：固定以瀏覽器可視寬度排成一整列，不做內部橫向捲動。 */
+  /* 操作區不進列印／PNG；固定分成數個滿版橫排，避免手機九宮格。 */
   position: sticky;
   left: 18px;
   z-index: 10;
   width: min(1120px, calc(100vw - 36px));
   margin: 0 auto 14px;
-  padding: 8px 10px;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
   gap: 8px;
-  white-space: nowrap;
-  overflow: visible;
-  background: #ececec;
+}
+
+.controls-row {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.controls-date-row {
+  grid-template-columns: 1fr minmax(150px, 1.1fr) minmax(140px, 1fr) 1fr;
+}
+
+.controls-mode-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.controls-action-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .controls button,
 .controls input,
 .controls select {
-  min-height: 36px;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
   border: 1px solid #aaa;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   color: #222;
+  font-size: 16px;
 }
 
 .controls button {
-  padding: 0 10px;
+  padding: 0 14px;
   cursor: pointer;
+  font-weight: 600;
+  touch-action: manipulation;
 }
 
 .controls button.is-active {
@@ -78,19 +94,38 @@ select {
 }
 
 .controls label {
-  display: inline-flex;
+  min-width: 0;
+}
+
+.date-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  min-height: 50px;
+  padding-left: 12px;
+  border: 1px solid #aaa;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.controls input {
-  width: 76px;
-  padding: 0 6px;
+.date-control input,
+.date-control select {
+  min-height: 48px;
+  border: 0;
+  border-left: 1px solid #ddd;
+  border-radius: 0 9px 9px 0;
+  padding: 0 12px;
+  background: #fff;
+  font-size: 16px;
 }
 
-.controls select {
-  width: 68px;
-  padding: 0 22px 0 7px;
+.date-control input:focus,
+.date-control select:focus {
+  outline: 2px solid #999;
+  outline-offset: -2px;
 }
 
 /*
@@ -547,43 +582,75 @@ table {
   .controls {
     left: 8px;
     width: calc(100vw - 16px);
-    margin: 0 0 8px;
-    padding: 6px 4px;
-    gap: 3px;
-    justify-content: space-between;
+    margin: 0 0 10px;
+    gap: 7px;
+  }
+
+  .controls-row {
+    gap: 6px;
+  }
+
+  .controls-date-row {
+    grid-template-columns: 0.9fr minmax(0, 1.15fr) minmax(0, 1fr) 0.9fr;
   }
 
   .controls button,
   .controls input,
-  .controls select {
-    min-width: 0;
-    min-height: 36px;
-    font-size: 11px;
+  .controls select,
+  .date-control {
+    min-height: 48px;
   }
 
   .controls button {
-    flex: 0 1 auto;
-    padding: 0 4px;
+    padding: 0 8px;
+    font-size: 14px;
   }
 
-  .controls label {
-    flex: 0 1 auto;
-    gap: 2px;
-    font-size: 12px;
+  .date-control {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 5px;
+    padding-left: 8px;
+    font-size: 13px;
   }
 
-  .controls input {
-    width: 54px;
-    padding: 0 3px;
-  }
-
-  .controls select {
-    width: 52px;
-    padding: 0 14px 0 4px;
+  .date-control input,
+  .date-control select {
+    min-height: 46px;
+    padding: 0 7px;
+    font-size: 14px;
   }
 
   .sheet {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .controls {
+    gap: 6px;
+  }
+
+  .controls-row {
+    gap: 4px;
+  }
+
+  .controls button {
+    min-height: 50px;
+    padding: 0 5px;
+    font-size: 13px;
+  }
+
+  .date-control {
+    min-height: 50px;
+    padding-left: 6px;
+    font-size: 12px;
+  }
+
+  .date-control input,
+  .date-control select {
+    min-height: 48px;
+    padding: 0 4px;
+    font-size: 13px;
   }
 }
 
@@ -925,36 +992,6 @@ table {
 }
 
 @media (max-width: 900px) {
-  .controls {
-    gap: 2px;
-  }
-
-  .controls button,
-  .controls input,
-  .controls select {
-    min-height: 32px;
-    font-size: 9px;
-  }
-
-  .controls button {
-    padding: 0 2px;
-  }
-
-  .controls label {
-    gap: 1px;
-    font-size: 10px;
-  }
-
-  .controls input {
-    width: 48px;
-    padding: 0 2px;
-  }
-
-  .controls select {
-    width: 45px;
-    padding: 0 12px 0 2px;
-  }
-
   .row-fill-bar {
     left: 8px;
     width: calc(100vw - 16px);
@@ -1250,6 +1287,7 @@ table {
 }
 
 #clearMonthButton,
+#leaveCheckButton,
 #exportPngButton {
   min-width: 104px;
 }
@@ -1328,6 +1366,7 @@ table {
   #prevMonth,
   #nextMonth,
   #clearMonthButton,
+  #leaveCheckButton,
   #exportPngButton,
   #printButton {
     min-width: 0;
@@ -1398,12 +1437,293 @@ table {
   }
 }
 
+
+/* ===== 排假檢查 ===== */
+.leave-check-dialog[hidden] {
+  display: none !important;
+}
+
+.leave-check-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.leave-check-dialog-panel {
+  width: min(430px, 100%);
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.28);
+}
+
+.leave-check-message {
+  margin: 0 0 16px;
+  white-space: pre-line;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.leave-check-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.leave-check-actions button {
+  min-height: 46px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.leave-check-actions button:first-child {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+.leave-check-actions button[hidden] {
+  display: none !important;
+}
+
+.leave-check-actions.is-single {
+  grid-template-columns: 1fr;
+}
+
+@media print {
+  .leave-check-dialog {
+    display: none !important;
+  }
+}
+
 /* 再保險一次：以上所有 RWD 只服務螢幕，不進紙本。 */
 @media print {
   .controls,
   .row-fill-bar,
   .conflict-dialog,
+  .leave-check-dialog,
+  .clear-month-dialog,
   .png-preview-overlay {
     display: none !important;
+  }
+}
+
+
+/* ===== 本月清空確認 ===== */
+.clear-month-dialog[hidden] {
+  display: none !important;
+}
+
+.clear-month-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1270;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.clear-month-dialog-panel {
+  width: min(400px, 100%);
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.28);
+}
+
+.clear-month-dialog-message {
+  margin: 0 0 16px;
+  white-space: pre-line;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.clear-month-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.clear-month-dialog-actions button {
+  min-height: 46px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clear-month-dialog-actions button:first-child {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+@media print {
+  .clear-month-dialog {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   操作列 v4｜每一排各自吃滿版寬度
+   修正：舊手機規則曾把三個 controls-row 當成 3 欄排版，
+   造成每一整排先被壓成 1/3 寬，再把裡面的按鈕切細。
+   這裡只處理螢幕操作，不影響列印／PNG。
+========================================================= */
+@media screen {
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: min(1120px, calc(100vw - 36px));
+    gap: 10px;
+  }
+
+  .controls-row {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .controls-date-row {
+    grid-template-columns: minmax(88px, .85fr) minmax(150px, 1.2fr) minmax(140px, 1.1fr) minmax(88px, .85fr);
+  }
+
+  .controls-mode-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .controls-action-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .controls button,
+  .controls .date-control {
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+  }
+
+  .controls button {
+    padding-inline: 14px;
+    font-size: 15px;
+  }
+
+  .date-control {
+    padding-left: 10px;
+  }
+
+  .date-control input,
+  .date-control select {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    font-size: 15px;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .controls {
+    position: relative;
+    left: auto;
+    width: calc(100vw - 16px);
+    margin: 0 0 12px;
+    padding: 0;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px;
+  }
+
+  .controls-row {
+    gap: 7px;
+  }
+
+  .controls-date-row {
+    grid-template-columns: minmax(70px, .8fr) minmax(0, 1.15fr) minmax(0, 1.05fr) minmax(70px, .8fr);
+  }
+
+  .controls-mode-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .controls-action-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .controls button,
+  .controls .date-control {
+    min-height: 54px;
+  }
+
+  .controls button {
+    padding-inline: 8px;
+    font-size: 15px;
+  }
+
+  .date-control {
+    padding-left: 8px;
+    gap: 5px;
+    font-size: 14px;
+  }
+
+  .date-control input,
+  .date-control select {
+    min-height: 52px;
+    padding-inline: 6px;
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 430px) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px;
+  }
+
+  .controls-row {
+    gap: 5px;
+  }
+
+  .controls-date-row {
+    grid-template-columns: .85fr 1.15fr 1.05fr .85fr;
+  }
+
+  .controls button,
+  .controls .date-control {
+    min-height: 56px;
+  }
+
+  .controls button {
+    padding-inline: 5px;
+    font-size: 14px;
+  }
+
+  .date-control {
+    padding-left: 6px;
+    gap: 3px;
+    font-size: 13px;
+  }
+
+  .date-control input,
+  .date-control select {
+    min-height: 54px;
+    padding-inline: 4px;
+    font-size: 13px;
   }
 }

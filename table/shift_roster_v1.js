@@ -7,6 +7,7 @@ const blockModeButton = document.getElementById('blockModeButton');
 const specialModeButton = document.getElementById('specialModeButton');
 const nightModeButton = document.getElementById('nightModeButton');
 const clearMonthButton = document.getElementById('clearMonthButton');
+const leaveCheckButton = document.getElementById('leaveCheckButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -25,6 +26,15 @@ const conflictDialog = document.getElementById('conflictDialog');
 const conflictDialogMessage = document.getElementById('conflictDialogMessage');
 const conflictChooseSchedule = document.getElementById('conflictChooseSchedule');
 const conflictChooseVacation = document.getElementById('conflictChooseVacation');
+const leaveCheckDialog = document.getElementById('leaveCheckDialog');
+const leaveCheckMessage = document.getElementById('leaveCheckMessage');
+const leaveCheckCorrect = document.getElementById('leaveCheckCorrect');
+const leaveCheckIncorrect = document.getElementById('leaveCheckIncorrect');
+const leaveCheckActions = document.getElementById('leaveCheckActions');
+const clearMonthDialog = document.getElementById('clearMonthDialog');
+const clearMonthDialogMessage = document.getElementById('clearMonthDialogMessage');
+const clearMonthCancel = document.getElementById('clearMonthCancel');
+const clearMonthConfirm = document.getElementById('clearMonthConfirm');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 const shifts = [
@@ -47,6 +57,9 @@ let specialModeEnabled = false;
 let nightModeEnabled = false;
 let selectedRowFillShiftIndex = null;
 let conflictChoiceResolver = null;
+let leaveCheckItems = [];
+let leaveCheckIndex = 0;
+let leaveCheckCompleteMode = false;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -231,16 +244,25 @@ function clearSetKeysForMonth(set, year, month) {
   }
 }
 
+function openClearMonthDialog() {
+  const { year, month } = getCurrentYearMonth();
+  clearMonthDialogMessage.textContent = `${year} 年 ${month} 月的排班與手動標記都要清空嗎？\n姓名與公休／特休數字會保留。`;
+  clearMonthDialog.hidden = false;
+}
+
+function closeClearMonthDialog() {
+  clearMonthDialog.hidden = true;
+}
+
 function clearCurrentMonth() {
   const { year, month } = getCurrentYearMonth();
-  const ok = window.confirm(`${year} 年 ${month} 月的排班與手動標記都要清空嗎？\n姓名與公休／特休數字會保留。`);
-  if (!ok) return;
 
   clearMapKeysForMonth(rosterValues, year, month);
   clearMapKeysForMonth(blockedVacationOverrides, year, month);
   clearMapKeysForMonth(nightShiftOverrides, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   closeRowFillPanel();
+  closeClearMonthDialog();
   render();
 }
 
@@ -381,6 +403,109 @@ function resolveConflictChoice(choice) {
   conflictChoiceResolver = null;
   conflictDialog.hidden = true;
   resolve(choice);
+}
+
+function getVacationDatesForLetter(year, month, letter) {
+  const days = getDaysInMonth(year, month);
+  const dates = [];
+
+  for (let day = 1; day <= days; day += 1) {
+    if (hasVacationLetter(year, month, day, letter)) dates.push(day);
+  }
+
+  return dates;
+}
+
+function buildLeaveCheckItems() {
+  const { year, month } = getCurrentYearMonth();
+  const target = Number.parseInt(publicLeaveCount || '8', 10) || 8;
+  const items = [];
+
+  for (let index = 0; index < 6; index += 1) {
+    const letter = String.fromCharCode(65 + index);
+    const dates = getVacationDatesForLetter(year, month, letter);
+
+    if (dates.length === target) continue;
+
+    items.push({
+      year,
+      month,
+      target,
+      index,
+      letter,
+      name: names[index] || '',
+      dates
+    });
+  }
+
+  return items;
+}
+
+function formatLeaveCheckMessage(item) {
+  const person = item.name ? `${item.letter} ${item.name}` : item.letter;
+  const dateText = item.dates.length
+    ? item.dates.map((day) => `${item.month}/${day}`).join('、')
+    : '無';
+  const difference = item.dates.length - item.target;
+  const differenceText = difference < 0
+    ? `少 ${Math.abs(difference)} 天`
+    : `多 ${difference} 天`;
+
+  return `${person} 已排 ${item.dates.length} 天（應排 ${item.target} 天，${differenceText}）\n日期：${dateText}\n\n此排假是否正確？`;
+}
+
+function showLeaveCheckItem() {
+  const item = leaveCheckItems[leaveCheckIndex];
+
+  if (!item) {
+    leaveCheckCompleteMode = true;
+    leaveCheckMessage.textContent = leaveCheckItems.length
+      ? '排假檢查完成。'
+      : `排假檢查完成：A～F 都是 ${Number.parseInt(publicLeaveCount || '8', 10) || 8} 天。`;
+    leaveCheckCorrect.textContent = '完成';
+    leaveCheckIncorrect.hidden = true;
+    leaveCheckActions.classList.add('is-single');
+    leaveCheckDialog.hidden = false;
+    requestAnimationFrame(() => leaveCheckCorrect.focus());
+    return;
+  }
+
+  leaveCheckCompleteMode = false;
+  leaveCheckCorrect.textContent = '正確';
+  leaveCheckIncorrect.hidden = false;
+  leaveCheckActions.classList.remove('is-single');
+  leaveCheckMessage.textContent = `${leaveCheckIndex + 1}/${leaveCheckItems.length}\n${formatLeaveCheckMessage(item)}`;
+  leaveCheckDialog.hidden = false;
+  requestAnimationFrame(() => leaveCheckCorrect.focus());
+}
+
+function startLeaveCheck() {
+  closeRowFillPanel();
+  leaveCheckItems = buildLeaveCheckItems();
+  leaveCheckIndex = 0;
+  showLeaveCheckItem();
+}
+
+function handleLeaveCheckCorrect() {
+  if (leaveCheckCompleteMode) {
+    leaveCheckDialog.hidden = true;
+    leaveCheckActions.classList.remove('is-single');
+    leaveCheckCompleteMode = false;
+    leaveCheckItems = [];
+    leaveCheckIndex = 0;
+    return;
+  }
+
+  leaveCheckIndex += 1;
+  showLeaveCheckItem();
+}
+
+function handleLeaveCheckIncorrect() {
+  leaveCheckDialog.hidden = true;
+  leaveCheckActions.classList.remove('is-single');
+  leaveCheckCompleteMode = false;
+  leaveCheckItems = [];
+  leaveCheckIndex = 0;
 }
 
 function cleanTwoDigits(value) {
@@ -814,11 +939,16 @@ nextMonthButton.addEventListener('click', () => changeMonth(1));
 blockModeButton.addEventListener('click', () => setBlockMode(!blockModeEnabled));
 specialModeButton.addEventListener('click', () => setSpecialMode(!specialModeEnabled));
 nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled));
-clearMonthButton.addEventListener('click', clearCurrentMonth);
+clearMonthButton.addEventListener('click', openClearMonthDialog);
+leaveCheckButton.addEventListener('click', startLeaveCheck);
 printButton.addEventListener('click', () => window.print());
 
 conflictChooseSchedule.addEventListener('click', () => resolveConflictChoice('schedule'));
 conflictChooseVacation.addEventListener('click', () => resolveConflictChoice('vacation'));
+leaveCheckCorrect.addEventListener('click', handleLeaveCheckCorrect);
+leaveCheckIncorrect.addEventListener('click', handleLeaveCheckIncorrect);
+clearMonthCancel.addEventListener('click', closeClearMonthDialog);
+clearMonthConfirm.addEventListener('click', clearCurrentMonth);
 
 rowFillClose.addEventListener('click', closeRowFillPanel);
 rowFillApplyCustom.addEventListener('click', () => {
@@ -844,6 +974,14 @@ rowFillCustomInput.addEventListener('keydown', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
   if (!conflictDialog.hidden) return;
+  if (!clearMonthDialog.hidden) {
+    closeClearMonthDialog();
+    return;
+  }
+  if (!leaveCheckDialog.hidden) {
+    handleLeaveCheckIncorrect();
+    return;
+  }
   if (!rowFillBar.hidden) closeRowFillPanel();
 });
 
