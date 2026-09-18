@@ -1,0 +1,571 @@
+:root {
+  --ink: #111;
+  --paper: #fff;
+  --line: #1b1b1b;
+  --weekend-sat: #c9c9c9;
+  --weekend-sun: #a9a9a9;
+  --focus: #fffbe8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  overflow-x: auto;
+  background: #ececec;
+  color: var(--ink);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+
+.controls {
+  width: min(100%, 1120px);
+  margin: 0 auto 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.controls button,
+.controls input,
+.controls select {
+  min-height: 40px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+}
+
+.controls button {
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.controls input {
+  width: 88px;
+  padding: 0 8px;
+}
+
+.controls select {
+  padding: 0 30px 0 10px;
+}
+
+/* 螢幕預覽直接維持接近 A4 橫式比例。 */
+.sheet {
+  width: 1120px;
+  margin: 0 auto;
+  padding: 12px 12px 10px;
+  background: var(--paper);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sheet-title {
+  height: 38px;
+  display: grid;
+  grid-template-columns: 180px 1fr 180px;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sheet-title h1 {
+  margin: 0;
+  text-align: center;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 24px;
+  letter-spacing: 0.34em;
+  font-weight: 700;
+}
+
+.sheet-month {
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 19px;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.sheet-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  align-items: stretch;
+}
+
+.sheet-main {
+  min-width: 0;
+}
+
+.side-note {
+  border: 2px solid var(--line);
+  border-left: 0;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.schedule-table {
+  border: 2px solid var(--line);
+}
+
+.schedule-table th,
+.schedule-table td,
+.lower-table th,
+.lower-table td {
+  border: 1px solid var(--line);
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.schedule-table .label-col,
+.lower-table .label-col {
+  width: 128px;
+}
+
+.schedule-table .code-col,
+.lower-table .code-col {
+  width: 31px;
+}
+
+.header-label {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.date-cell {
+  height: 23px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.date-band-light {
+  background: #fff;
+  color: #111;
+}
+
+.date-band-dark {
+  background: #4b4b4b;
+  color: #fff;
+}
+
+.weekday-cell {
+  height: 23px;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.saturday {
+  background: var(--weekend-sat);
+}
+
+.sunday {
+  background: var(--weekend-sun);
+}
+
+.shift-label {
+  height: 48px;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+}
+
+.shift-code {
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 14px;
+}
+
+.shift-cell {
+  height: 48px;
+}
+
+.shift-input,
+.vacation-input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #111;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: Arial, sans-serif;
+  font-weight: 500;
+  caret-color: #111;
+}
+
+.shift-input {
+  padding: 0;
+  font-size: 18px;
+}
+
+.shift-input:focus,
+.vacation-input:focus,
+.name-input:focus {
+  background: var(--focus);
+}
+
+.vacation-label {
+  height: 66px;
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 23px;
+  letter-spacing: 0.42em;
+  padding-left: 0.42em !important;
+}
+
+.vacation-cell {
+  height: 66px;
+  display: grid;
+  grid-template-rows: 20px 1fr;
+  background: #fff;
+}
+
+.vacation-cell.saturday,
+.vacation-cell.sunday {
+  background: #fff;
+}
+
+.vacation-cell .mini-weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--line);
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 12px;
+}
+
+.vacation-cell.saturday .mini-weekday {
+  background: var(--weekend-sat);
+}
+
+.vacation-cell.sunday .mini-weekday {
+  background: var(--weekend-sun);
+}
+
+.vacation-inputs {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+}
+
+.vacation-input {
+  padding: 0;
+  font-size: 16px;
+}
+
+.vacation-input + .vacation-input {
+  border-top: 1px solid rgba(27, 27, 27, 0.28);
+}
+
+.lower-table {
+  border-left: 2px solid var(--line);
+  border-right: 2px solid var(--line);
+  border-bottom: 2px solid var(--line);
+}
+
+.lower-main-cell,
+.lower-code-cell,
+.day-blank {
+  height: 267px;
+}
+
+.names-cell {
+  vertical-align: top !important;
+  background: #fff;
+}
+
+.lower-code-cell {
+  background: #fff;
+}
+
+.names-panel {
+  height: 267px;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 27px minmax(0, 1fr);
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  min-height: 0;
+  padding: 0 4px 0 2px;
+}
+
+.name-row:last-child {
+  border-bottom: 0;
+}
+
+.name-letter {
+  width: 27px;
+  flex: 0 0 27px;
+  font-family: Arial, sans-serif;
+  font-size: 17px;
+  text-align: center;
+  user-select: none;
+}
+
+.name-input {
+  width: 3.2em;
+  max-width: 3.2em;
+  height: 100%;
+  justify-self: start;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 3px 0;
+  font: 17px/1.2 "Noto Serif TC", "PMingLiU", serif;
+  text-align: left;
+}
+
+.lower-date-label {
+  height: 22px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 2px solid var(--line);
+  border-top: 0;
+}
+
+.summary-item {
+  min-height: 29px;
+  display: grid;
+  grid-template-columns: 3.4em 1fr 1fr;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 7px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-family: "Noto Serif TC", "PMingLiU", serif;
+  font-size: 14px;
+}
+
+.summary-item:nth-child(3n) {
+  border-right: 0;
+}
+
+.summary-item:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+
+.summary-name {
+  width: 3.4em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.summary-count {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding: 8px;
+  }
+
+  .sheet {
+    margin-left: 0;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 6mm;
+}
+
+@media print {
+  html,
+  body {
+    width: 297mm;
+    height: 210mm;
+  }
+
+  body {
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .controls {
+    display: none !important;
+  }
+
+  .sheet {
+    width: 285mm;
+    height: 198mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sheet-title {
+    height: 9mm;
+    margin: 0;
+    grid-template-columns: 42mm 1fr 42mm;
+  }
+
+  .sheet-title h1 {
+    font-size: 5mm;
+  }
+
+  .sheet-month {
+    font-size: 4mm;
+  }
+
+  .sheet-body {
+    height: 189mm;
+    grid-template-columns: minmax(0, 1fr) 10mm;
+  }
+
+  .sheet-main {
+    height: 189mm;
+  }
+
+  .side-note {
+    height: 189mm;
+    padding: 1.5mm 1mm;
+    font-size: 3mm;
+    border-width: 0.45mm;
+  }
+
+  .schedule-table,
+  .lower-table,
+  .summary-grid {
+    width: 100%;
+  }
+
+  .schedule-table .label-col,
+  .lower-table .label-col {
+    width: 34mm;
+  }
+
+  .schedule-table .code-col,
+  .lower-table .code-col {
+    width: 8mm;
+  }
+
+  .date-cell,
+  .weekday-cell {
+    height: 6mm;
+    font-size: 2.6mm;
+  }
+
+  .header-label {
+    font-size: 2.8mm;
+  }
+
+  .shift-label,
+  .shift-cell {
+    height: 13mm;
+  }
+
+  .shift-label {
+    font-size: 4.2mm;
+  }
+
+  .shift-code {
+    font-size: 3.2mm;
+  }
+
+  .shift-input {
+    font-size: 4.3mm;
+  }
+
+  .vacation-label,
+  .vacation-cell {
+    height: 18mm;
+  }
+
+  .vacation-label {
+    font-size: 5mm;
+  }
+
+  .vacation-cell {
+    grid-template-rows: 5mm 1fr;
+  }
+
+  .vacation-cell .mini-weekday {
+    font-size: 2.5mm;
+  }
+
+  .vacation-input {
+    font-size: 3.7mm;
+  }
+
+  .lower-main-cell,
+  .lower-code-cell,
+  .day-blank,
+  .names-panel {
+    height: 72mm;
+  }
+
+  .name-row {
+    grid-template-columns: 7mm minmax(0, 1fr);
+    padding: 0 1mm 0 0.5mm;
+  }
+
+  .name-letter {
+    width: 7mm;
+    font-size: 3.7mm;
+  }
+
+  .name-input {
+    width: 3.2em;
+    max-width: 3.2em;
+    font-size: 3.7mm;
+  }
+
+  .lower-date-label {
+    height: 6mm;
+    font-size: 2.5mm;
+  }
+
+  .summary-grid {
+    height: 16mm;
+    grid-template-rows: 8mm 8mm;
+  }
+
+  .summary-item {
+    min-height: 8mm;
+    padding: 0.5mm 1.5mm;
+    gap: 1.5mm;
+    font-size: 3mm;
+  }
+
+  .summary-name {
+    width: 3.4em;
+  }
+}
