@@ -217,7 +217,7 @@ select {
   min-height: 1.6em;
   padding: 1px 0;
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
   outline: 0;
   background: transparent;
   text-align: center;
@@ -1856,5 +1856,347 @@ table {
   .date-control select {
     padding-inline: 3px;
     font-size: 12px;
+  }
+}
+
+/* =========================================================
+   vNext｜規則檢查與特殊註記
+   - 全站只用系統安全字體，不外連字型。
+   - 螢幕操作區可增加功能；A4 列印尺寸仍固定 6mm 邊界。
+========================================================= */
+:root {
+  --safe-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", Arial, sans-serif;
+  --formal-leave-red: #c62828;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea,
+[contenteditable],
+.sheet,
+.sheet * {
+  font-family: var(--safe-font) !important;
+}
+
+@media screen {
+  .controls-mark-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .controls-check-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .controls-action-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ===== 班別設定 ===== */
+.shift-config-panel[hidden] {
+  display: none !important;
+}
+
+.shift-config-panel {
+  position: sticky;
+  left: 18px;
+  z-index: 11;
+  width: min(1120px, calc(100vw - 36px));
+  margin: -4px auto 10px;
+  padding: 10px;
+  border: 1px solid #c9c9c9;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .08);
+}
+
+.shift-config-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.shift-config-head span {
+  color: #666;
+  font-size: 13px;
+}
+
+.shift-config-head button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.shift-config-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shift-config-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(72px, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 7px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.shift-config-person {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.shift-config-row select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid #bbb;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 7px;
+}
+
+/* ===== 共用功能對話框 ===== */
+.app-dialog[hidden] {
+  display: none !important;
+}
+
+.app-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .48);
+}
+
+.app-dialog-panel {
+  width: min(440px, 100%);
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, .28);
+}
+
+.app-dialog-message {
+  margin: 0 0 16px;
+  white-space: pre-line;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.app-dialog-actions,
+.leave-type-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.app-dialog-actions.three-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-dialog button,
+.leave-type-choices button {
+  min-height: 46px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-dialog-actions button:first-child,
+.leave-type-choices button:first-child {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+.app-dialog-wide-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.dialog-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-weight: 700;
+}
+
+.dialog-field input {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  padding: 0 10px;
+  font-size: 16px;
+}
+
+.rule-check-message {
+  text-align: left;
+}
+
+/* ===== 假別 ===== */
+.vacation-input.is-formal-leave {
+  color: var(--formal-leave-red) !important;
+  font-weight: 700;
+}
+
+.leave-type-mode .vacation-cell,
+.meeting-mode .day-blank {
+  cursor: crosshair;
+}
+
+.leave-type-mode .vacation-input {
+  cursor: pointer;
+}
+
+/* ===== 下方長條備註 ===== */
+.day-blank {
+  position: relative;
+  overflow: hidden;
+}
+
+.day-note-stack {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  overflow: hidden;
+  padding: 3px 1px;
+}
+
+.day-note {
+  min-width: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  line-height: 1.05;
+  color: #111;
+}
+
+.day-note-line {
+  display: block;
+  max-width: 100%;
+  word-break: break-all;
+  text-align: center;
+}
+
+.day-note-time .day-note-line:last-child {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  max-height: 210px;
+}
+
+.output-timestamp {
+  align-self: end;
+  justify-self: end;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.output-timestamp[hidden] {
+  display: none !important;
+}
+
+@media screen and (max-width: 900px) {
+  .shift-config-panel {
+    left: 8px;
+    width: calc(100vw - 16px);
+    margin-inline: 0;
+  }
+
+  .shift-config-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controls-mark-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .controls-check-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 520px) {
+  .controls-mark-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .controls-mark-row button,
+  .controls-check-row button,
+  .controls-action-row button {
+    padding-inline: 3px;
+    font-size: clamp(12px, 3.2vw, 14px);
+  }
+
+  .shift-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shift-config-head {
+    grid-template-columns: 1fr auto;
+  }
+
+  .shift-config-head span {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .app-dialog-actions.three-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .shift-config-panel,
+  .app-dialog {
+    display: none !important;
+  }
+
+  .output-timestamp {
+    font-size: 2.4mm;
+  }
+
+  .day-note-stack {
+    padding: .6mm .2mm;
+    gap: .2mm;
+  }
+
+  .day-note {
+    gap: .3mm;
+    font-size: 2.3mm;
   }
 }

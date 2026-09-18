@@ -285,6 +285,16 @@
       if ((element.textContent || '').trim()) drawElementText(context, element, rootRect, null, { center: true });
     });
 
+    // 下方長條備註：特殊班／特殊大夜／特休／請假／8點開會。
+    table.querySelectorAll('.day-note-line').forEach(element => {
+      const style = getComputedStyle(element);
+      if ((style.writingMode || '').startsWith('vertical')) {
+        drawVerticalText(context, element, rootRect, element.textContent || '');
+      } else {
+        drawElementText(context, element, rootRect, null, { center: true, fallbackSize: 11 });
+      }
+    });
+
     const rect = getRect(table, rootRect);
     context.save();
     context.strokeStyle = DEFAULT_LINE;
@@ -331,18 +341,7 @@
     note.querySelectorAll('.side-note-text').forEach(element => drawVerticalText(context, element, rootRect));
 
     const number = note.querySelector('.side-note-number');
-    if (number) {
-      drawVerticalText(context, number, rootRect, number.textContent || '');
-      const rect = getRect(number, rootRect);
-      context.save();
-      context.strokeStyle = DEFAULT_LINE;
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(rect.x, rect.bottom);
-      context.lineTo(rect.right, rect.bottom);
-      context.stroke();
-      context.restore();
-    }
+    if (number) drawVerticalText(context, number, rootRect, number.textContent || '');
   }
 
   async function drawRosterToCanvas() {
@@ -371,8 +370,10 @@
 
     const titleMonth = sheet.querySelector('.sheet-month');
     const title = sheet.querySelector('.sheet-title h1');
+    const timestamp = sheet.querySelector('.output-timestamp');
     if (titleMonth) drawElementText(context, titleMonth, rootRect, null, { center: true });
     if (title) drawElementText(context, title, rootRect, null, { center: true });
+    if (timestamp && !timestamp.hidden) drawElementText(context, timestamp, rootRect);
 
     drawScheduleTable(context, rootRect);
     drawLowerTable(context, rootRect);
@@ -525,14 +526,20 @@
 
     exportButton.disabled = true;
     const originalText = exportButton.textContent;
-    exportButton.textContent = '繪製預覽…';
+    exportButton.textContent = '準備輸出…';
+    let cleanupTimestamp = null;
 
     try {
+      if (window.ShiftRosterOutput?.prepare) {
+        cleanupTimestamp = await window.ShiftRosterOutput.prepare();
+      }
+      exportButton.textContent = '繪製預覽…';
       await previewPng();
     } catch (error) {
       console.error(error);
       window.alert(`PNG 預覽產生失敗：${error?.message || '未知錯誤'}`);
     } finally {
+      if (typeof cleanupTimestamp === 'function') cleanupTimestamp();
       exportButton.disabled = false;
       exportButton.textContent = originalText;
     }

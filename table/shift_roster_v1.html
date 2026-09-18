@@ -10,25 +10,29 @@
   <div class="controls" aria-label="排班表操作">
     <div class="controls-row controls-date-row" aria-label="月份控制">
       <button id="prevMonth" type="button">‹ 上月</button>
-
       <label class="date-control">
         <span>年</span>
         <input id="yearInput" type="number" min="2000" max="2100" value="2026" inputmode="numeric">
       </label>
-
       <label class="date-control">
         <span>月</span>
         <select id="monthSelect"></select>
       </label>
-
       <button id="nextMonth" type="button">下月 ›</button>
     </div>
 
-    <div class="controls-row controls-mode-row" aria-label="標記與檢查">
+    <div class="controls-row controls-mark-row" aria-label="標記工具">
       <button id="blockModeButton" type="button" aria-pressed="false">禁休</button>
       <button id="specialModeButton" type="button" aria-pressed="false">特殊</button>
       <button id="nightModeButton" type="button" aria-pressed="false">大夜</button>
+      <button id="leaveTypeModeButton" type="button" aria-pressed="false">假別</button>
+      <button id="meetingModeButton" type="button" aria-pressed="false">開會</button>
+    </div>
+
+    <div class="controls-row controls-check-row" aria-label="設定與檢查">
+      <button id="shiftConfigButton" type="button" aria-expanded="false">班別設定</button>
       <button id="leaveCheckButton" type="button">排假檢查</button>
+      <button id="ruleCheckButton" type="button">規則檢查</button>
     </div>
 
     <div class="controls-row controls-action-row" aria-label="其他操作">
@@ -43,9 +47,7 @@
       <strong id="rowFillTitle">整列填入</strong>
       <button id="rowFillClose" class="row-fill-close" type="button" aria-label="關閉">×</button>
     </div>
-
     <div id="rowFillQuickLetters" class="row-fill-quick" aria-label="快速選擇英文字母"></div>
-
     <div class="row-fill-custom">
       <label>其他
         <input id="rowFillCustomInput" type="text" maxlength="1" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="其他英文字母">
@@ -53,6 +55,15 @@
       <button id="rowFillApplyCustom" type="button">套用</button>
       <button id="rowFillClearRow" type="button">清空整列</button>
     </div>
+  </div>
+
+  <div id="shiftConfigPanel" class="shift-config-panel" hidden aria-live="polite">
+    <div class="shift-config-head">
+      <strong>本月主要班別</strong>
+      <span>供同組排休／排休順序檢查使用</span>
+      <button id="shiftConfigClose" type="button" aria-label="關閉班別設定">×</button>
+    </div>
+    <div id="shiftConfigGrid" class="shift-config-grid"></div>
   </div>
 
   <div id="conflictDialog" class="conflict-dialog" hidden>
@@ -65,6 +76,60 @@
     </div>
   </div>
 
+  <div id="blockedLeaveDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="blockedLeaveMessage">
+      <p id="blockedLeaveMessage" class="app-dialog-message"></p>
+      <div class="app-dialog-actions three-actions">
+        <button id="blockedLeaveException" type="button">例外排休</button>
+        <button id="blockedLeaveFormal" type="button">請假</button>
+        <button id="blockedLeaveBack" type="button">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveTypeDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="leaveTypeMessage">
+      <p id="leaveTypeMessage" class="app-dialog-message"></p>
+      <div id="leaveTypeChoices" class="leave-type-choices">
+        <button type="button" data-leave-type="public">公休</button>
+        <button type="button" data-leave-type="annual">特休</button>
+        <button type="button" data-leave-type="personal">事假</button>
+        <button type="button" data-leave-type="bereavement">喪假</button>
+        <button type="button" data-leave-type="other">其他請假</button>
+        <button type="button" data-leave-type="exceptionPublic">例外排休</button>
+      </div>
+      <button id="leaveTypeCancel" class="app-dialog-wide-button" type="button">返回</button>
+    </div>
+  </div>
+
+  <div id="specialTimeDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="specialTimeMessage">
+      <p id="specialTimeMessage" class="app-dialog-message"></p>
+      <label class="dialog-field">實際時間
+        <input id="specialTimeInput" type="text" inputmode="numeric" placeholder="例如 12~20" autocomplete="off">
+      </label>
+      <div class="app-dialog-actions three-actions">
+        <button id="specialTimeApply" type="button">套用</button>
+        <button id="specialTimeRemove" type="button">取消特殊</button>
+        <button id="specialTimeBack" type="button">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="nightTimeDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="nightTimeMessage">
+      <p id="nightTimeMessage" class="app-dialog-message"></p>
+      <label class="dialog-field">特殊大夜時間
+        <input id="nightTimeInput" type="text" inputmode="numeric" placeholder="例如 21~05" autocomplete="off">
+      </label>
+      <div class="app-dialog-actions three-actions">
+        <button id="nightTimeNormal" type="button">一般大夜</button>
+        <button id="nightTimeSpecial" type="button">特殊大夜</button>
+        <button id="nightTimeRemove" type="button">取消灰底</button>
+      </div>
+      <button id="nightTimeBack" class="app-dialog-wide-button" type="button">返回</button>
+    </div>
+  </div>
 
   <div id="clearMonthDialog" class="clear-month-dialog" hidden>
     <div class="clear-month-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="clearMonthDialogMessage">
@@ -86,30 +151,51 @@
     </div>
   </div>
 
-  <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
-  <main class="sheet" id="sheet">
-    <header class="sheet-title">
-      <div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
-      <h1>櫃檯人員排班紀錄表</h1>
-      <div class="sheet-spacer" aria-hidden="true"></div>
-    </header>
-
-    <div class="sheet-body">
-      <div class="sheet-main">
-        <table class="schedule-table" id="scheduleTable" aria-label="排班表"></table>
-        <table class="lower-table" id="lowerTable" aria-label="姓名與月曆空白表"></table>
-        <div class="summary-grid" id="summaryGrid" aria-label="休假統計"></div>
+  <div id="ruleCheckDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="ruleCheckMessage">
+      <p id="ruleCheckMessage" class="app-dialog-message rule-check-message"></p>
+      <div id="ruleCheckActions" class="app-dialog-actions">
+        <button id="ruleCheckException" type="button">例外安排</button>
+        <button id="ruleCheckBack" type="button">回去修改</button>
       </div>
-
-      <aside class="side-note" aria-label="排假說明">
-        <span class="side-note-text">請每人先各排</span>
-        <span id="publicLeaveInput" class="side-note-number" contenteditable="true" role="textbox" inputmode="numeric" aria-label="每人公休天數">8</span>
-        <span class="side-note-text">天月假，等大家全部都排完再排特休。</span>
-      </aside>
     </div>
-  </main>
   </div>
 
+  <div id="outputTimeDialog" class="app-dialog" hidden>
+    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="outputTimeMessage">
+      <p id="outputTimeMessage" class="app-dialog-message">這次輸出要加入右上角時間嗎？</p>
+      <div class="app-dialog-actions">
+        <button id="outputTimeYes" type="button">加時間</button>
+        <button id="outputTimeNo" type="button">不加時間</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
+    <main class="sheet" id="sheet">
+      <header class="sheet-title">
+        <div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
+        <h1>櫃檯人員排班紀錄表</h1>
+        <div id="outputTimestamp" class="output-timestamp" hidden aria-label="輸出時間"></div>
+      </header>
+
+      <div class="sheet-body">
+        <div class="sheet-main">
+          <table class="schedule-table" id="scheduleTable" aria-label="排班表"></table>
+          <table class="lower-table" id="lowerTable" aria-label="姓名與月曆備註表"></table>
+          <div class="summary-grid" id="summaryGrid" aria-label="休假統計"></div>
+        </div>
+
+        <aside class="side-note" aria-label="排假說明">
+          <span class="side-note-text">請每人先各排</span>
+          <span id="publicLeaveInput" class="side-note-number" contenteditable="true" role="textbox" inputmode="numeric" aria-label="每人公休天數">8</span>
+          <span class="side-note-text">天月假，等大家全部都排完再排特休。</span>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script src="shift_roster_rules.js"></script>
   <script src="shift_roster_v1.js"></script>
   <script src="shift_roster_export.js"></script>
 </body>
