@@ -208,7 +208,11 @@ function renderSchedule(year, month) {
       inputs.appendChild(input);
     }
 
-    td.append(miniWeekday, inputs);
+    const inner = document.createElement('div');
+    inner.className = 'vacation-cell-inner';
+    inner.append(miniWeekday, inputs);
+
+    td.appendChild(inner);
     vacationRow.appendChild(td);
   }
 
