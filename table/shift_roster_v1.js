@@ -14,7 +14,7 @@ const summaryGrid = document.getElementById('summaryGrid');
 const titleYear = document.getElementById('titleYear');
 const titleMonth = document.getElementById('titleMonth');
 const publicLeaveInput = document.getElementById('publicLeaveInput');
-const rowFillOverlay = document.getElementById('rowFillOverlay');
+const rowFillBar = document.getElementById('rowFillBar');
 const rowFillTitle = document.getElementById('rowFillTitle');
 const rowFillQuickLetters = document.getElementById('rowFillQuickLetters');
 const rowFillCustomInput = document.getElementById('rowFillCustomInput');
@@ -259,11 +259,12 @@ function openRowFillPanel(shiftIndex) {
   selectedRowFillShiftIndex = shiftIndex;
   rowFillTitle.textContent = `${shifts[shiftIndex].label} 整列填入`;
   rowFillCustomInput.value = '';
-  rowFillOverlay.hidden = false;
+  rowFillBar.hidden = false;
+  rowFillBar.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function closeRowFillPanel() {
-  rowFillOverlay.hidden = true;
+  rowFillBar.hidden = true;
   selectedRowFillShiftIndex = null;
 }
 
@@ -681,9 +682,6 @@ clearMonthButton.addEventListener('click', clearCurrentMonth);
 printButton.addEventListener('click', () => window.print());
 
 rowFillClose.addEventListener('click', closeRowFillPanel);
-rowFillOverlay.addEventListener('click', (event) => {
-  if (event.target === rowFillOverlay) closeRowFillPanel();
-});
 rowFillApplyCustom.addEventListener('click', () => {
   if (selectedRowFillShiftIndex == null) return;
   const letter = cleanEnglishLetter(rowFillCustomInput.value);
@@ -705,7 +703,7 @@ rowFillCustomInput.addEventListener('keydown', (event) => {
   }
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !rowFillOverlay.hidden) closeRowFillPanel();
+  if (event.key === 'Escape' && !rowFillBar.hidden) closeRowFillPanel();
 });
 
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
