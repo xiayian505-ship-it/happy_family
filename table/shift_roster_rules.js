@@ -205,8 +205,10 @@
       return model.getSpecialTime(day, shiftIndex) || null;
     }
 
-    if (shiftIndex === 3 && model.isNightGray(day, shiftIndex)) {
-      return model.getNightTime(day, shiftIndex) || model.settings?.normalNightRange || '22~06';
+    if (model.isNightGray(day, shiftIndex)) {
+      const grayTime = model.getNightTime(day, shiftIndex);
+      if (grayTime) return grayTime;
+      if (shiftIndex === 3) return model.settings?.normalNightRange || '22~06';
     }
 
     return shift.label.replace(/\s+/g, '');
@@ -256,13 +258,13 @@
             });
           }
         }
-        if (shiftIndex === 3 && model.getNightTime(day, shiftIndex)) {
+        if (model.getNightTime(day, shiftIndex)) {
           const time = model.getNightTime(day, shiftIndex);
           if (!parseTimeRange(time)) {
             issues.push({
               code: 'night-time-invalid',
-              title: '特殊大夜時間格式',
-              message: `${formatDate(model.month, day)} ${letter || ''} 的特殊大夜時間「${time}」無法判讀。`
+              title: '灰底時間格式',
+              message: `${formatDate(model.month, day)} ${letter || ''} 的灰底實際時間「${time}」無法判讀。`
             });
           }
         }

@@ -347,7 +347,7 @@
 
     if (!isPlainObject(data.nightShiftOverrides)) return false;
     for (const [key, value] of Object.entries(data.nightShiftOverrides)) {
-      if (!/^\d{1,2}-night$/.test(key) || typeof value !== 'boolean') return false;
+      if (!/^\d{1,2}-night(?:-[0-4])?$/.test(key) || typeof value !== 'boolean') return false;
     }
 
     const validLeaveTypes = new Set(['public', 'annual', 'leave', 'personal', 'bereavement', 'other', 'exceptionPublic']);
@@ -363,7 +363,7 @@
 
     if (!isPlainObject(data.nightShiftTimes)) return false;
     for (const [key, value] of Object.entries(data.nightShiftTimes)) {
-      if (!/^\d{1,2}-night$/.test(key) || !isValidTimeRangeText(value)) return false;
+      if (!/^\d{1,2}-night(?:-[0-4])?$/.test(key) || !isValidTimeRangeText(value)) return false;
     }
 
     const daysInMonth = new Date(parsedId.year, parsedId.month, 0).getDate();
@@ -383,7 +383,7 @@
     if (!Number.isInteger(Number(settings.publicLeaveCount)) || Number(settings.publicLeaveCount) < 1 || Number(settings.publicLeaveCount) > 31) return { ok: false, error: '每月公休設定格式不正確。' };
     if (!Number.isInteger(Number(settings.maxConsecutiveWorkDays)) || Number(settings.maxConsecutiveWorkDays) < 1 || Number(settings.maxConsecutiveWorkDays) > 31) return { ok: false, error: '連續上班設定格式不正確。' };
     if (!Number.isFinite(Number(settings.minTurnaroundHours)) || Number(settings.minTurnaroundHours) < 0 || Number(settings.minTurnaroundHours) > 24) return { ok: false, error: '轉班間隔設定格式不正確。' };
-    if (!isValidTimeRangeText(settings.normalNightRange)) return { ok: false, error: '一般大夜時間格式不正確。' };
+    if (!isValidTimeRangeText(settings.normalNightRange)) return { ok: false, error: '灰底預設時間格式不正確。' };
 
     for (const [employeeId, employee] of Object.entries(payload.employees)) {
       if (!/^emp_[A-Za-z0-9_]+$/.test(employeeId) || !isPlainObject(employee) || typeof employee.name !== 'string') {

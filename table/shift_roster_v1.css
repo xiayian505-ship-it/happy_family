@@ -344,11 +344,11 @@ table {
   background: var(--night-gray);
 }
 
-.night-mode .shift-cell[data-shift-index="3"] {
+.night-mode .shift-cell {
   cursor: crosshair;
 }
 
-.night-mode .shift-cell[data-shift-index="3"] .shift-input {
+.night-mode .shift-cell .shift-input {
   pointer-events: none;
 }
 

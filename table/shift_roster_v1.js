@@ -90,8 +90,7 @@ const nightTimeDialog = document.getElementById('nightTimeDialog');
 const nightTimeMessage = document.getElementById('nightTimeMessage');
 const nightTimeStartInput = document.getElementById('nightTimeStartInput');
 const nightTimeEndInput = document.getElementById('nightTimeEndInput');
-const nightTimeNormal = document.getElementById('nightTimeNormal');
-const nightTimeSpecial = document.getElementById('nightTimeSpecial');
+const nightTimeApply = document.getElementById('nightTimeApply');
 const nightTimeRemove = document.getElementById('nightTimeRemove');
 const nightTimeBack = document.getElementById('nightTimeBack');
 
@@ -261,7 +260,7 @@ function applyRuleSettings() {
     return;
   }
   if (!window.ShiftRosterRules?.parseTimeRange(nextNight)) {
-    window.alert('一般大夜時間請分別輸入開始與結束小時，例如 22、06。');
+    window.alert('灰底預設時間請分別輸入開始與結束小時，例如 22、06。');
     return;
   }
 
@@ -320,8 +319,8 @@ function makeBlockedDayKey(year, month, day) {
 function makeSpecialShiftKey(year, month, day, shiftIndex) {
   return `${year}-${month}-${day}-shift-${shiftIndex}`;
 }
-function makeNightShiftKey(year, month, day) {
-  return `${year}-${month}-${day}-night`;
+function makeNightShiftKey(year, month, day, shiftIndex) {
+  return `${year}-${month}-${day}-night-${shiftIndex}`;
 }
 function makeMeetingDayKey(year, month, day) {
   return `${year}-${month}-${day}-meeting`;
@@ -466,10 +465,27 @@ function loadMonthIntoMemory(year, month, data) {
   restoreMapForMonth(rosterValues, year, month, data?.rosterValues);
   restoreMapForMonth(blockedVacationOverrides, year, month, data?.blockedVacationOverrides);
   restoreSetForMonth(specialShiftCells, year, month, data?.specialShiftCells);
-  restoreMapForMonth(nightShiftOverrides, year, month, data?.nightShiftOverrides);
+
+  const nightOverrides = { ...(data?.nightShiftOverrides || {}) };
+  const nightTimes = { ...(data?.nightShiftTimes || {}) };
+  for (const [suffix, value] of Object.entries({ ...nightOverrides })) {
+    const match = String(suffix).match(/^(\d{1,2})-night$/);
+    if (!match) continue;
+    const migrated = `${match[1]}-night-3`;
+    if (!Object.prototype.hasOwnProperty.call(nightOverrides, migrated)) nightOverrides[migrated] = value;
+    delete nightOverrides[suffix];
+  }
+  for (const [suffix, value] of Object.entries({ ...nightTimes })) {
+    const match = String(suffix).match(/^(\d{1,2})-night$/);
+    if (!match) continue;
+    const migrated = `${match[1]}-night-3`;
+    if (!Object.prototype.hasOwnProperty.call(nightTimes, migrated)) nightTimes[migrated] = value;
+    delete nightTimes[suffix];
+  }
+  restoreMapForMonth(nightShiftOverrides, year, month, nightOverrides);
   restoreMapForMonth(leaveTypeValues, year, month, data?.leaveTypeValues);
   restoreMapForMonth(specialShiftTimes, year, month, data?.specialShiftTimes);
-  restoreMapForMonth(nightShiftTimes, year, month, data?.nightShiftTimes);
+  restoreMapForMonth(nightShiftTimes, year, month, nightTimes);
 
   if (Array.isArray(data?.meetingDays)) {
     data.meetingDays.forEach((day) => {
@@ -628,13 +644,11 @@ function getDefaultNightGrayState(year, month, day, shiftIndex) {
   return shiftIndex === 3 && getDayInfo(year, month, day).weekdayIndex === 6;
 }
 function isNightGray(year, month, day, shiftIndex) {
-  if (shiftIndex !== 3) return false;
-  const key = makeNightShiftKey(year, month, day);
+  const key = makeNightShiftKey(year, month, day, shiftIndex);
   return nightShiftOverrides.has(key) ? nightShiftOverrides.get(key) : getDefaultNightGrayState(year, month, day, shiftIndex);
 }
 function setNightGrayState(year, month, day, shiftIndex, enabled) {
-  if (shiftIndex !== 3) return;
-  const key = makeNightShiftKey(year, month, day);
+  const key = makeNightShiftKey(year, month, day, shiftIndex);
   const defaultState = getDefaultNightGrayState(year, month, day, shiftIndex);
   if (enabled === defaultState) nightShiftOverrides.delete(key);
   else nightShiftOverrides.set(key, enabled);
@@ -697,7 +711,7 @@ function removeShiftLetterForDay(year, month, day, letter) {
     const specialKey = makeSpecialShiftKey(year, month, day, entry.shiftIndex);
     specialShiftCells.delete(specialKey);
     specialShiftTimes.delete(specialKey);
-    if (entry.shiftIndex === 3) nightShiftTimes.delete(makeNightShiftKey(year, month, day));
+    nightShiftTimes.delete(makeNightShiftKey(year, month, day, entry.shiftIndex));
   });
 }
 
@@ -863,38 +877,56 @@ function removeSpecialTime() {
 }
 
 function openNightTimeDialog(year, month, day, shiftIndex) {
-  if (shiftIndex !== 3) return;
   const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
   const letter = rosterValues.get(key) || '';
   nightTimeContext = { year, month, day, shiftIndex, key, letter };
-  nightTimeMessage.textContent = `${month}/${day}${letter ? `　${letter}` : ''}　大夜設定`;
-  fillHourPair(nightTimeStartInput, nightTimeEndInput, nightShiftTimes.get(makeNightShiftKey(year, month, day)) || '');
+  const shiftLabel = shifts[shiftIndex]?.label || '';
+  const emptyTimeHint = shiftIndex === 3
+    ? `留空時使用灰底預設時間 ${normalNightRange}`
+    : `留空時沿用班別時間 ${shiftLabel}`;
+  nightTimeMessage.textContent = `${month}/${day}${letter ? `　${letter}` : ''}${shiftLabel ? `　${shiftLabel}` : ''}　灰底設定\n實際時間可留空；${emptyTimeHint}`;
+  fillHourPair(nightTimeStartInput, nightTimeEndInput, nightShiftTimes.get(makeNightShiftKey(year, month, day, shiftIndex)) || '');
   nightTimeDialog.hidden = false;
-  requestAnimationFrame(() => nightTimeNormal.focus());
+  requestAnimationFrame(() => nightTimeStartInput.focus());
 }
 function closeNightTimeDialog() {
   nightTimeDialog.hidden = true;
   nightTimeContext = null;
 }
-function setNormalNight() {
+function applyNightTime() {
   if (!nightTimeContext) return;
+
+  const startText = cleanHourInput(nightTimeStartInput.value);
+  const endText = cleanHourInput(nightTimeEndInput.value);
+  nightTimeStartInput.value = startText;
+  nightTimeEndInput.value = endText;
+
   const { year, month, day, shiftIndex } = nightTimeContext;
-  setNightGrayState(year, month, day, shiftIndex, true);
-  nightShiftTimes.delete(makeNightShiftKey(year, month, day));
-  closeNightTimeDialog();
-  render();
-}
-function setSpecialNight() {
-  if (!nightTimeContext) return;
-  const value = buildHourRange(nightTimeStartInput, nightTimeEndInput);
+  const nightKey = makeNightShiftKey(year, month, day, shiftIndex);
+
+  if (!startText && !endText) {
+    setNightGrayState(year, month, day, shiftIndex, true);
+    nightShiftTimes.delete(nightKey);
+    closeNightTimeDialog();
+    render();
+    return;
+  }
+
+  if (!startText || !endText) {
+    window.alert('時間可以完全留空；若要輸入，請把開始與結束時間都填完整。');
+    (startText ? nightTimeEndInput : nightTimeStartInput).focus();
+    return;
+  }
+
+  const value = `${String(Number(startText)).padStart(2, '0')}~${String(Number(endText)).padStart(2, '0')}`;
   if (!window.ShiftRosterRules?.parseTimeRange(value)) {
-    window.alert('請分別輸入開始與結束小時，例如 21、05。');
+    window.alert('時間格式不正確，請分別輸入開始與結束小時，例如 21、05；或兩格都留空。');
     nightTimeStartInput.focus();
     return;
   }
-  const { year, month, day, shiftIndex } = nightTimeContext;
+
   setNightGrayState(year, month, day, shiftIndex, true);
-  nightShiftTimes.set(makeNightShiftKey(year, month, day), value);
+  nightShiftTimes.set(nightKey, value);
   closeNightTimeDialog();
   render();
 }
@@ -902,7 +934,7 @@ function removeNight() {
   if (!nightTimeContext) return;
   const { year, month, day, shiftIndex } = nightTimeContext;
   setNightGrayState(year, month, day, shiftIndex, false);
-  nightShiftTimes.delete(makeNightShiftKey(year, month, day));
+  nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
   closeNightTimeDialog();
   render();
 }
@@ -945,7 +977,7 @@ async function applyLetterToShiftRow(shiftIndex, letter) {
       const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
       specialShiftCells.delete(specialKey);
       specialShiftTimes.delete(specialKey);
-      if (shiftIndex === 3) nightShiftTimes.delete(makeNightShiftKey(year, month, day));
+      nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
     }
     closeRowFillPanel();
     render();
@@ -1311,10 +1343,8 @@ function buildDayNotes(year, month, day) {
       const time = specialShiftTimes.get(specialKey);
       if (time) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, time) });
     }
-    if (shiftIndex === 3) {
-      const time = nightShiftTimes.get(makeNightShiftKey(year, month, day));
-      if (time) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, time) });
-    }
+    const grayTime = nightShiftTimes.get(makeNightShiftKey(year, month, day, shiftIndex));
+    if (grayTime) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, grayTime) });
   }
 
   for (const entry of getVacationLettersForDay(year, month, day)) {
@@ -1414,7 +1444,7 @@ function renderSchedule(year, month) {
             rosterValues.delete(key);
             specialShiftCells.delete(specialKey);
             specialShiftTimes.delete(specialKey);
-            if (shiftIndex === 3) nightShiftTimes.delete(makeNightShiftKey(year, month, day));
+            nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
             renderLower(year, month);
             return;
           }
@@ -1435,14 +1465,26 @@ function renderSchedule(year, month) {
       td.appendChild(input);
 
       td.addEventListener('click', (event) => {
-        if (nightModeEnabled && shiftIndex === 3) {
+        if (nightModeEnabled) {
           event.preventDefault();
-          openNightTimeDialog(year, month, day, shiftIndex);
+          if (isNightGray(year, month, day, shiftIndex)) {
+            setNightGrayState(year, month, day, shiftIndex, false);
+            nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
+            render();
+          } else {
+            openNightTimeDialog(year, month, day, shiftIndex);
+          }
           return;
         }
         if (specialModeEnabled) {
           event.preventDefault();
-          openSpecialTimeDialog(year, month, day, shiftIndex);
+          if (specialShiftCells.has(specialKey)) {
+            specialShiftCells.delete(specialKey);
+            specialShiftTimes.delete(specialKey);
+            render();
+          } else {
+            openSpecialTimeDialog(year, month, day, shiftIndex);
+          }
         }
       });
       row.appendChild(td);
@@ -1812,12 +1854,21 @@ function getStoredActualRange(monthData, year, month, day, shiftIndex) {
     return monthData?.specialShiftTimes?.[specialKey] || null;
   }
 
-  if (shiftIndex === 3) {
-    const nightKey = `${day}-night`;
-    const defaultGray = getDayInfo(year, month, day).weekdayIndex === 6;
-    const hasOverride = Object.prototype.hasOwnProperty.call(monthData?.nightShiftOverrides || {}, nightKey);
-    const gray = hasOverride ? Boolean(monthData.nightShiftOverrides[nightKey]) : defaultGray;
-    if (gray) return monthData?.nightShiftTimes?.[nightKey] || normalNightRange || '22~06';
+  const nightKey = `${day}-night-${shiftIndex}`;
+  const legacyNightKey = shiftIndex === 3 ? `${day}-night` : '';
+  const defaultGray = shiftIndex === 3 && getDayInfo(year, month, day).weekdayIndex === 6;
+  const overrides = monthData?.nightShiftOverrides || {};
+  const times = monthData?.nightShiftTimes || {};
+  const hasNewOverride = Object.prototype.hasOwnProperty.call(overrides, nightKey);
+  const hasLegacyOverride = Boolean(legacyNightKey) && Object.prototype.hasOwnProperty.call(overrides, legacyNightKey);
+  const gray = hasNewOverride
+    ? Boolean(overrides[nightKey])
+    : (hasLegacyOverride ? Boolean(overrides[legacyNightKey]) : defaultGray);
+
+  if (gray) {
+    const grayTime = times[nightKey] || (legacyNightKey ? times[legacyNightKey] : '');
+    if (grayTime) return grayTime;
+    if (shiftIndex === 3) return normalNightRange || '22~06';
   }
 
   return shifts[shiftIndex]?.label.replace(/\s+/g, '') || null;
@@ -1944,8 +1995,8 @@ function buildRuleModel() {
     isNightGray(day, shiftIndex) {
       return isNightGray(year, month, day, shiftIndex);
     },
-    getNightTime(day) {
-      return nightShiftTimes.get(makeNightShiftKey(year, month, day)) || '';
+    getNightTime(day, shiftIndex) {
+      return nightShiftTimes.get(makeNightShiftKey(year, month, day, shiftIndex)) || '';
     }
   };
 }
@@ -2138,8 +2189,7 @@ leaveTypeCancel.addEventListener('click', () => resolveLeaveTypeChoice(null));
 specialTimeApply.addEventListener('click', applySpecialTime);
 specialTimeRemove.addEventListener('click', removeSpecialTime);
 specialTimeBack.addEventListener('click', closeSpecialTimeDialog);
-nightTimeNormal.addEventListener('click', setNormalNight);
-nightTimeSpecial.addEventListener('click', setSpecialNight);
+nightTimeApply.addEventListener('click', applyNightTime);
 nightTimeRemove.addEventListener('click', removeNight);
 nightTimeBack.addEventListener('click', closeNightTimeDialog);
 
@@ -2168,7 +2218,7 @@ publicLeaveInput.addEventListener('blur', () => {
 });
 
 bindHourPair(specialTimeStartInput, specialTimeEndInput, applySpecialTime);
-bindHourPair(nightTimeStartInput, nightTimeEndInput, setSpecialNight);
+bindHourPair(nightTimeStartInput, nightTimeEndInput, applyNightTime);
 bindHourPair(ruleNightStartInput, ruleNightEndInput, applyRuleSettings);
 
 document.addEventListener('keydown', (event) => {

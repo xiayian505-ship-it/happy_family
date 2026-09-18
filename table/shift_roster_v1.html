@@ -158,19 +158,18 @@
   <div id="nightTimeDialog" class="app-dialog" hidden>
     <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="nightTimeMessage">
       <p id="nightTimeMessage" class="app-dialog-message"></p>
-      <label class="dialog-field">特殊大夜時間
-        <span class="time-pair" aria-label="特殊大夜實際時間">
-          <input id="nightTimeStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="21" autocomplete="off" aria-label="開始時間">
+      <label class="dialog-field">實際時間（選填）
+        <span class="time-pair" aria-label="灰底實際時間">
+          <input id="nightTimeStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="22" autocomplete="off" aria-label="開始時間">
           <span aria-hidden="true">～</span>
-          <input id="nightTimeEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="05" autocomplete="off" aria-label="結束時間">
+          <input id="nightTimeEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="06" autocomplete="off" aria-label="結束時間">
         </span>
       </label>
       <div class="app-dialog-actions three-actions">
-        <button id="nightTimeNormal" type="button">一般大夜</button>
-        <button id="nightTimeSpecial" type="button">特殊大夜</button>
+        <button id="nightTimeApply" type="button">套用</button>
         <button id="nightTimeRemove" type="button">取消灰底</button>
+        <button id="nightTimeBack" type="button">返回</button>
       </div>
-      <button id="nightTimeBack" class="app-dialog-wide-button" type="button">返回</button>
     </div>
   </div>
 
@@ -322,8 +321,8 @@
           <div class="guide-details-body">
             <ul>
               <li><strong>禁休：</strong>開啟後點休假日期，可切換該日是否顯示禁休斜線。</li>
-              <li><strong>粉底：</strong>開啟後點排班格，可設定特殊班的實際時間；開始與結束時間分兩格輸入數字，不必輸入「~」；班別格顯示粉紅底，下方長條格記錄員工代號與時間。</li>
-              <li><strong>灰底：</strong>開啟後點排班格，可設為一般大夜、特殊大夜或取消灰底；特殊大夜的開始與結束時間同樣分兩格輸入數字。</li>
+              <li><strong>粉底：</strong>開啟後點未變色的排班格，可設定特殊班的實際時間；開始與結束時間分兩格輸入數字，不必輸入「~」。再點已是粉底的格子會直接取消粉底；下方長條格記錄員工代號與時間。</li>
+              <li><strong>灰底：</strong>開啟後點未變色的排班格可套用灰底，實際時間可選填；若要輸入則開始與結束時間分兩格輸入數字，不必輸入「~」。再點已是灰底的格子會直接取消灰底；未填時間時沿用該班別原時間，23～07 灰底仍使用灰底預設時間。</li>
               <li><strong>假別：</strong>開啟後點已填入的休假格，可指定公休、特休、請假或例外排休。</li>
               <li><strong>開會：</strong>開啟後點下方日期長條格，可加入或取消「8 點櫃檯開會」註記。</li>
               <li>禁休、粉底、灰底、假別、開會都是點格模式；使用完可再按一次同一按鈕關閉。</li>
@@ -399,7 +398,7 @@
           <div class="rules-value-item"><span>每人每月公休</span><strong><span id="rulePublicLeaveText">8</span> 天</strong></div>
           <div class="rules-value-item"><span>連續上班上限</span><strong><span id="ruleConsecutiveText">6</span> 天</strong></div>
           <div class="rules-value-item"><span>轉班不能低於</span><strong><span id="ruleTurnaroundText">12</span> 小時</strong></div>
-          <div class="rules-value-item"><span>一般大夜實際時間</span><strong id="ruleNightText">22~06</strong></div>
+          <div class="rules-value-item"><span>灰底預設時間</span><strong id="ruleNightText">22~06</strong></div>
         </div>
 
         <div id="ruleSettingsEditor" class="rule-settings-editor" hidden>
@@ -413,11 +412,11 @@
             <label>轉班不能低於
               <span class="rule-editor-field"><input id="ruleTurnaroundInput" type="number" min="0" max="24" step="0.5" inputmode="decimal"><span>小時</span></span>
             </label>
-            <label>一般大夜實際時間
+            <label>灰底預設時間
               <span class="rule-editor-field time-pair rule-time-pair">
-                <input id="ruleNightStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="22" autocomplete="off" aria-label="一般大夜開始時間">
+                <input id="ruleNightStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="22" autocomplete="off" aria-label="灰底預設開始時間">
                 <span aria-hidden="true">～</span>
-                <input id="ruleNightEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="06" autocomplete="off" aria-label="一般大夜結束時間">
+                <input id="ruleNightEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="06" autocomplete="off" aria-label="灰底預設結束時間">
               </span>
             </label>
           </div>
@@ -489,7 +488,7 @@
               <li><strong>轉班不能低於 <span data-rule-turnaround>12</span> 小時。</strong>例如前一天 15~23、隔天 07~15，中間只有 8 小時，會提醒。</li>
               <li>月初檢查會往前讀前月月底資料；月份切換不會把連續上班天數歸零，前月最後一班也會參與本月第一班的轉班間隔檢查。</li>
               <li>第一次使用時前月不必整月補齊，可只補月底銜接需要的日期；若需要的日期仍是空白，規則檢查會提醒資料不足，不會把空白當休假。</li>
-              <li>跨午夜班依實際日期與時間計算；特殊班及特殊大夜會使用登記的實際時間參與轉班檢查。</li>
+              <li>跨午夜班依實際日期與時間計算；特殊班及有填時間的灰底班別會使用登記的實際時間參與轉班檢查。</li>
               <li>因人力或其他協調而出現特殊安排時，可人工確認為例外。</li>
             </ul>
           </div>
@@ -503,7 +502,7 @@
           <div class="guide-details-body">
             <ul>
               <li>粉紅底代表特殊班；上方班別格仍填員工代號，下方長條格直排記錄員工代號與時間，例如「A／12／│／20」。</li>
-              <li>灰底代表大夜。一般大夜實際時間為 <strong><span data-rule-night>22~06</span></strong>，不需另外註記；特殊大夜則在下方補上員工代號與實際時間。</li>
+              <li>灰底可標記任一班別；若有輸入實際時間，就以該時間參與規則檢查並在下方長條註記。未輸入時沿用該班別原時間；23～07 灰底則使用預設時間 <strong><span data-rule-night>22~06</span></strong>。</li>
               <li>特殊班仍算上班 1 天，會參與連續上班與轉班檢查。</li>
               <li>特休會在下方長條格顯示「員工代號／特／休」；請假以紅色員工代號及黑色「請假」註記表示。</li>
               <li>8 點櫃檯開會只是一筆備註，不算班別、不算工作日、不計入連續上班，也不參與轉班或公休數量檢查。</li>
