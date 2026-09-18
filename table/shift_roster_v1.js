@@ -310,7 +310,7 @@ function getCurrentYearMonth() {
 }
 
 function cleanEnglishLetter(value) {
-  return String(value || '').toUpperCase().replace(/[^A-E]/g, '').slice(0, 1);
+  return String(value || '').toUpperCase().replace(/[^A-F]/g, '').slice(0, 1);
 }
 function cleanTwoDigits(value) {
   return String(value || '').replace(/\D/g, '').slice(0, 2);
@@ -852,6 +852,12 @@ async function handleVacationChange({ year, month, day, key, letter, inputElemen
   render();
 }
 
+function makeTimeNoteLines(letter, value) {
+  const { start, end } = splitHourRange(value);
+  if (!letter || !start || !end) return [];
+  return [letter, start, '│', end];
+}
+
 function buildDayNotes(year, month, day) {
   const notes = [];
 
@@ -861,11 +867,11 @@ function buildDayNotes(year, month, day) {
     const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
     if (specialShiftCells.has(specialKey)) {
       const time = specialShiftTimes.get(specialKey);
-      if (time) notes.push({ kind: 'time', lines: [letter, time] });
+      if (time) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, time) });
     }
     if (shiftIndex === 3) {
       const time = nightShiftTimes.get(makeNightShiftKey(year, month, day));
-      if (time) notes.push({ kind: 'time', lines: [letter, time] });
+      if (time) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, time) });
     }
   }
 
@@ -1153,6 +1159,7 @@ function renderLower(year, month) {
         note.lines.forEach((line) => {
           const span = document.createElement('span');
           span.className = 'day-note-line';
+          if (note.kind === 'time' && line === '│') span.classList.add('day-note-time-separator');
           span.textContent = line;
           noteEl.appendChild(span);
         });
