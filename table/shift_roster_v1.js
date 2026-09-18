@@ -117,11 +117,11 @@ const outputTimeNo = document.getElementById('outputTimeNo');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 const shifts = [
-  { label: '07 ~ 15', code: '10' },
-  { label: '15 ~ 23', code: '11' },
-  { label: '16 ~ 24', code: '12' },
-  { label: '23 ~ 07', code: '16' },
-  { label: '00 ~ 08', code: '17' }
+  { label: '07 ~ 15', groupLabel: '早' },
+  { label: '15 ~ 23', groupLabel: '中' },
+  { label: '16 ~ 24', groupLabel: '中' },
+  { label: '23 ~ 07', groupLabel: '夜' },
+  { label: '00 ~ 08', groupLabel: '夜' }
 ];
 
 const LEAVE_TYPE_LABELS = Object.freeze({
@@ -1420,7 +1420,7 @@ function renderSchedule(year, month) {
 
     const code = document.createElement('td');
     code.className = 'shift-code';
-    code.textContent = shift.code;
+    code.textContent = shift.groupLabel;
     row.appendChild(code);
 
     for (let day = 1; day <= days; day += 1) {
