@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>櫃檯人員排班紀錄表</title>
   <link rel="stylesheet" href="shift_roster_v1.css">
 </head>
@@ -86,6 +86,7 @@
     </div>
   </div>
 
+  <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
   <main class="sheet" id="sheet">
     <header class="sheet-title">
       <div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
@@ -107,6 +108,7 @@
       </aside>
     </div>
   </main>
+  </div>
 
   <script src="shift_roster_v1.js"></script>
   <script src="shift_roster_export.js"></script>
