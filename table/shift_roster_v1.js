@@ -4,6 +4,7 @@ const prevMonthButton = document.getElementById('prevMonth');
 const nextMonthButton = document.getElementById('nextMonth');
 const printButton = document.getElementById('printButton');
 const blockModeButton = document.getElementById('blockModeButton');
+const specialModeButton = document.getElementById('specialModeButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -26,7 +27,9 @@ const specialLeaveValues = Array(6).fill('');
 let publicLeaveCount = '8';
 const rosterValues = new Map();
 const blockedVacationOverrides = new Map();
+const specialShiftCells = new Set();
 let blockModeEnabled = false;
+let specialModeEnabled = false;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -108,9 +111,34 @@ function setVacationBlockedState(year, month, day, blocked) {
 
 function setBlockMode(enabled) {
   blockModeEnabled = Boolean(enabled);
+
+  // 兩種點格模式互斥，避免同一次點擊同時改到兩種狀態。
+  if (blockModeEnabled && specialModeEnabled) {
+    setSpecialMode(false);
+  }
+
   blockModeButton.classList.toggle('is-active', blockModeEnabled);
   blockModeButton.setAttribute('aria-pressed', String(blockModeEnabled));
   document.body.classList.toggle('block-mode', blockModeEnabled);
+}
+
+function setSpecialMode(enabled) {
+  specialModeEnabled = Boolean(enabled);
+
+  if (specialModeEnabled && blockModeEnabled) {
+    blockModeEnabled = false;
+    blockModeButton.classList.remove('is-active');
+    blockModeButton.setAttribute('aria-pressed', 'false');
+    document.body.classList.remove('block-mode');
+  }
+
+  specialModeButton.classList.toggle('is-active', specialModeEnabled);
+  specialModeButton.setAttribute('aria-pressed', String(specialModeEnabled));
+  document.body.classList.toggle('special-mode', specialModeEnabled);
+}
+
+function makeSpecialShiftKey(year, month, day, shiftIndex) {
+  return `${year}-${month}-${day}-shift-${shiftIndex}`;
 }
 
 function cleanEnglishLetter(value) {
@@ -221,6 +249,9 @@ function renderSchedule(year, month) {
       const td = document.createElement('td');
       td.className = 'shift-cell';
 
+      const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
+      td.classList.toggle('is-special', specialShiftCells.has(specialKey));
+
       const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
       const input = createLetterInput({
         value: rosterValues.get(key) || '',
@@ -233,6 +264,21 @@ function renderSchedule(year, month) {
       });
 
       td.appendChild(input);
+
+      td.addEventListener('click', (event) => {
+        if (!specialModeEnabled) return;
+
+        event.preventDefault();
+
+        if (specialShiftCells.has(specialKey)) {
+          specialShiftCells.delete(specialKey);
+          td.classList.remove('is-special');
+        } else {
+          specialShiftCells.add(specialKey);
+          td.classList.add('is-special');
+        }
+      });
+
       row.appendChild(td);
     }
 
@@ -467,6 +513,7 @@ monthSelect.addEventListener('change', render);
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
 blockModeButton.addEventListener('click', () => setBlockMode(!blockModeEnabled));
+specialModeButton.addEventListener('click', () => setSpecialMode(!specialModeEnabled));
 printButton.addEventListener('click', () => window.print());
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
 publicLeaveInput.addEventListener('blur', () => {
