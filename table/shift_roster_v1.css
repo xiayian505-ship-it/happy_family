@@ -997,6 +997,68 @@ table {
 }
 
 
+
+/* ===== 排班／休假衝突選擇 ===== */
+.conflict-dialog[hidden] {
+  display: none !important;
+}
+
+.conflict-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.conflict-dialog-panel {
+  width: min(360px, 100%);
+  padding: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.28);
+}
+
+.conflict-dialog-message {
+  margin: 0 0 16px;
+  white-space: pre-line;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.conflict-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.conflict-dialog-actions button {
+  min-height: 42px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.conflict-dialog-actions button:first-child {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+@media print {
+  .conflict-dialog {
+    display: none !important;
+  }
+}
+
 /* ===== PNG 預覽 ===== */
 .png-preview-overlay {
   position: fixed;
@@ -1102,5 +1164,57 @@ table {
 @media print {
   .png-preview-overlay {
     display: none !important;
+  }
+}
+
+/* =========================================================
+   上方操作列：加大實際可點擊範圍
+   操作列不進列印，也不會被 PNG 匯出，因此優先考慮手機操作手感。
+========================================================= */
+.controls button,
+.controls input,
+.controls select {
+  min-height: 44px;
+  font-size: 13px;
+  touch-action: manipulation;
+}
+
+.controls button {
+  padding-inline: 9px;
+}
+
+.controls label {
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .controls {
+    min-height: 56px;
+    padding: 6px 4px;
+    gap: 3px;
+  }
+
+  .controls button,
+  .controls input,
+  .controls select {
+    min-height: 44px;
+    font-size: 11px;
+  }
+
+  .controls button {
+    padding-inline: 4px;
+  }
+
+  .controls label {
+    font-size: 11px;
+    gap: 2px;
+  }
+
+  .controls input {
+    width: 52px;
+  }
+
+  .controls select {
+    width: 49px;
   }
 }

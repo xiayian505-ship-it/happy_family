@@ -21,6 +21,10 @@ const rowFillCustomInput = document.getElementById('rowFillCustomInput');
 const rowFillApplyCustom = document.getElementById('rowFillApplyCustom');
 const rowFillClearRow = document.getElementById('rowFillClearRow');
 const rowFillClose = document.getElementById('rowFillClose');
+const conflictDialog = document.getElementById('conflictDialog');
+const conflictDialogMessage = document.getElementById('conflictDialogMessage');
+const conflictChooseSchedule = document.getElementById('conflictChooseSchedule');
+const conflictChooseVacation = document.getElementById('conflictChooseVacation');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
 const shifts = [
@@ -42,6 +46,7 @@ let blockModeEnabled = false;
 let specialModeEnabled = false;
 let nightModeEnabled = false;
 let selectedRowFillShiftIndex = null;
+let conflictChoiceResolver = null;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -64,7 +69,7 @@ function getDayInfo(year, month, day) {
   };
 }
 
-// 上方日期列採「兩白、兩黑」循環，且跨月份不中斷。
+// 上方日期列採「兩白、兩灰」循環，且跨月份不中斷。
 // 以 2026/10/1～10/2 為白底基準。
 function getDateBandClass(year, month, day) {
   const anchorUtc = Date.UTC(2026, 9, 1);
@@ -239,16 +244,47 @@ function clearCurrentMonth() {
   render();
 }
 
-function applyLetterToShiftRow(shiftIndex, letter) {
+async function applyLetterToShiftRow(shiftIndex, letter) {
   const { year, month } = getCurrentYearMonth();
   const cleaned = cleanEnglishLetter(letter);
   if (shiftIndex == null || shiftIndex < 0 || shiftIndex >= shifts.length) return;
 
   const days = getDaysInMonth(year, month);
+
+  // 清空整列不涉及排班／休假衝突。
+  if (!cleaned) {
+    for (let day = 1; day <= days; day += 1) {
+      rosterValues.delete(makeRosterKey(year, month, day, 'shift', shiftIndex));
+    }
+    closeRowFillPanel();
+    renderSchedule(year, month);
+    return;
+  }
+
+  const conflictDays = [];
   for (let day = 1; day <= days; day += 1) {
-    const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
-    if (cleaned) rosterValues.set(key, cleaned);
-    else rosterValues.delete(key);
+    if (hasVacationLetter(year, month, day, cleaned)) conflictDays.push(day);
+  }
+
+  let conflictChoice = null;
+  if (conflictDays.length) {
+    const dateText = conflictDays.map((day) => `${month}/${day}`).join('、');
+    conflictChoice = await showConflictChoice(`${dateText}　${cleaned} 已排休\n要以哪一種為準？`);
+
+    if (conflictChoice === 'schedule') {
+      // 選「排班」：把衝突日期中這個人的休假移除。
+      conflictDays.forEach((day) => removeVacationLetter(year, month, day, cleaned));
+    } else {
+      // 選「休假」：保留休假，並清掉衝突日期中既有的同人排班。
+      conflictDays.forEach((day) => removeShiftLetterForDay(year, month, day, cleaned));
+    }
+  }
+
+  const conflictDaySet = new Set(conflictDays);
+  for (let day = 1; day <= days; day += 1) {
+    // 選「休假」時，衝突日期直接跳過，不把整列字母蓋進去。
+    if (conflictChoice === 'vacation' && conflictDaySet.has(day)) continue;
+    rosterValues.set(makeRosterKey(year, month, day, 'shift', shiftIndex), cleaned);
   }
 
   closeRowFillPanel();
@@ -287,6 +323,66 @@ function cleanEnglishLetter(value) {
   return letters.slice(0, 1);
 }
 
+function getVacationLettersForDay(year, month, day) {
+  return [0, 1].map((slot) => {
+    const key = makeRosterKey(year, month, day, 'vacation', slot);
+    return { key, value: rosterValues.get(key) || '' };
+  });
+}
+
+function hasVacationLetter(year, month, day, letter) {
+  if (!letter) return false;
+  return getVacationLettersForDay(year, month, day).some((entry) => entry.value === letter);
+}
+
+function removeVacationLetter(year, month, day, letter) {
+  getVacationLettersForDay(year, month, day).forEach((entry) => {
+    if (entry.value === letter) rosterValues.delete(entry.key);
+  });
+}
+
+function getShiftEntriesForDay(year, month, day) {
+  return shifts.map((shift, shiftIndex) => {
+    const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
+    return { key, shiftIndex, value: rosterValues.get(key) || '' };
+  });
+}
+
+function hasShiftLetterForDay(year, month, day, letter) {
+  if (!letter) return false;
+  return getShiftEntriesForDay(year, month, day).some((entry) => entry.value === letter);
+}
+
+function removeShiftLetterForDay(year, month, day, letter) {
+  getShiftEntriesForDay(year, month, day).forEach((entry) => {
+    if (entry.value === letter) rosterValues.delete(entry.key);
+  });
+}
+
+function showConflictChoice(message) {
+  if (conflictChoiceResolver) {
+    conflictChoiceResolver('vacation');
+    conflictChoiceResolver = null;
+  }
+
+  conflictDialogMessage.textContent = message;
+  conflictDialog.hidden = false;
+
+  return new Promise((resolve) => {
+    conflictChoiceResolver = resolve;
+    // 既有休假優先保守處理，預設把焦點放在「休假」。
+    requestAnimationFrame(() => conflictChooseVacation.focus());
+  });
+}
+
+function resolveConflictChoice(choice) {
+  if (!conflictChoiceResolver) return;
+  const resolve = conflictChoiceResolver;
+  conflictChoiceResolver = null;
+  conflictDialog.hidden = true;
+  resolve(choice);
+}
+
 function cleanTwoDigits(value) {
   return String(value).replace(/\D/g, '').slice(0, 2);
 }
@@ -323,7 +419,7 @@ function createLetterInput({ value = '', ariaLabel, onChange, className }) {
   input.addEventListener('input', () => {
     const cleaned = cleanEnglishLetter(input.value);
     if (input.value !== cleaned) input.value = cleaned;
-    onChange(cleaned);
+    onChange(cleaned, input);
   });
 
   return input;
@@ -412,9 +508,29 @@ function renderSchedule(year, month) {
         value: rosterValues.get(key) || '',
         ariaLabel: `${month}月${day}日 ${shift.label} 班別`,
         className: 'shift-input',
-        onChange: (letter) => {
-          if (letter) rosterValues.set(key, letter);
-          else rosterValues.delete(key);
+        onChange: async (letter, inputElement) => {
+          const previous = rosterValues.get(key) || '';
+
+          if (!letter) {
+            rosterValues.delete(key);
+            return;
+          }
+
+          if (hasVacationLetter(year, month, day, letter)) {
+            const choice = await showConflictChoice(`${month}/${day}　${letter} 已排休\n要以哪一種為準？`);
+
+            if (choice === 'schedule') {
+              removeVacationLetter(year, month, day, letter);
+              rosterValues.set(key, letter);
+              renderSchedule(year, month);
+            } else {
+              // 選休假：不改資料，輸入框退回原值。
+              inputElement.value = previous;
+            }
+            return;
+          }
+
+          rosterValues.set(key, letter);
         }
       });
 
@@ -475,9 +591,29 @@ function renderSchedule(year, month) {
         value: rosterValues.get(key) || '',
         ariaLabel: `${month}月${day}日 休假第${slot + 1}格`,
         className: 'vacation-input',
-        onChange: (letter) => {
-          if (letter) rosterValues.set(key, letter);
-          else rosterValues.delete(key);
+        onChange: async (letter, inputElement) => {
+          const previous = rosterValues.get(key) || '';
+
+          if (!letter) {
+            rosterValues.delete(key);
+            return;
+          }
+
+          if (hasShiftLetterForDay(year, month, day, letter)) {
+            const choice = await showConflictChoice(`${month}/${day}　${letter} 已排班\n要以哪一種為準？`);
+
+            if (choice === 'vacation') {
+              removeShiftLetterForDay(year, month, day, letter);
+              rosterValues.set(key, letter);
+              renderSchedule(year, month);
+            } else {
+              // 選排班：保留既有排班，休假輸入退回原值。
+              inputElement.value = previous;
+            }
+            return;
+          }
+
+          rosterValues.set(key, letter);
         }
       });
       inputs.appendChild(input);
@@ -681,6 +817,9 @@ nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled))
 clearMonthButton.addEventListener('click', clearCurrentMonth);
 printButton.addEventListener('click', () => window.print());
 
+conflictChooseSchedule.addEventListener('click', () => resolveConflictChoice('schedule'));
+conflictChooseVacation.addEventListener('click', () => resolveConflictChoice('vacation'));
+
 rowFillClose.addEventListener('click', closeRowFillPanel);
 rowFillApplyCustom.addEventListener('click', () => {
   if (selectedRowFillShiftIndex == null) return;
@@ -703,7 +842,9 @@ rowFillCustomInput.addEventListener('keydown', (event) => {
   }
 });
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape' && !rowFillBar.hidden) closeRowFillPanel();
+  if (event.key !== 'Escape') return;
+  if (!conflictDialog.hidden) return;
+  if (!rowFillBar.hidden) closeRowFillPanel();
 });
 
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
