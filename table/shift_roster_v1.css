@@ -65,6 +65,13 @@ select {
   cursor: pointer;
 }
 
+.controls button.is-active {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+  font-weight: 700;
+}
+
 .controls label {
   display: inline-flex;
   align-items: center;
@@ -334,9 +341,36 @@ table {
 }
 
 .vacation-inputs {
+  position: relative;
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+/*
+  禁休斜線畫在「兩個休假輸入格」共同的外層，
+  所以不管上下兩格各自有沒有字，都只會出現一條斜線。
+*/
+.vacation-inputs.is-blocked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 210%;
+  height: 1.5px;
+  background: var(--line);
+  transform: translate(-50%, -50%) rotate(-58deg);
+  transform-origin: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.block-mode .vacation-cell {
+  cursor: crosshair;
+}
+
+.block-mode .vacation-input {
+  pointer-events: none;
 }
 
 .vacation-input {

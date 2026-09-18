@@ -3,6 +3,7 @@ const monthSelect = document.getElementById('monthSelect');
 const prevMonthButton = document.getElementById('prevMonth');
 const nextMonthButton = document.getElementById('nextMonth');
 const printButton = document.getElementById('printButton');
+const blockModeButton = document.getElementById('blockModeButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -24,6 +25,8 @@ const names = Array(6).fill('');
 const specialLeaveValues = Array(6).fill('');
 let publicLeaveCount = '8';
 const rosterValues = new Map();
+const blockedVacationOverrides = new Map();
+let blockModeEnabled = false;
 
 for (let month = 1; month <= 12; month += 1) {
   const option = document.createElement('option');
@@ -72,6 +75,42 @@ function appendDayColumns(colgroup, days) {
 
 function makeRosterKey(year, month, day, type, index = '') {
   return `${year}-${month}-${day}-${type}-${index}`;
+}
+
+function makeBlockedDayKey(year, month, day) {
+  return `${year}-${month}-${day}`;
+}
+
+// 週六預設為禁休；只有使用者手動切換過的日期才記錄覆寫值。
+// 這樣每個新月份的週六都會自動出現斜線，同時仍可逐日取消。
+function getDefaultBlockedState(year, month, day) {
+  return getDayInfo(year, month, day).weekdayIndex === 6;
+}
+
+function isVacationBlocked(year, month, day) {
+  const key = makeBlockedDayKey(year, month, day);
+  if (blockedVacationOverrides.has(key)) {
+    return blockedVacationOverrides.get(key);
+  }
+  return getDefaultBlockedState(year, month, day);
+}
+
+function setVacationBlockedState(year, month, day, blocked) {
+  const key = makeBlockedDayKey(year, month, day);
+  const defaultBlocked = getDefaultBlockedState(year, month, day);
+
+  if (blocked === defaultBlocked) {
+    blockedVacationOverrides.delete(key);
+  } else {
+    blockedVacationOverrides.set(key, blocked);
+  }
+}
+
+function setBlockMode(enabled) {
+  blockModeEnabled = Boolean(enabled);
+  blockModeButton.classList.toggle('is-active', blockModeEnabled);
+  blockModeButton.setAttribute('aria-pressed', String(blockModeEnabled));
+  document.body.classList.toggle('block-mode', blockModeEnabled);
 }
 
 function cleanEnglishLetter(value) {
@@ -219,6 +258,8 @@ function renderSchedule(year, month) {
     const inputs = document.createElement('div');
     inputs.className = 'vacation-inputs';
 
+    inputs.classList.toggle('is-blocked', isVacationBlocked(year, month, day));
+
     for (let slot = 0; slot < 2; slot += 1) {
       const key = makeRosterKey(year, month, day, 'vacation', slot);
       const input = createLetterInput({
@@ -238,6 +279,17 @@ function renderSchedule(year, month) {
     inner.append(miniWeekday, inputs);
 
     td.appendChild(inner);
+
+    td.addEventListener('click', (event) => {
+      if (!blockModeEnabled) return;
+
+      event.preventDefault();
+
+      const nextBlockedState = !isVacationBlocked(year, month, day);
+      setVacationBlockedState(year, month, day, nextBlockedState);
+      inputs.classList.toggle('is-blocked', nextBlockedState);
+    });
+
     vacationRow.appendChild(td);
   }
 
@@ -414,6 +466,7 @@ yearInput.addEventListener('change', render);
 monthSelect.addEventListener('change', render);
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
+blockModeButton.addEventListener('click', () => setBlockMode(!blockModeEnabled));
 printButton.addEventListener('click', () => window.print());
 publicLeaveInput.addEventListener('input', handlePublicLeaveInput);
 publicLeaveInput.addEventListener('blur', () => {
