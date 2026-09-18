@@ -1218,3 +1218,192 @@ table {
     width: 49px;
   }
 }
+
+/* =========================================================
+   操作列 v2｜大按鈕 + 手機自適應
+   - 桌面維持單一橫排
+   - 手機改為網格換行，避免為了塞一排把按鈕縮成牙籤
+   - 本區只影響螢幕操作；列印仍由 @media print 隱藏
+========================================================= */
+.controls {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.controls button,
+.controls input,
+.controls select {
+  min-height: 46px;
+  font-size: 14px;
+}
+
+.controls button {
+  flex: 0 0 auto;
+  min-width: 76px;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+#prevMonth,
+#nextMonth {
+  min-width: 88px;
+}
+
+#clearMonthButton,
+#exportPngButton {
+  min-width: 104px;
+}
+
+#printButton {
+  min-width: 82px;
+}
+
+.controls label {
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 0 8px;
+  border: 1px solid #c9c9c9;
+  border-radius: 8px;
+  background: #f6f6f6;
+}
+
+.controls label input,
+.controls label select {
+  min-height: 38px;
+}
+
+/* 平板／窄視窗：按鈕保持好按，操作區自行換行。 */
+@media screen and (max-width: 900px) {
+  body {
+    padding: 8px;
+  }
+
+  .controls {
+    position: relative;
+    left: auto;
+    width: calc(100vw - 16px);
+    margin: 0 0 10px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .controls button,
+  .controls label {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    margin: 0;
+  }
+
+  .controls button {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .controls label {
+    justify-content: center;
+    gap: 4px;
+    padding: 0 5px;
+    font-size: 13px;
+  }
+
+  .controls input {
+    width: 58px;
+    min-width: 0;
+    padding: 0 4px;
+    font-size: 13px;
+  }
+
+  .controls select {
+    width: 54px;
+    min-width: 0;
+    padding: 0 15px 0 4px;
+    font-size: 13px;
+  }
+
+  #prevMonth,
+  #nextMonth,
+  #clearMonthButton,
+  #exportPngButton,
+  #printButton {
+    min-width: 0;
+  }
+
+  .row-fill-bar {
+    position: relative;
+    left: auto;
+    width: calc(100vw - 16px);
+    margin: 0 0 10px;
+  }
+}
+
+/* 手機：三欄，按鈕會比舊版明顯更寬，也不需要橫向拖操作列。 */
+@media screen and (max-width: 600px) {
+  .controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .controls button,
+  .controls label {
+    min-height: 48px;
+  }
+
+  .controls button {
+    font-size: 14px;
+    padding: 0 7px;
+  }
+
+  .controls label {
+    font-size: 13px;
+  }
+
+  .row-fill-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .row-fill-head,
+  .row-fill-quick,
+  .row-fill-custom {
+    grid-column: 1;
+  }
+
+  .row-fill-quick {
+    grid-template-columns: repeat(6, minmax(38px, 1fr));
+  }
+
+  .row-fill-quick button {
+    min-height: 42px;
+  }
+
+  .row-fill-custom {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .row-fill-custom input,
+  .row-fill-custom button {
+    min-height: 42px;
+  }
+}
+
+/* 很窄的手機再降成兩欄，寧可多一列也不要縮小點擊面積。 */
+@media screen and (max-width: 360px) {
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 再保險一次：以上所有 RWD 只服務螢幕，不進紙本。 */
+@media print {
+  .controls,
+  .row-fill-bar,
+  .conflict-dialog,
+  .png-preview-overlay {
+    display: none !important;
+  }
+}

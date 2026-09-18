@@ -6,96 +6,380 @@
   if (!exportButton || !sheet) return;
 
   const SCALE = 2;
+  const DEFAULT_LINE = '#1b1b1b';
+  const TRANSPARENT = new Set(['transparent', 'rgba(0, 0, 0, 0)', 'rgba(0,0,0,0)']);
 
-  function collectStylesheetText() {
-    let cssText = '';
-
-    for (const styleSheet of Array.from(document.styleSheets)) {
-      try {
-        for (const rule of Array.from(styleSheet.cssRules || [])) {
-          cssText += `${rule.cssText}\n`;
-        }
-      } catch (error) {
-        // 同資料夾 CSS 正常情況可直接讀；若瀏覽器限制 CSSOM，後面還有 computed-style 備援。
-      }
-    }
-
-    return cssText;
+  function getRect(element, rootRect) {
+    const rect = element.getBoundingClientRect();
+    return {
+      x: rect.left - rootRect.left,
+      y: rect.top - rootRect.top,
+      width: rect.width,
+      height: rect.height,
+      right: rect.right - rootRect.left,
+      bottom: rect.bottom - rootRect.top
+    };
   }
 
-  function copyComputedStyles(sourceRoot, cloneRoot) {
-    const sourceNodes = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
-    const cloneNodes = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+  function isVisible(element) {
+    const style = getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) !== 0;
+  }
 
-    const properties = [
-      'display', 'position', 'box-sizing', 'width', 'height', 'min-width', 'min-height',
-      'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row', 'gap',
-      'align-items', 'align-content', 'justify-items', 'justify-content',
-      'margin', 'padding', 'overflow', 'vertical-align',
-      'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
-      'border-radius', 'border-collapse', 'table-layout',
-      'background', 'background-color', 'color', 'opacity',
-      'font-family', 'font-size', 'font-style', 'font-weight', 'line-height',
-      'letter-spacing', 'text-align', 'text-transform', 'white-space',
-      'writing-mode', 'text-orientation', 'transform', 'transform-origin'
+  function parsePx(value, fallback = 0) {
+    const number = Number.parseFloat(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function normalizeColor(value, fallback = null) {
+    if (!value || TRANSPARENT.has(value.trim())) return fallback;
+    return value;
+  }
+
+  function applyFont(context, element, fallbackSize = 14) {
+    const style = getComputedStyle(element);
+    const fontStyle = style.fontStyle || 'normal';
+    const fontVariant = style.fontVariant || 'normal';
+    const fontWeight = style.fontWeight || '400';
+    const fontSize = style.fontSize || `${fallbackSize}px`;
+    const fontFamily = style.fontFamily || 'sans-serif';
+    context.font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize} ${fontFamily}`;
+    context.fillStyle = normalizeColor(style.color, '#111') || '#111';
+    return style;
+  }
+
+  function drawBackground(context, element, rootRect, fallback = null) {
+    if (!isVisible(element)) return;
+    const rect = getRect(element, rootRect);
+    const style = getComputedStyle(element);
+    const background = normalizeColor(style.backgroundColor, fallback);
+    if (!background) return;
+    context.save();
+    context.fillStyle = background;
+    context.fillRect(rect.x, rect.y, rect.width, rect.height);
+    context.restore();
+  }
+
+  function drawElementBorders(context, element, rootRect, fallbackColor = DEFAULT_LINE) {
+    if (!isVisible(element)) return;
+    const rect = getRect(element, rootRect);
+    const style = getComputedStyle(element);
+    const sides = [
+      ['Top', rect.x, rect.y, rect.right, rect.y],
+      ['Right', rect.right, rect.y, rect.right, rect.bottom],
+      ['Bottom', rect.x, rect.bottom, rect.right, rect.bottom],
+      ['Left', rect.x, rect.y, rect.x, rect.bottom]
     ];
 
-    sourceNodes.forEach((source, index) => {
-      const clone = cloneNodes[index];
-      if (!clone) return;
-      const computed = getComputedStyle(source);
-      for (const property of properties) {
-        const value = computed.getPropertyValue(property);
-        if (value) clone.style.setProperty(property, value);
+    context.save();
+    context.lineCap = 'butt';
+
+    for (const [side, x1, y1, x2, y2] of sides) {
+      const width = parsePx(style[`border${side}Width`]);
+      const borderStyle = style[`border${side}Style`];
+      if (!width || borderStyle === 'none' || borderStyle === 'hidden') continue;
+      context.beginPath();
+      context.lineWidth = width;
+      context.strokeStyle = normalizeColor(style[`border${side}Color`], fallbackColor) || fallbackColor;
+      context.moveTo(x1, y1);
+      context.lineTo(x2, y2);
+      context.stroke();
+    }
+
+    context.restore();
+  }
+
+  function drawBox(context, element, rootRect, options = {}) {
+    drawBackground(context, element, rootRect, options.backgroundFallback || null);
+    if (options.border !== false) drawElementBorders(context, element, rootRect, options.borderColor || DEFAULT_LINE);
+  }
+
+  function getHorizontalTextX(style, rect) {
+    const align = style.textAlign;
+    if (align === 'left' || align === 'start') return rect.x + parsePx(style.paddingLeft, 0);
+    if (align === 'right' || align === 'end') return rect.right - parsePx(style.paddingRight, 0);
+    return rect.x + rect.width / 2;
+  }
+
+  function getCanvasTextAlign(style) {
+    const align = style.textAlign;
+    if (align === 'left' || align === 'start') return 'left';
+    if (align === 'right' || align === 'end') return 'right';
+    return 'center';
+  }
+
+  function drawSpacedText(context, text, centerX, centerY, letterSpacing = 0) {
+    const chars = Array.from(text || '');
+    if (!chars.length) return;
+    if (!letterSpacing) {
+      context.textAlign = 'center';
+      context.fillText(text, centerX, centerY);
+      return;
+    }
+
+    const widths = chars.map(char => context.measureText(char).width);
+    const total = widths.reduce((sum, width) => sum + width, 0) + letterSpacing * Math.max(chars.length - 1, 0);
+    let x = centerX - total / 2;
+    context.textAlign = 'left';
+    chars.forEach((char, index) => {
+      context.fillText(char, x, centerY);
+      x += widths[index] + letterSpacing;
+    });
+  }
+
+  function drawElementText(context, element, rootRect, textOverride = null, options = {}) {
+    if (!element || !isVisible(element)) return;
+    const text = textOverride ?? element.textContent ?? '';
+    if (!String(text).length && !options.allowEmpty) return;
+
+    const rect = getRect(element, rootRect);
+    const style = applyFont(context, element, options.fallbackSize || 14);
+    const letterSpacing = parsePx(style.letterSpacing, 0);
+    const lineHeight = parsePx(style.lineHeight, parsePx(style.fontSize, 14) * 1.2);
+
+    context.save();
+    applyFont(context, element, options.fallbackSize || 14);
+    context.textBaseline = 'middle';
+    context.textAlign = getCanvasTextAlign(style);
+
+    const x = options.center === true ? rect.x + rect.width / 2 : getHorizontalTextX(style, rect);
+    const y = rect.y + rect.height / 2 + (options.yOffset || 0);
+
+    if ((style.textAlign === 'center' || options.center === true) && letterSpacing > 0.1) {
+      drawSpacedText(context, String(text), rect.x + rect.width / 2, y, letterSpacing);
+    } else {
+      context.fillText(String(text), x, y, Math.max(0, rect.width - 2));
+    }
+
+    context.restore();
+  }
+
+  function drawInputValue(context, input, rootRect) {
+    if (!input || !isVisible(input)) return;
+    const rect = getRect(input, rootRect);
+    const style = applyFont(context, input, 14);
+    const value = input.value || '';
+    if (!value) return;
+
+    context.save();
+    applyFont(context, input, 14);
+    context.textBaseline = 'middle';
+    context.textAlign = getCanvasTextAlign(style);
+    const x = getHorizontalTextX(style, rect);
+    const y = rect.y + rect.height / 2;
+    context.fillText(value, x, y, Math.max(0, rect.width - 2));
+    context.restore();
+  }
+
+  function drawVerticalText(context, element, rootRect, textOverride = null) {
+    if (!element || !isVisible(element)) return;
+    const text = String(textOverride ?? element.textContent ?? '');
+    if (!text) return;
+
+    const rect = getRect(element, rootRect);
+    const style = applyFont(context, element, 14);
+    const chars = Array.from(text);
+    const fontSize = parsePx(style.fontSize, 14);
+    const letterSpacing = parsePx(style.letterSpacing, 0);
+    const step = Math.max(fontSize + letterSpacing, rect.height / Math.max(chars.length, 1));
+    const totalHeight = step * chars.length;
+    let y = rect.y + Math.max((rect.height - totalHeight) / 2, 0) + step / 2;
+
+    context.save();
+    applyFont(context, element, 14);
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    const x = rect.x + rect.width / 2;
+    for (const char of chars) {
+      context.fillText(char, x, y);
+      y += step;
+    }
+    context.restore();
+  }
+
+  function drawOuterBorder(context, element, rootRect, width = 2, color = DEFAULT_LINE) {
+    const rect = getRect(element, rootRect);
+    context.save();
+    context.strokeStyle = color;
+    context.lineWidth = width;
+    context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+    context.restore();
+  }
+
+  function drawScheduleTable(context, rootRect) {
+    const table = document.getElementById('scheduleTable');
+    if (!table) return;
+
+    table.querySelectorAll('th, td').forEach(cell => drawBox(context, cell, rootRect));
+
+    table.querySelectorAll('.header-label, .date-cell, .weekday-cell, .shift-label, .shift-code, .vacation-label')
+      .forEach(element => drawElementText(context, element, rootRect, null, { center: true }));
+
+    table.querySelectorAll('.shift-input').forEach(input => drawInputValue(context, input, rootRect));
+
+    table.querySelectorAll('.vacation-cell').forEach(cell => {
+      const miniWeekday = cell.querySelector('.mini-weekday');
+      const inputs = cell.querySelector('.vacation-inputs');
+
+      if (miniWeekday) {
+        drawBackground(context, miniWeekday, rootRect, '#fff');
+        drawElementBorders(context, miniWeekday, rootRect);
+        drawElementText(context, miniWeekday, rootRect, null, { center: true });
+      }
+
+      cell.querySelectorAll('.vacation-input').forEach(input => drawInputValue(context, input, rootRect));
+
+      if (inputs?.classList.contains('is-blocked')) {
+        const rect = getRect(inputs, rootRect);
+        context.save();
+        context.strokeStyle = DEFAULT_LINE;
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.moveTo(rect.x + 1, rect.bottom - 1);
+        context.lineTo(rect.right - 1, rect.y + 1);
+        context.stroke();
+        context.restore();
       }
     });
+
+    drawOuterBorder(context, table, rootRect, 2);
   }
 
-  function syncLiveValues(sourceRoot, cloneRoot) {
-    const sourceInputs = sourceRoot.querySelectorAll('input, textarea');
-    const cloneInputs = cloneRoot.querySelectorAll('input, textarea');
+  function drawLowerTable(context, rootRect) {
+    const table = document.getElementById('lowerTable');
+    if (!table) return;
 
-    sourceInputs.forEach((source, index) => {
-      const clone = cloneInputs[index];
-      if (!clone) return;
-      clone.value = source.value;
-      clone.setAttribute('value', source.value);
+    table.querySelectorAll('td, th').forEach(cell => drawBox(context, cell, rootRect));
+
+    table.querySelectorAll('.name-row').forEach(row => {
+      const rect = getRect(row, rootRect);
+      const style = getComputedStyle(row);
+      const bottom = parsePx(style.borderBottomWidth, 0);
+      if (bottom > 0) {
+        context.save();
+        context.strokeStyle = normalizeColor(style.borderBottomColor, DEFAULT_LINE) || DEFAULT_LINE;
+        context.lineWidth = bottom;
+        context.beginPath();
+        context.moveTo(rect.x, rect.bottom);
+        context.lineTo(rect.right, rect.bottom);
+        context.stroke();
+        context.restore();
+      }
     });
+
+    table.querySelectorAll('.name-letter').forEach(element => drawElementText(context, element, rootRect, null, { center: true }));
+    table.querySelectorAll('.name-input, .special-leave-input').forEach(input => drawInputValue(context, input, rootRect));
+    table.querySelectorAll('.special-leave-input').forEach(input => {
+      const rect = getRect(input, rootRect);
+      context.save();
+      context.strokeStyle = DEFAULT_LINE;
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(rect.x, rect.y);
+      context.lineTo(rect.x, rect.bottom);
+      context.stroke();
+      context.restore();
+    });
+
+    table.querySelectorAll('.lower-date-label').forEach(element => {
+      if ((element.textContent || '').trim()) drawElementText(context, element, rootRect, null, { center: true });
+    });
+
+    const rect = getRect(table, rootRect);
+    context.save();
+    context.strokeStyle = DEFAULT_LINE;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(rect.x, rect.y);
+    context.lineTo(rect.x, rect.bottom);
+    context.moveTo(rect.right, rect.y);
+    context.lineTo(rect.right, rect.bottom);
+    context.lineTo(rect.x, rect.bottom);
+    context.stroke();
+    context.restore();
   }
 
-  function buildSvg(width, height) {
-    const clone = sheet.cloneNode(true);
-    clone.style.margin = '0';
-    clone.style.boxShadow = 'none';
-    clone.style.width = `${width}px`;
-    clone.style.minWidth = `${width}px`;
+  function drawSummary(context, rootRect) {
+    const grid = document.getElementById('summaryGrid');
+    if (!grid) return;
 
-    syncLiveValues(sheet, clone);
+    grid.querySelectorAll('.summary-item').forEach(item => {
+      drawBox(context, item, rootRect, { backgroundFallback: '#fff' });
+      item.querySelectorAll('.summary-name, .summary-count').forEach(span => drawElementText(context, span, rootRect));
+    });
 
-    const stylesheetText = collectStylesheetText();
-    if (!stylesheetText.trim()) {
-      copyComputedStyles(sheet, clone);
+    const rect = getRect(grid, rootRect);
+    context.save();
+    context.strokeStyle = DEFAULT_LINE;
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(rect.x, rect.y);
+    context.lineTo(rect.x, rect.bottom);
+    context.lineTo(rect.right, rect.bottom);
+    context.lineTo(rect.right, rect.y);
+    context.stroke();
+    context.restore();
+  }
+
+  function drawSideNote(context, rootRect) {
+    const note = sheet.querySelector('.side-note');
+    if (!note) return;
+
+    drawBackground(context, note, rootRect, '#fff');
+    drawElementBorders(context, note, rootRect);
+
+    note.querySelectorAll('.side-note-text').forEach(element => drawVerticalText(context, element, rootRect));
+
+    const number = note.querySelector('.side-note-number');
+    if (number) {
+      drawVerticalText(context, number, rootRect, number.textContent || '');
+      const rect = getRect(number, rootRect);
+      context.save();
+      context.strokeStyle = DEFAULT_LINE;
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(rect.x, rect.bottom);
+      context.lineTo(rect.right, rect.bottom);
+      context.stroke();
+      context.restore();
+    }
+  }
+
+  async function drawRosterToCanvas() {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    if (document.fonts?.ready) {
+      try { await document.fonts.ready; } catch (_) { /* ignore */ }
     }
 
-    const wrapper = document.createElement('div');
-    wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-    wrapper.style.width = `${width}px`;
-    wrapper.style.height = `${height}px`;
-    wrapper.style.background = '#fff';
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-    if (stylesheetText.trim()) {
-      const style = document.createElement('style');
-      style.textContent = `${stylesheetText}\n.sheet{margin:0!important;box-shadow:none!important;}`;
-      wrapper.appendChild(style);
-    }
+    const rootRect = sheet.getBoundingClientRect();
+    const width = Math.ceil(rootRect.width);
+    const height = Math.ceil(rootRect.height);
 
-    wrapper.appendChild(clone);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(width * SCALE));
+    canvas.height = Math.max(1, Math.round(height * SCALE));
 
-    const serialized = new XMLSerializer().serializeToString(wrapper);
-    return `<?xml version="1.0" encoding="UTF-8"?>
-      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-        <foreignObject width="100%" height="100%">${serialized}</foreignObject>
-      </svg>`;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('瀏覽器無法建立 Canvas');
+
+    context.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+    context.imageSmoothingEnabled = true;
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, width, height);
+
+    const titleMonth = sheet.querySelector('.sheet-month');
+    const title = sheet.querySelector('.sheet-title h1');
+    if (titleMonth) drawElementText(context, titleMonth, rootRect, null, { center: true });
+    if (title) drawElementText(context, title, rootRect, null, { center: true });
+
+    drawScheduleTable(context, rootRect);
+    drawLowerTable(context, rootRect);
+    drawSummary(context, rootRect);
+    drawSideNote(context, rootRect);
+
+    return canvas;
   }
 
   function canvasToBlob(canvas) {
@@ -107,26 +391,6 @@
     });
   }
 
-  function loadSvgAsImage(svgText) {
-    return new Promise((resolve, reject) => {
-      const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const image = new Image();
-
-      image.onload = () => {
-        URL.revokeObjectURL(url);
-        resolve(image);
-      };
-
-      image.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('瀏覽器無法把目前表格轉成圖片'));
-      };
-
-      image.src = url;
-    });
-  }
-
   function getFileName() {
     const year = document.getElementById('yearInput')?.value || '';
     const month = String(document.getElementById('monthSelect')?.value || '').padStart(2, '0');
@@ -134,23 +398,7 @@
   }
 
   async function createPngBlob() {
-    const width = Math.ceil(sheet.scrollWidth);
-    const height = Math.ceil(sheet.scrollHeight);
-    const svgText = buildSvg(width, height);
-    const image = await loadSvgAsImage(svgText);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width * SCALE;
-    canvas.height = height * SCALE;
-
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('瀏覽器無法建立 Canvas');
-
-    context.setTransform(SCALE, 0, 0, SCALE, 0, 0);
-    context.fillStyle = '#fff';
-    context.fillRect(0, 0, width, height);
-    context.drawImage(image, 0, 0, width, height);
-
+    const canvas = await drawRosterToCanvas();
     return canvasToBlob(canvas);
   }
 
@@ -266,9 +514,10 @@
   }
 
   async function previewPng() {
-    const blob = await createPngBlob();
+    const canvas = await drawRosterToCanvas();
+    const blob = await canvasToBlob(canvas);
     showPreview(blob);
-    return blob;
+    return { canvas, blob };
   }
 
   exportButton.addEventListener('click', async () => {
@@ -276,13 +525,13 @@
 
     exportButton.disabled = true;
     const originalText = exportButton.textContent;
-    exportButton.textContent = '產生預覽…';
+    exportButton.textContent = '繪製預覽…';
 
     try {
       await previewPng();
     } catch (error) {
       console.error(error);
-      window.alert('PNG 預覽產生失敗，請重新整理後再試一次。');
+      window.alert(`PNG 預覽產生失敗：${error?.message || '未知錯誤'}`);
     } finally {
       exportButton.disabled = false;
       exportButton.textContent = originalText;
@@ -296,6 +545,7 @@
   });
 
   window.ShiftRosterExport = Object.freeze({
+    drawRosterToCanvas,
     createPngBlob,
     previewPng,
     closePreview
