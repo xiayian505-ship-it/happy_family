@@ -5,24 +5,116 @@
   const COLS = 4;
 
   /*
-    經典「橫刀立馬」初始配置。
+    經典華容道關卡。
     r / c = 左上角格座標
     h / w = 佔用格數
+
+    選單顯示的「經典最佳」採連步算法；
+    本頁 moveCount 仍維持原本「每移一格 +1」的逐格計數，不改規則。
   */
-  const INITIAL = [
-    { id:"zhang", name:"張飛", r:0, c:0, h:2, w:1, type:"general" },
-    { id:"cao",   name:"曹操", r:0, c:1, h:2, w:2, type:"cao" },
-    { id:"zhao",  name:"趙雲", r:0, c:3, h:2, w:1, type:"general" },
+  const LEVELS = Object.freeze({
+    qianhuhouyong: Object.freeze({
+      label:"前呼後擁",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:1, c:0, h:1, w:2, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:2, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:2, c:0, h:1, w:2, type:"general" },
+        { id:"ma",    name:"馬超", r:2, c:2, h:1, w:2, type:"general" },
+        { id:"guan",  name:"關羽", r:3, c:0, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:3, c:2, h:1, w:2, type:"general" },
+        { id:"s1", name:"兵", r:0, c:0, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:0, c:1, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:4, c:2, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:4, c:3, h:1, w:1, type:"soldier" }
+      ])
+    }),
 
-    { id:"ma",    name:"馬超", r:2, c:0, h:2, w:1, type:"general" },
-    { id:"guan",  name:"關羽", r:2, c:1, h:1, w:2, type:"guan" },
-    { id:"huang", name:"黃忠", r:2, c:3, h:2, w:1, type:"general" },
+    biyihengkong: Object.freeze({
+      label:"比翼橫空",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:3, c:3, h:2, w:1, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:2, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:0, c:0, h:1, w:2, type:"general" },
+        { id:"ma",    name:"馬超", r:1, c:0, h:1, w:2, type:"general" },
+        { id:"guan",  name:"關羽", r:2, c:0, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:2, c:2, h:1, w:2, type:"general" },
+        { id:"s1", name:"兵", r:3, c:0, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:3, c:2, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:4, c:0, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:4, c:2, h:1, w:1, type:"soldier" }
+      ])
+    }),
 
-    { id:"s1", name:"兵", r:3, c:1, h:1, w:1, type:"soldier" },
-    { id:"s2", name:"兵", r:3, c:2, h:1, w:1, type:"soldier" },
-    { id:"s3", name:"兵", r:4, c:0, h:1, w:1, type:"soldier" },
-    { id:"s4", name:"兵", r:4, c:3, h:1, w:1, type:"soldier" }
-  ];
+    jiezuxiandeng: Object.freeze({
+      label:"捷足先登",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:3, c:0, h:2, w:1, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:1, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:3, c:1, h:2, w:1, type:"general" },
+        { id:"ma",    name:"馬超", r:3, c:2, h:2, w:1, type:"general" },
+        { id:"guan",  name:"關羽", r:2, c:1, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:3, c:3, h:2, w:1, type:"general" },
+        { id:"s1", name:"兵", r:0, c:0, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:0, c:3, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:1, c:0, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:1, c:3, h:1, w:1, type:"soldier" }
+      ])
+    }),
+
+    yongchuangwuguan: Object.freeze({
+      label:"勇闖五關",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:2, c:0, h:1, w:2, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:1, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:2, c:2, h:1, w:2, type:"general" },
+        { id:"ma",    name:"馬超", r:3, c:0, h:1, w:2, type:"general" },
+        { id:"guan",  name:"關羽", r:3, c:2, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:4, c:1, h:1, w:2, type:"general" },
+        { id:"s1", name:"兵", r:0, c:0, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:0, c:3, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:1, c:0, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:1, c:3, h:1, w:1, type:"soldier" }
+      ])
+    }),
+
+    yilushunfeng: Object.freeze({
+      label:"一路順風",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:0, c:0, h:2, w:1, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:1, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:2, c:0, h:2, w:1, type:"general" },
+        { id:"ma",    name:"馬超", r:2, c:3, h:2, w:1, type:"general" },
+        { id:"guan",  name:"關羽", r:2, c:1, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:3, c:2, h:2, w:1, type:"general" },
+        { id:"s1", name:"兵", r:0, c:3, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:1, c:3, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:3, c:1, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:4, c:1, h:1, w:1, type:"soldier" }
+      ])
+    }),
+
+    hengdao: Object.freeze({
+      label:"橫刀立馬",
+      pieces:Object.freeze([
+        { id:"zhang", name:"張飛", r:0, c:0, h:2, w:1, type:"general" },
+        { id:"cao",   name:"曹操", r:0, c:1, h:2, w:2, type:"cao" },
+        { id:"zhao",  name:"趙雲", r:0, c:3, h:2, w:1, type:"general" },
+        { id:"ma",    name:"馬超", r:2, c:0, h:2, w:1, type:"general" },
+        { id:"guan",  name:"關羽", r:2, c:1, h:1, w:2, type:"guan" },
+        { id:"huang", name:"黃忠", r:2, c:3, h:2, w:1, type:"general" },
+        { id:"s1", name:"兵", r:3, c:1, h:1, w:1, type:"soldier" },
+        { id:"s2", name:"兵", r:3, c:2, h:1, w:1, type:"soldier" },
+        { id:"s3", name:"兵", r:4, c:0, h:1, w:1, type:"soldier" },
+        { id:"s4", name:"兵", r:4, c:3, h:1, w:1, type:"soldier" }
+      ])
+    })
+  });
+
+  function normalizedLevel(value){
+    return Object.prototype.hasOwnProperty.call(LEVELS, value)
+      ? value
+      : "qianhuhouyong";
+  }
 
   const DIRS = Object.freeze({
     up:    { dr:-1, dc:0 },
@@ -34,6 +126,8 @@
   const boardEl = document.getElementById("board");
   const selectedNameEl = document.getElementById("selectedName");
   const moveCountEl = document.getElementById("moveCount");
+  const gameModeEl = document.getElementById("gameMode");
+  const gameSubEl = document.getElementById("gameSub");
   const undoBtn = document.getElementById("undoBtn");
   const resetBtn = document.getElementById("resetBtn");
   const resetConfirmEl = document.getElementById("resetConfirm");
@@ -41,17 +135,38 @@
   const cancelResetBtn = document.getElementById("cancelResetBtn");
   const confirmResetBtn = document.getElementById("confirmResetBtn");
   const dirButtons = [...document.querySelectorAll("[data-dir]")];
+  const viewTabs = [...document.querySelectorAll("[data-view-target]")];
+  const viewPanels = [...document.querySelectorAll("[data-view-panel]")];
+  const rankModeTabs = [...document.querySelectorAll("[data-rank-level]")];
 
   const toast = window.SlowlyToast?.create
     ? window.SlowlyToast.create("#toast", { duration:1500 })
     : { show(message){ console.log("[Toast]", message); } };
 
+  let activeLevel = normalizedLevel(gameModeEl?.value);
+  let activeRankLevel = activeLevel;
   let pieces = [];
   let selectedId = null;
   let history = [];
   let moves = 0;
   let won = false;
   let resetConfirmOpen = false;
+  let activeView = "game";
+
+  function showView(viewName){
+    activeView = viewName;
+
+    for(const tab of viewTabs){
+      tab.setAttribute(
+        "aria-selected",
+        tab.dataset.viewTarget === viewName ? "true" : "false"
+      );
+    }
+
+    for(const panel of viewPanels){
+      panel.hidden = panel.dataset.viewPanel !== viewName;
+    }
+  }
 
   function openResetConfirm(){
     resetConfirmOpen = true;
@@ -67,12 +182,30 @@
     resetBtn.focus();
   }
 
+  function updateLevelLabels(){
+    if(gameSubEl){
+      gameSubEl.textContent = `華容道・${LEVELS[activeLevel].label}`;
+    }
+  }
+
+  function setRankLevel(levelName){
+    activeRankLevel = normalizedLevel(levelName);
+
+    for(const tab of rankModeTabs){
+      tab.setAttribute(
+        "aria-selected",
+        tab.dataset.rankLevel === activeRankLevel ? "true" : "false"
+      );
+    }
+  }
+
   function reset(){
-    pieces = INITIAL.map(piece => ({ ...piece }));
+    pieces = LEVELS[activeLevel].pieces.map(piece => ({ ...piece }));
     selectedId = null;
     history = [];
     moves = 0;
     won = false;
+    updateLevelLabels();
     render();
   }
 
@@ -138,7 +271,7 @@
   }
 
   function moveSelected(dirName){
-    if(resetConfirmOpen || won || !selectedId) return;
+    if(activeView !== "game" || resetConfirmOpen || won || !selectedId) return;
 
     const piece = pieces.find(item => item.id === selectedId);
     const dir = DIRS[dirName];
@@ -178,7 +311,7 @@
   }
 
   function undo(){
-    if(!history.length) return;
+    if(activeView !== "game" || !history.length) return;
 
     const previous = history.pop();
     restore(previous);
@@ -186,6 +319,7 @@
   }
 
   function selectPiece(id){
+    if(activeView !== "game") return;
     selectedId = selectedId === id ? null : id;
     render();
   }
@@ -240,6 +374,25 @@
     }
   }
 
+  viewTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      showView(tab.dataset.viewTarget);
+    });
+  });
+
+  gameModeEl?.addEventListener("change", () => {
+    activeLevel = normalizedLevel(gameModeEl.value);
+    setRankLevel(activeLevel);
+    reset();
+    toast.show(`已切換：${LEVELS[activeLevel].label}`);
+  });
+
+  rankModeTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      setRankLevel(tab.dataset.rankLevel);
+    });
+  });
+
   dirButtons.forEach(button => {
     button.addEventListener("click", () => {
       moveSelected(button.dataset.dir);
@@ -249,6 +402,7 @@
   undoBtn.addEventListener("click", undo);
 
   resetBtn.addEventListener("click", () => {
+    if(activeView !== "game") return;
     if(moves > 0){
       openResetConfirm();
       return;
@@ -269,6 +423,7 @@
   });
 
   document.addEventListener("keydown", event => {
+    if(activeView !== "game" && !resetConfirmOpen) return;
     if(resetConfirmOpen){
       if(event.key === "Escape"){
         event.preventDefault();
@@ -303,5 +458,7 @@
 
   window.addEventListener("resize", render);
 
+  showView("game");
+  setRankLevel(activeRankLevel);
   reset();
 })();

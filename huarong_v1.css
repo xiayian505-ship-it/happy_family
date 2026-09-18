@@ -334,3 +334,185 @@ h1{
 @media(prefers-reduced-motion:reduce){
   .piece{transition:none}
 }
+
+/* =========================================================
+   同頁分頁骨架｜沿用 Match3 的「設定 / 遊戲 / 排行」結構
+   華容道原有遊戲視覺與元件樣式不變。
+========================================================= */
+
+.page-head{
+  display:grid;
+  gap:14px;
+  align-items:initial;
+  justify-content:initial;
+}
+
+.page-title-row{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.page-nav-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  width:100%;
+}
+
+.view-tabs{
+  display:flex;
+  justify-content:flex-start;
+  gap:16px;
+  flex:0 0 auto;
+}
+
+.view-tab,
+.home-link{
+  padding:4px 0;
+  border:0;
+  border-bottom:2px solid transparent;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:13px;
+  text-decoration:none;
+}
+
+.view-tab{
+  appearance:none;
+  cursor:pointer;
+}
+
+.view-tab:hover,
+.view-tab:focus-visible,
+.home-link:hover,
+.home-link:focus-visible{
+  color:var(--text);
+  border-bottom-color:var(--line);
+}
+
+.view-tab[aria-selected="true"]{
+  color:var(--text);
+  border-bottom-color:var(--accent);
+  font-weight:700;
+}
+
+.view-panel[hidden]{
+  display:none !important;
+}
+
+.utility-card{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--card);
+}
+
+.section-title{
+  margin:0 0 14px;
+  color:var(--text);
+  font-size:16px;
+  font-weight:800;
+}
+
+.settings-list{
+  border-top:1px solid var(--line);
+}
+
+.setting-row{
+  display:grid;
+  grid-template-columns:minmax(92px,.38fr) minmax(0,1fr);
+  gap:18px;
+  align-items:center;
+  min-height:56px;
+  padding:10px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.setting-label{
+  color:var(--text);
+  font-size:13px;
+  font-weight:700;
+}
+
+.setting-control{
+  min-width:0;
+}
+
+.setting-select{
+  width:min(100%,260px);
+  min-height:38px;
+  padding:7px 9px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  color:var(--text);
+  font:inherit;
+  font-size:13px;
+}
+
+.setting-select:disabled{
+  opacity:.68;
+  cursor:not-allowed;
+}
+
+.setting-note{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.rank-mode-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  margin:0 0 12px;
+}
+
+.rank-mode-tab{
+  appearance:none;
+  padding:6px 0 7px;
+  border:0;
+  border-bottom:2px solid transparent;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:13px;
+  cursor:pointer;
+}
+
+.rank-mode-tab:hover,
+.rank-mode-tab:focus-visible{
+  color:var(--text);
+}
+
+.rank-mode-tab[aria-selected="true"]{
+  color:var(--text);
+  border-bottom-color:var(--accent);
+  font-weight:700;
+}
+
+.rank-list{
+  border-top:0;
+}
+
+.empty-data{
+  padding:14px 0;
+  border-bottom:0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+@media(max-width:380px){
+  .page-title-row{gap:10px}
+  .view-tabs{gap:13px}
+  .page-nav-row{gap:12px}
+  .setting-row{
+    grid-template-columns:82px minmax(0,1fr);
+    gap:12px;
+  }
+}
