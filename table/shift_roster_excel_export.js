@@ -308,6 +308,9 @@
 
     ws.pageSetup.printArea = `A1:${colName(noteCol)}${r-1}`;
     ws.headerFooter.oddFooter = '&C&8';
+
+    // 年資資訊：只加在同一張工作表的正式列印範圍下方，不改動原班表版型與 A4 列印範圍。
+    appendSeniorityInfo(ws, payload, people, r + 1, totalMainCols, serif, sans);
   }
 
   function normalizePeople(data) {
@@ -317,6 +320,165 @@
       result[letter] = {displayName:String(p.displayName || ''),employeeId:String(p.employeeId || '')};
     }
     return result;
+  }
+
+  function appendSeniorityInfo(ws, sourcePayload, people, startRow, totalMainCols, serif, sans) {
+    const today = getCurrentCalendarDate();
+    const dateLabel = `${today.year}.${String(today.month).padStart(2,'0')}.${String(today.day).padStart(2,'0')}`;
+    const rows = [];
+
+    for (const letter of ['A','B','C','D','E','F']) {
+      const person = people?.[letter] || {};
+      const employeeId = String(person.employeeId || '');
+      const record = employeeId ? sourcePayload?.employees?.[employeeId] : null;
+      const line = formatSeniorityLine(sourcePayload, person.displayName, record, false);
+      if (line) rows.push(line);
+    }
+
+    const supervisor = sourcePayload?.employees?.emp_supervisor;
+    const supervisorLine = supervisor?.role === 'supervisor'
+      ? formatSeniorityLine(sourcePayload, supervisor.name, supervisor, true)
+      : '';
+
+    if (!rows.length && !supervisorLine) return;
+
+    let r = startRow;
+    ws.mergeCells(r,1,r,totalMainCols);
+    const title = ws.getCell(r,1);
+    title.value = `年資資訊（截至 ${dateLabel}）`;
+    title.font = {name:serif,size:11,bold:true};
+    title.alignment = {horizontal:'left',vertical:'middle'};
+    ws.getRow(r).height = 20;
+    r += 1;
+
+    for (const line of rows) {
+      ws.mergeCells(r,1,r,totalMainCols);
+      const cell = ws.getCell(r,1);
+      cell.value = line;
+      cell.font = {name:sans,size:10};
+      cell.alignment = {horizontal:'left',vertical:'middle'};
+      ws.getRow(r).height = 18;
+      r += 1;
+    }
+
+    if (supervisorLine) {
+      ws.mergeCells(r,1,r,totalMainCols);
+      const cell = ws.getCell(r,1);
+      cell.value = supervisorLine;
+      cell.font = {name:sans,size:10};
+      cell.alignment = {horizontal:'left',vertical:'middle'};
+      ws.getRow(r).height = 18;
+    }
+  }
+
+  function parseHireDateValue(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(year,month-1,day);
+    if (Number.isNaN(date.getTime()) || date.getFullYear() !== year || date.getMonth()+1 !== month || date.getDate() !== day) return null;
+    return {year,month,day,date};
+  }
+
+  function getCurrentCalendarDate() {
+    const now = new Date();
+    return {
+      year:now.getFullYear(),
+      month:now.getMonth()+1,
+      day:now.getDate(),
+      date:new Date(now.getFullYear(),now.getMonth(),now.getDate())
+    };
+  }
+
+  function addMonthsClamped(date,months) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + months;
+    const day = date.getDate();
+    const lastDay = new Date(year,month+1,0).getDate();
+    return new Date(year,month,Math.min(day,lastDay));
+  }
+
+  function addYearsClamped(date,years) {
+    const year = date.getFullYear() + years;
+    const month = date.getMonth();
+    const day = date.getDate();
+    const lastDay = new Date(year,month+1,0).getDate();
+    return new Date(year,month,Math.min(day,lastDay));
+  }
+
+  function getAnnualRules(sourcePayload) {
+    const defaults = {sixMonths:3,year1:7,year2:10,years3to4:14,years5to9:15,year10Base:16,after10Increment:1,maxDays:30};
+    const saved = sourcePayload?.settings?.annualLeaveRules;
+    return saved && typeof saved === 'object' && !Array.isArray(saved) ? {...defaults,...saved} : defaults;
+  }
+
+  function getAnnualGrantDaysForYears(sourcePayload,years) {
+    const rules = getAnnualRules(sourcePayload);
+    if (years === 1) return Number(rules.year1 || 0);
+    if (years === 2) return Number(rules.year2 || 0);
+    if (years >= 3 && years < 5) return Number(rules.years3to4 || 0);
+    if (years >= 5 && years < 10) return Number(rules.years5to9 || 0);
+    if (years >= 10) return Math.min(Number(rules.maxDays || 0), Number(rules.year10Base || 0) + (years - 10) * Number(rules.after10Increment || 0));
+    return 0;
+  }
+
+  function getAnnualLeaveEntitlementForDate(sourcePayload,record,referenceDate,supervisor = false) {
+    const parsed = parseHireDateValue(record?.hireDate);
+    if (!parsed || !(referenceDate instanceof Date) || Number.isNaN(referenceDate.getTime()) || referenceDate < parsed.date) return 0;
+    const rules = getAnnualRules(sourcePayload);
+    let days = 0;
+    const sixMonth = addMonthsClamped(parsed.date,6);
+    if (referenceDate >= sixMonth) days = Number(rules.sixMonths || 0);
+    for (let years=1; years<=80; years+=1) {
+      const anniversary = addYearsClamped(parsed.date,years);
+      if (anniversary > referenceDate) break;
+      days = getAnnualGrantDaysForYears(sourcePayload,years);
+    }
+    return supervisor ? Math.ceil(Number(days || 0) / 2) : Number(days || 0);
+  }
+
+  function getCalendarSeniority(startDate,endDate) {
+    if (!(startDate instanceof Date) || !(endDate instanceof Date) || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) return null;
+    let years = endDate.getFullYear() - startDate.getFullYear();
+    let yearAnchor = addYearsClamped(startDate,years);
+    if (yearAnchor > endDate) {
+      years -= 1;
+      yearAnchor = addYearsClamped(startDate,years);
+    }
+    let months = 0;
+    while (months < 11 && addMonthsClamped(yearAnchor,months+1) <= endDate) months += 1;
+    const monthAnchor = addMonthsClamped(yearAnchor,months);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const anchorUtc = Date.UTC(monthAnchor.getFullYear(),monthAnchor.getMonth(),monthAnchor.getDate());
+    const endUtc = Date.UTC(endDate.getFullYear(),endDate.getMonth(),endDate.getDate());
+    const days = Math.floor((endUtc - anchorUtc) / dayMs);
+    return {years,months,days};
+  }
+
+  function getSeniorityInfo(sourcePayload,record,supervisor = false) {
+    const parsed = parseHireDateValue(record?.hireDate);
+    if (!parsed) return null;
+    const today = getCurrentCalendarDate();
+    if (parsed.date > today.date) return null;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const hireUtc = Date.UTC(parsed.year,parsed.month-1,parsed.day);
+    const todayUtc = Date.UTC(today.year,today.month-1,today.day);
+    const days = Math.floor((todayUtc - hireUtc) / dayMs);
+    const calendarSeniority = getCalendarSeniority(parsed.date,today.date);
+    const annualDays = getAnnualLeaveEntitlementForDate(sourcePayload,record,today.date,supervisor);
+    const gregorian = `${parsed.year}.${String(parsed.month).padStart(2,'0')}.${String(parsed.day).padStart(2,'0')}`;
+    const roc = `${parsed.year - 1911}.${String(parsed.month).padStart(2,'0')}.${String(parsed.day).padStart(2,'0')}`;
+    return {days,annualDays,calendarSeniority,gregorian,roc};
+  }
+
+  function formatSeniorityLine(sourcePayload,name,record,supervisor = false) {
+    const displayName = String(name || '').trim();
+    const info = getSeniorityInfo(sourcePayload,record,supervisor);
+    if (!displayName || !info || !info.calendarSeniority) return '';
+    const seniority = info.calendarSeniority;
+    return `${displayName} ${info.days} 天｜${info.annualDays} 天｜${seniority.years} 年 ${seniority.months} 個月 ${seniority.days} 天｜${info.gregorian}｜${info.roc}`;
   }
 
   function formatShift(value) {
