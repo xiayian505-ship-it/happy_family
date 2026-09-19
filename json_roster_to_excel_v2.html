@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JSON 班表 → Excel v2</title>
+  <link rel="stylesheet" href="json_roster_to_excel_v2.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">Standalone test tool</p>
+      <h1>JSON 班表 → Excel</h1>
+      <p class="desc">讀取 EliteHotel 班表 JSON，重新組回「日期橫向、項目縱向」的 Excel 表格。不修改原始 JSON。</p>
+    </header>
+
+    <section class="panel">
+      <label class="file-picker">
+        <span>選擇 JSON</span>
+        <input id="fileInput" type="file" accept="application/json,.json">
+      </label>
+      <div id="fileName" class="file-name">尚未選擇檔案</div>
+      <div class="actions">
+        <button id="exportBtn" type="button" disabled>匯出表格 Excel</button>
+        <button id="clearBtn" type="button" class="secondary" disabled>清除</button>
+      </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel preview-panel">
+      <div class="preview-head">
+        <h2>表格預覽</h2>
+        <select id="monthSelect" disabled aria-label="選擇月份"></select>
+      </div>
+      <div id="preview" class="preview empty">載入 JSON 後會在這裡預覽班表。</div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="json_roster_to_excel_v2.js"></script>
+</body>
+</html>

@@ -1,63 +1,35 @@
-# JSON → Excel v1
+# JSON 班表 → Excel v2
 
-獨立瀏覽器測試工具，不依賴後端。
+這是獨立測試工具，不會修改班表主程式，也不會寫回原始 JSON。
 
-## 檔案
+## 用法
+1. 開啟 `json_roster_to_excel_v2.html`
+2. 選擇 EliteHotel 班表 JSON
+3. 畫面會先以「日期橫向、項目縱向」預覽
+4. 按「匯出表格 Excel」
 
-- `json_to_excel_v1.html`：測試介面
-- `json_to_excel_v1.css`：外觀
-- `json_to_excel_v1.js`：JSON 解析、表格整理、Excel 匯出
+## 這版和 v1 的差別
+v1 是通用 JSON flatten：適合檢查資料結構，但不會知道班表的視覺結構。
 
-## 使用方式
+v2 針對目前班表 JSON 的 `months -> rosterValues`，解析像：
 
-1. 開啟 `json_to_excel_v1.html`
-2. 選擇 `.json` 檔案
-3. 選擇轉換模式
-4. 查看預覽
-5. 按「匯出 Excel」
+- `2-vacation-0`
+- `3-shift-1`
 
-## 轉換模式
+這種 sparse key，重新組成二維表格。
 
-### 智慧分頁
+## 不會做的事
+- 不修改 JSON
+- 不修改正式班表 HTML / CSS / JS
+- 不猜 `shift-0` 一定是早班、`shift-1` 一定是中班，所以 Excel 先標示為「班次 1 / 班次 2」
+- 不把 A/B/C 直接改成姓名；人員姓名另列對照，避免改變原始班表值
 
-- 根節點陣列：輸出成一張 `data` 工作表
-- 根節點物件：頂層區塊分成多張工作表
-- 物件 map（例如 id -> record）：每個 record 變一列，key 放在 `_key`
-- 巢狀物件欄位會用 `a.b.c` 展開
-- 陣列會保留成 JSON 字串，避免擅自猜測資料語意
+## 可能的軍火庫拆法
+如果測試方向正確，可再拆成：
 
-### 完整路徑
+1. `roster-grid-adapter.js`：sparse JSON key → 二維 grid
+2. `excel-export.js`：二維 grid → `.xlsx`
+3. 測試台 UI 留在專案，不進軍火庫
 
-把所有葉節點輸出成：
-
-- `path`
-- `type`
-- `value`
-
-適合檢查資料是否完整，以及處理結構很深、語意不固定的 JSON。
-
-## 核心 API
-
-載入 JS 後會提供：
-
-```js
-window.SlowlyJsonExcel.buildSheets(data, "smart");
-window.SlowlyJsonExcel.buildSheets(data, "paths");
-window.SlowlyJsonExcel.exportWorkbook(data, {
-  mode: "smart",
-  fileName: "example.xlsx"
-});
-```
-
-## 相依套件
-
-使用 SheetJS Community Edition `0.20.3`，目前由官方 CDN 載入。
-
-若之後要正式收進軍火庫，可再決定：
-
-- 保留外部 CDN
-- 或把 SheetJS 本地化，讓工具可離線使用
-
-## v1 原則
-
-這版刻意不包含任何旅館班表專用欄位或規則，先驗證「任意 JSON → Excel」這個單一功能。
+## 相依
+ExcelJS 4.4.0（CDN），用於瀏覽器端產生 `.xlsx` 與基本 Excel 樣式。
