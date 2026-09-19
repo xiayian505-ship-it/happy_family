@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON → Excel 測試台</title>
+  <link rel="stylesheet" href="./json_to_excel_v1.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">Slowly Lab</p>
+      <h1>JSON → Excel</h1>
+      <p class="sub">獨立測試台。只讀你選擇的 JSON，不會上傳檔案。</p>
+    </header>
+
+    <section class="panel controls" aria-label="匯入與匯出控制">
+      <label class="file-button" for="jsonFile">選擇 JSON</label>
+      <input id="jsonFile" type="file" accept=".json,application/json">
+
+      <label class="field">
+        <span>轉換模式</span>
+        <select id="mode">
+          <option value="smart">智慧分頁</option>
+          <option value="paths">完整路徑</option>
+        </select>
+      </label>
+
+      <button id="exportBtn" type="button" disabled>匯出 Excel</button>
+      <button id="clearBtn" type="button" class="ghost" disabled>清除</button>
+    </section>
+
+    <section class="panel status-panel" aria-live="polite">
+      <div>
+        <span class="label">檔案</span>
+        <strong id="fileName">尚未選擇</strong>
+      </div>
+      <div>
+        <span class="label">根節點</span>
+        <strong id="rootType">—</strong>
+      </div>
+      <div>
+        <span class="label">工作表</span>
+        <strong id="sheetCount">—</strong>
+      </div>
+      <div>
+        <span class="label">狀態</span>
+        <strong id="statusText">等待 JSON</strong>
+      </div>
+    </section>
+
+    <section class="panel preview-panel">
+      <div class="preview-head">
+        <div>
+          <p class="label">預覽</p>
+          <h2 id="previewTitle">尚無資料</h2>
+        </div>
+        <label class="field sheet-picker">
+          <span>工作表</span>
+          <select id="sheetSelect" disabled></select>
+        </label>
+      </div>
+
+      <div id="previewEmpty" class="empty">選擇 JSON 後，這裡會顯示前 12 列。</div>
+      <div id="tableWrap" class="table-wrap" hidden>
+        <table id="previewTable"></table>
+      </div>
+    </section>
+  </main>
+
+  <script src="./json_to_excel_v1.js"></script>
+</body>
+</html>
