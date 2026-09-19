@@ -3247,10 +3247,10 @@ textarea,
   flex-wrap: wrap;
   align-items: end;
   gap: 6px;
-  padding: 8px;
-  border: 1px dashed #aaa;
-  border-radius: 8px;
-  background: #fff;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .annual-calibration-actions {
@@ -4794,4 +4794,353 @@ textarea,
 #rosterView .menu-actions:has(#leaveCheckButton),
 #rosterView .menu-actions:has(#checkFixedShiftButton) {
   --menu-item-width: 64px;
+}
+
+/* =========================================================
+   2026-09｜設定頁＋說明頁第一輪降噪
+   - 對齊班表頁：文字導覽、細線分隔、少框少圓角。
+   - 只調整視覺，不改功能、資料與 JS 行為。
+========================================================= */
+
+/* 頂層／次層入口：改成安靜的文字導覽。 */
+#settingsView .settings-top-tabs,
+#settingsView .settings-subtabs,
+#rulesView .guide-top-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+#settingsView .settings-top-tabs > button,
+#settingsView .settings-subtabs > button,
+#rulesView .guide-top-tabs > button {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #555;
+  padding: 7px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#settingsView .settings-top-tabs > button + button::before,
+#settingsView .settings-subtabs > button + button::before,
+#rulesView .guide-top-tabs > button + button::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 1px;
+  background: #d8d8d8;
+}
+
+#settingsView .settings-top-tabs > button:hover,
+#settingsView .settings-top-tabs > button:focus-visible,
+#settingsView .settings-subtabs > button:hover,
+#settingsView .settings-subtabs > button:focus-visible,
+#rulesView .guide-top-tabs > button:hover,
+#rulesView .guide-top-tabs > button:focus-visible {
+  background: #f5f5f5;
+  color: #111;
+  outline: 0;
+}
+
+#settingsView .settings-top-tabs > button.is-active,
+#settingsView .settings-subtabs > button.is-active,
+#settingsView .settings-subtabs > button[aria-pressed="true"],
+#rulesView .guide-top-tabs > button.is-active {
+  border: 0;
+  border-radius: 0;
+  background: #f1f1f1;
+  color: #111;
+  box-shadow: inset 0 -2px 0 #222;
+}
+
+/* 分隔線與內容距離對齊班表頁。 */
+#settingsView .settings-divider,
+#rulesView .settings-divider {
+  height: 1px;
+  margin: 0 0 16px;
+  background: #bdbdbd;
+}
+
+#settingsView .settings-subtabs {
+  margin: 0 0 12px;
+}
+
+/* 基本值清單保持資料表感；修改只是低調文字操作。 */
+#settingsView .basic-settings-live {
+  border-top-color: #d8d8d8;
+}
+
+#settingsView .basic-setting-row {
+  min-height: 50px;
+  padding-inline: 2px;
+  border-bottom-color: #e2e2e2;
+}
+
+#settingsView .setting-row-edit,
+#settingsView .shift-config-summary > button,
+#settingsView .supervisor-apply-button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #444;
+  padding: 0 8px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 -1px 0 #aaa;
+}
+
+#settingsView .setting-row-edit:hover,
+#settingsView .setting-row-edit:focus-visible,
+#settingsView .shift-config-summary > button:hover,
+#settingsView .shift-config-summary > button:focus-visible,
+#settingsView .supervisor-apply-button:hover,
+#settingsView .supervisor-apply-button:focus-visible {
+  background: #f3f3f3;
+  color: #111;
+  outline: 0;
+}
+
+/* 人員列表：保留原本資料結構，只去掉卡片感。 */
+#settingsView .shift-config-row {
+  border-bottom-color: #dedede;
+}
+
+#settingsView .shift-config-summary {
+  min-height: 50px;
+}
+
+#settingsView .shift-config-exception {
+  border: 0;
+  border-radius: 0;
+  background: #f5f5f5;
+}
+
+#settingsView .seniority-info-list {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#settingsView .seniority-info-line,
+#settingsView .seniority-info-empty {
+  padding: 7px 2px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+#settingsView .seniority-info-line {
+  white-space: pre-line;
+  line-height: 1.65;
+}
+
+/* 編輯器中的真正提交動作仍保留按鈕感，但不要膠囊。 */
+#settingsView .rule-editor-actions button {
+  min-height: 38px;
+  border: 1px solid #aaa;
+  border-radius: 0;
+  background: #fff;
+  color: #222;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#settingsView .rule-editor-actions button:hover,
+#settingsView .rule-editor-actions button:focus-visible {
+  background: #f3f3f3;
+  outline: 0;
+}
+
+/* 說明頁：操作說明直接讀；公司規定維持細線收合。 */
+#rulesView .operation-guide-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#rulesView .operation-guide-list > li {
+  padding: 9px 2px;
+  border-bottom: 1px solid #e5e5e5;
+  line-height: 1.7;
+}
+
+#rulesView .operation-guide-list > li:first-child {
+  border-top: 1px solid #e5e5e5;
+}
+
+#rulesView .company-rule-item {
+  border-bottom-color: #dedede;
+}
+
+#rulesView .company-rule-item:first-child {
+  border-top-color: #dedede;
+}
+
+#rulesView .company-rule-item > summary {
+  min-height: 48px;
+  padding: 0 2px;
+}
+
+#rulesView .company-rule-item > summary:hover,
+#rulesView .company-rule-item > summary:focus-visible {
+  background: #f5f5f5;
+  outline: 0;
+}
+
+@media (max-width: 760px) {
+  #settingsView .settings-top-tabs > button,
+  #settingsView .settings-subtabs > button,
+  #rulesView .guide-top-tabs > button {
+    min-height: 46px;
+    padding-inline: 13px;
+    font-size: 14px;
+  }
+
+  #settingsView .basic-setting-row {
+    grid-template-columns: minmax(110px, .85fr) minmax(0, 1.15fr) auto;
+  }
+}
+
+/* =========================================================
+   2026-09｜設定頁輸入欄位降噪
+   - 只調整設定頁表單外觀，不碰班表輸入格與功能行為。
+   - 由完整框改為底線式欄位，維持可輸入辨識度。
+========================================================= */
+
+#settingsView input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+#settingsView select,
+#settingsView textarea {
+  border: 0;
+  border-bottom: 1px solid #bdbdbd;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #222;
+  padding: 5px 2px;
+  outline: 0;
+}
+
+#settingsView input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):hover,
+#settingsView select:hover,
+#settingsView textarea:hover {
+  border-bottom-color: #888;
+}
+
+#settingsView input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+#settingsView select:focus,
+#settingsView textarea:focus {
+  border-bottom-color: #222;
+  box-shadow: inset 0 -1px 0 #222;
+  background: transparent;
+  outline: 0;
+}
+
+#settingsView input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+#settingsView select:disabled,
+#settingsView textarea:disabled,
+#settingsView input[readonly] {
+  border-bottom-color: #ddd;
+  background: transparent;
+  color: #888;
+  opacity: 1;
+}
+
+/* 舊規則中較具體的欄位樣式在這裡統一覆寫，避免又長回方框。 */
+#settingsView .shift-config-field input,
+#settingsView .supervisor-config-field input,
+#settingsView .rule-editor-field input,
+#settingsView .rule-editor-grid > label > select,
+#settingsView .rule-editor-grid > label > input[type="text"],
+#settingsView .shift-config-meta input[type="date"] {
+  border: 0;
+  border-bottom: 1px solid #bdbdbd;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding-inline: 2px;
+}
+
+#settingsView .shift-config-field input:focus,
+#settingsView .supervisor-config-field input:focus,
+#settingsView .rule-editor-field input:focus,
+#settingsView .rule-editor-grid > label > select:focus,
+#settingsView .rule-editor-grid > label > input[type="text"]:focus,
+#settingsView .shift-config-meta input[type="date"]:focus {
+  border-bottom-color: #222;
+  box-shadow: inset 0 -1px 0 #222;
+}
+
+/* =========================================================
+   2026-09｜設定頁：特休摘要與固定班別降噪
+   - 特休摘要改為單行文字，不再使用白底框。
+   - 櫃檯固定班別改為無圓角的文字切換樣式。
+========================================================= */
+#settingsView .annual-balance-status {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+#settingsView .annual-balance-status > span {
+  display: inline;
+}
+
+#settingsView .annual-balance-status > span + span::before,
+#settingsView .annual-balance-status > .annual-balance-warning::before {
+  content: " | ";
+  color: #999;
+  font-weight: 400;
+}
+
+#settingsView .shift-config-option {
+  min-height: 40px;
+  border: 0;
+  border-bottom: 1px solid #c8c8c8;
+  border-radius: 0;
+  background: transparent;
+  color: #333;
+  box-shadow: none;
+}
+
+#settingsView .shift-config-option:hover,
+#settingsView .shift-config-option:focus-visible {
+  background: #f5f5f5;
+  outline: 0;
+}
+
+#settingsView .shift-config-option[aria-pressed="true"] {
+  border: 0;
+  border-bottom: 1px solid #222;
+  border-radius: 0;
+  background: #f1f1f1;
+  color: #111;
+  box-shadow: inset 0 -2px 0 #222;
+}
+
+#settingsView .shift-config-option[aria-pressed="true"] small {
+  color: #555;
 }

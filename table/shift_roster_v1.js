@@ -928,7 +928,7 @@ function formatSeniorityLine(name, record, supervisor = false) {
   const info = getSeniorityInfo(record, supervisor);
   if (!displayName || !info || !info.calendarSeniority) return '';
   const seniority = info.calendarSeniority;
-  return `${displayName} ${info.days} 天｜${info.annualDays} 天｜${seniority.years} 年 ${seniority.months} 個月 ${seniority.days} 天｜${info.gregorian}｜${info.roc}`;
+  return `${displayName} ${info.days}天 | 特休${info.annualDays}天 | ${seniority.years}年${seniority.months}個月${seniority.days}天\n到職日 | 西元${info.gregorian} | 民國${info.roc}`;
 }
 
 function renderShiftSeniorityInfo() {
@@ -2203,12 +2203,7 @@ function renderShiftConfigPanel() {
     const options = document.createElement('div');
     options.className = 'shift-config-options';
 
-    if (letter === 'A') {
-      const exception = document.createElement('div');
-      exception.className = 'shift-config-exception';
-      exception.textContent = '所有規則不檢查';
-      options.appendChild(exception);
-    } else {
+    if (letter !== 'A') {
       options.setAttribute('aria-label', `${letter} 固定班別，只能單選`);
       const current = getPersonnelShifts(year, month, letter);
       PERSONNEL_SHIFT_GROUPS.forEach((group) => {
