@@ -141,9 +141,14 @@
       specialShiftCells: [],
       nightShiftOverrides: {},
       leaveTypeValues: {},
+      leaveNoteValues: {},
+      manualNotes: {},
+      extraLeaves: {},
+      annualLeaveReminderSeen: [],
       specialShiftTimes: {},
       nightShiftTimes: {},
-      meetingDays: []
+      meetingDays: [],
+      meetingNoteValues: {}
     };
   }
 
@@ -356,6 +361,34 @@
       if (!/^\d{1,2}-vacation-[01]$/.test(key) || !validLeaveTypes.has(String(value))) return false;
     }
 
+    if (data.leaveNoteValues !== undefined) {
+      if (!isPlainObject(data.leaveNoteValues)) return false;
+      for (const [key, value] of Object.entries(data.leaveNoteValues)) {
+        if (!/^\d{1,2}-vacation-[01]$/.test(key) || typeof value !== 'string' || Array.from(value).length > 4) return false;
+      }
+    }
+
+    if (data.manualNotes !== undefined) {
+      if (!isPlainObject(data.manualNotes)) return false;
+      for (const [key, value] of Object.entries(data.manualNotes)) {
+        if (!/^\d{1,2}$/.test(key) || typeof value !== 'string' || Array.from(value).length > 10) return false;
+      }
+    }
+
+    if (data.extraLeaves !== undefined) {
+      if (!isPlainObject(data.extraLeaves)) return false;
+      for (const [key, value] of Object.entries(data.extraLeaves)) {
+        if (!/^\d{1,2}$/.test(key) || !isPlainObject(value)) return false;
+        if (!/^[A-F]$/.test(String(value.letter || ''))) return false;
+        if (!validLeaveTypes.has(String(value.type || 'public'))) return false;
+        if (typeof (value.note ?? '') !== 'string' || Array.from(value.note || '').length > 4) return false;
+      }
+    }
+
+    if (data.annualLeaveReminderSeen !== undefined) {
+      if (!Array.isArray(data.annualLeaveReminderSeen) || !data.annualLeaveReminderSeen.every((item) => typeof item === 'string')) return false;
+    }
+
     if (!isPlainObject(data.specialShiftTimes)) return false;
     for (const [key, value] of Object.entries(data.specialShiftTimes)) {
       if (!/^\d{1,2}-shift-[0-4]$/.test(key) || !isValidTimeRangeText(value)) return false;
@@ -368,6 +401,12 @@
 
     const daysInMonth = new Date(parsedId.year, parsedId.month, 0).getDate();
     if (!Array.isArray(data.meetingDays) || !data.meetingDays.every((item) => Number.isInteger(item) && item >= 1 && item <= daysInMonth)) return false;
+    if (data.meetingNoteValues !== undefined) {
+      if (!isPlainObject(data.meetingNoteValues)) return false;
+      for (const [key, value] of Object.entries(data.meetingNoteValues)) {
+        if (!/^\d{1,2}$/.test(key) || typeof value !== 'string' || Array.from(value).length > 10) return false;
+      }
+    }
     return true;
   }
 
@@ -384,6 +423,19 @@
     if (!Number.isInteger(Number(settings.maxConsecutiveWorkDays)) || Number(settings.maxConsecutiveWorkDays) < 1 || Number(settings.maxConsecutiveWorkDays) > 31) return { ok: false, error: '連續上班設定格式不正確。' };
     if (!Number.isFinite(Number(settings.minTurnaroundHours)) || Number(settings.minTurnaroundHours) < 0 || Number(settings.minTurnaroundHours) > 24) return { ok: false, error: '轉班間隔設定格式不正確。' };
     if (!isValidTimeRangeText(settings.normalNightRange)) return { ok: false, error: '灰底預設時間格式不正確。' };
+    if (settings.shiftRanges !== undefined) {
+      if (!Array.isArray(settings.shiftRanges) || settings.shiftRanges.length !== 5 || !settings.shiftRanges.every(isValidTimeRangeText)) {
+        return { ok: false, error: '班別時間設定格式不正確。' };
+      }
+    }
+    if (settings.blockedWeekdays !== undefined && (!Array.isArray(settings.blockedWeekdays) || !settings.blockedWeekdays.every((item) => Number.isInteger(Number(item)) && Number(item) >= 0 && Number(item) <= 6))) return { ok: false, error: '預設禁休星期格式不正確。' };
+    if (settings.blockedLeaveTypes !== undefined && (!Array.isArray(settings.blockedLeaveTypes) || !settings.blockedLeaveTypes.every((item) => ['public', 'annual'].includes(String(item))))) return { ok: false, error: '禁休假別設定格式不正確。' };
+    if (settings.sameDayLeaveEnabled !== undefined && typeof settings.sameDayLeaveEnabled !== 'boolean') return { ok: false, error: '同日排休開關格式不正確。' };
+    if (settings.sameDayLeaveGrouping !== undefined && !['separate', 'early-middle', 'early-night', 'middle-night', 'all'].includes(String(settings.sameDayLeaveGrouping))) return { ok: false, error: '同日排休分組格式不正確。' };
+    if (settings.sameDayLeaveMax !== undefined && (!Number.isInteger(Number(settings.sameDayLeaveMax)) || Number(settings.sameDayLeaveMax) < 1 || Number(settings.sameDayLeaveMax) > 6)) return { ok: false, error: '同日排休人數設定格式不正確。' };
+    if (settings.adjacentLeaveEnabled !== undefined && typeof settings.adjacentLeaveEnabled !== 'boolean') return { ok: false, error: '相鄰排休開關格式不正確。' };
+    if (settings.turnaroundEnabled !== undefined && typeof settings.turnaroundEnabled !== 'boolean') return { ok: false, error: '轉班檢查開關格式不正確。' };
+    if (settings.meetingDefaultText !== undefined && (typeof settings.meetingDefaultText !== 'string' || Array.from(settings.meetingDefaultText).length > 10)) return { ok: false, error: '開會預設備註格式不正確。' };
 
     for (const [employeeId, employee] of Object.entries(payload.employees)) {
       if (!/^emp_[A-Za-z0-9_]+$/.test(employeeId) || !isPlainObject(employee) || typeof employee.name !== 'string') {

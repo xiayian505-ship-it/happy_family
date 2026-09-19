@@ -285,7 +285,7 @@
       if ((element.textContent || '').trim()) drawElementText(context, element, rootRect, null, { center: true });
     });
 
-    // 下方長條備註：特殊班／灰底實際時間／特休／請假／8點櫃檯開會。
+    // 下方長條備註：粉／灰底實際時間、假別、開會與自由備註。
     table.querySelectorAll('.day-note-line').forEach(element => {
       const style = getComputedStyle(element);
       if ((style.writingMode || '').startsWith('vertical')) {

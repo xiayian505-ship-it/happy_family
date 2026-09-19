@@ -110,12 +110,14 @@
   }
 
   function collectBlockedLeaveIssues(model, issues) {
+    const blockedTypes = new Set(Array.isArray(model.settings?.blockedLeaveTypes) ? model.settings.blockedLeaveTypes : ['public', 'annual']);
+    if (!blockedTypes.size) return;
     for (let day = 1; day <= model.days; day += 1) {
       if (!model.isBlocked(day)) continue;
       for (const leave of model.getLeaveEntries(day)) {
         if (!leave.letter) continue;
         const type = leave.type || 'public';
-        if (type === 'exceptionPublic' || isFormalLeaveType(type)) continue;
+        if (!blockedTypes.has(type)) continue;
         const label = type === 'annual' ? '特休' : '公休';
         issues.push({
           code: 'blocked-leave',
@@ -144,31 +146,53 @@
     }
   }
 
+  function getConfiguredLeaveGroups(mode) {
+    const configs = {
+      separate: [
+        { name: '早班組', keys: ['early'] },
+        { name: '中班組', keys: ['middle'] },
+        { name: '夜班組', keys: ['night'] }
+      ],
+      'early-middle': [
+        { name: '早／中班組', keys: ['early', 'middle'] },
+        { name: '夜班組', keys: ['night'] }
+      ],
+      'early-night': [
+        { name: '早／夜班組', keys: ['early', 'night'] },
+        { name: '中班組', keys: ['middle'] }
+      ],
+      'middle-night': [
+        { name: '早班組', keys: ['early'] },
+        { name: '中／夜班組', keys: ['middle', 'night'] }
+      ],
+      all: [{ name: '全體人員', keys: ['early', 'middle', 'night'], all: true }]
+    };
+    return configs[mode] || configs['early-middle'];
+  }
+
   function collectSameGroupLeaveIssues(model, issues) {
+    if (model.settings?.sameDayLeaveEnabled === false) return;
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
-    // 早班與中班仍屬同一個日／中班排休群組；夜班獨立一組。
-    // 人員班別可複選，只要屬於該群組就會納入同日排休檢查。
-    const groups = [
-      { name: '早／中班組', groupKeys: new Set(['early', 'middle']) },
-      { name: '夜班組', groupKeys: new Set(['night']) }
-    ];
+    const maxPeople = Math.max(1, Number(model.settings?.sameDayLeaveMax) || 1);
+    const groups = getConfiguredLeaveGroups(model.settings?.sameDayLeaveGrouping);
 
     for (let day = 1; day <= model.days; day += 1) {
       const leaves = model.getLeaveEntries(day).filter((entry) => entry.letter);
       for (const group of groups) {
+        const groupKeys = new Set(group.keys);
         const members = [];
         for (const leave of leaves) {
           const employee = employeeMap.get(leave.letter);
           if (!employee) continue;
           const employeeGroups = getShiftGroups(employee);
-          if ([...group.groupKeys].some((key) => employeeGroups.has(key))) members.push(leave.letter);
+          if (group.all || [...groupKeys].some((key) => employeeGroups.has(key))) members.push(leave.letter);
         }
         const unique = [...new Set(members)];
-        if (unique.length > 1) {
+        if (unique.length > maxPeople) {
           issues.push({
             code: 'same-group-leave',
             title: '同組同日排休',
-            message: `${formatDate(model.month, day)} ${group.name}同日排休：${unique.join('、')}。\n原則上同組同一天最多休 1 人。`
+            message: `${formatDate(model.month, day)} ${group.name}同日排休：${unique.join('、')}。\n目前設定每組同一天最多休 ${maxPeople} 人。`
           });
         }
       }
@@ -176,6 +200,7 @@
   }
 
   function collectAdjacentLeaveOrderIssues(model, issues) {
+    if (model.settings?.adjacentLeaveEnabled === false) return;
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
 
     for (let day = 1; day < model.days; day += 1) {
@@ -202,7 +227,8 @@
     if (!shift) return null;
 
     if (model.isSpecial(day, shiftIndex)) {
-      return model.getSpecialTime(day, shiftIndex) || null;
+      const specialTime = model.getSpecialTime(day, shiftIndex);
+      if (specialTime) return specialTime;
     }
 
     if (model.isNightGray(day, shiftIndex)) {
@@ -250,11 +276,11 @@
         if (!letter) continue;
         if (model.isSpecial(day, shiftIndex)) {
           const time = model.getSpecialTime(day, shiftIndex);
-          if (!time || !parseTimeRange(time)) {
+          if (time && !parseTimeRange(time)) {
             issues.push({
-              code: 'special-time-missing',
-              title: '特殊班缺少時間',
-              message: `${formatDate(model.month, day)} ${letter} 的特殊班沒有有效實際時間。\n請補上開始與結束小時，例如 12、20。`
+              code: 'special-time-invalid',
+              title: '粉底時間格式',
+              message: `${formatDate(model.month, day)} ${letter} 的粉底實際時間「${time}」無法判讀。`
             });
           }
         }
@@ -278,10 +304,11 @@
     if (model.previousMonthExists === false) {
       const previous = model.previousMonth;
       const label = previous ? `${previous.year} 年 ${previous.month} 月` : '前一個月';
+      const purpose = model.settings?.turnaroundEnabled === false ? '跨月連勤' : '跨月連勤與轉班間隔';
       issues.push({
         code: 'previous-month-missing',
         title: '前月銜接資料不存在',
-        message: `找不到${label}的班表資料。\n本月月初的跨月連勤與轉班間隔無法完整檢查；第一次使用時可切回前月，只補月底需要的幾天。`
+        message: `找不到${label}的班表資料。\n本月月初的${purpose}無法完整檢查；第一次使用時可切回前月，只補月底需要的幾天。`
       });
       return;
     }
@@ -290,10 +317,11 @@
       const history = model.getPreviousMonthHistory(letter);
       if (!history?.employeeFound || !history.incomplete) continue;
       const employee = (model.employees || []).find((item) => item.letter === letter);
+      const purpose = model.settings?.turnaroundEnabled === false ? '跨月連勤' : '跨月連勤／轉班間隔';
       issues.push({
         code: 'previous-month-incomplete',
         title: '前月月底資料不完整',
-        message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 的前月月底銜接資料有空白。\n跨月連勤／轉班間隔可能無法完整判斷；請回前月補上最近的排班或休假。`
+        message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 的前月月底銜接資料有空白。\n${purpose}可能無法完整判斷；請回前月補上最近的排班或休假。`
       });
     }
   }
@@ -355,6 +383,7 @@
   }
 
   function collectRestGapIssues(model, issues) {
+    if (model.settings?.turnaroundEnabled === false) return;
     const byLetter = buildWorkIntervals(model);
     const configuredRestHours = Number(model.settings?.minTurnaroundHours);
     const minRestHours = Number.isFinite(configuredRestHours) ? Math.max(0, configuredRestHours) : 12;

@@ -2,7 +2,7 @@
   --ink: #111;
   --paper: #fff;
   --line: #1b1b1b;
-  /* 六、日使用參考表的粉紅底；23～07 週六維持灰底。 */
+  /* 六、日使用參考表的粉紅底；第四列夜班週六維持灰底。 */
   --weekend-sat: #f586c0;
   --weekend-sun: #f586c0;
   --night-gray: #b7b7b7;
@@ -2066,7 +2066,7 @@ textarea,
 
 @media screen {
   .controls-mark-row {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .controls-check-row {
@@ -2231,7 +2231,8 @@ textarea,
 }
 
 .app-dialog-actions,
-.leave-type-choices {
+.leave-type-choices,
+.leave-note-choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
@@ -2242,7 +2243,8 @@ textarea,
 }
 
 .app-dialog button,
-.leave-type-choices button {
+.leave-type-choices button,
+.leave-note-choices button {
   min-height: 46px;
   border: 1px solid #aaa;
   border-radius: 8px;
@@ -2254,7 +2256,8 @@ textarea,
 }
 
 .app-dialog-actions button:first-child,
-.leave-type-choices button:first-child {
+.leave-type-choices button:first-child,
+.leave-note-choices button:first-child {
   border-color: #222;
   background: #222;
   color: #fff;
@@ -2274,13 +2277,41 @@ textarea,
   font-weight: 700;
 }
 
-.dialog-field input {
+.dialog-field input,
+.dialog-field select {
   min-width: 0;
   min-height: 44px;
   border: 1px solid #aaa;
   border-radius: 8px;
   padding: 0 10px;
   font-size: 16px;
+}
+
+
+.leave-note-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.dialog-subnote {
+  margin: -6px 0 12px;
+  color: #666;
+  font-size: 13px;
+  text-align: right;
+}
+
+.dialog-section {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+  padding-top: 14px;
+  border-top: 1px solid #ddd;
+}
+
+.dialog-section > strong {
+  font-size: 14px;
 }
 
 .time-pair {
@@ -2399,7 +2430,8 @@ textarea,
 }
 
 .leave-type-mode .vacation-cell,
-.meeting-mode .day-blank {
+.meeting-mode .day-blank,
+.note-mode .day-blank {
   cursor: crosshair;
 }
 
@@ -2479,7 +2511,7 @@ textarea,
   }
 
   .controls-mark-row {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .controls-check-row {
@@ -2489,7 +2521,7 @@ textarea,
 
 @media screen and (max-width: 520px) {
   .controls-mark-row {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .controls-mark-row button,
@@ -2728,6 +2760,111 @@ textarea,
   padding: 0 10px;
 }
 
+.rules-shift-times-item {
+  grid-column: 1 / -1;
+}
+
+.rules-shift-times-item strong {
+  text-align: right;
+}
+
+
+.rule-option-group {
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: 8px;
+}
+
+.rule-option-group legend {
+  padding: 0 5px;
+  font-weight: 700;
+}
+
+.rule-checkbox-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.rule-checkbox-list label,
+.rule-toggle-row {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+}
+
+.rule-checkbox-list input,
+.rule-toggle-row input {
+  width: auto !important;
+  min-height: 0 !important;
+}
+
+.rule-editor-grid > label > select,
+.rule-editor-grid > label > input[type="text"] {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #aaa;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 10px;
+}
+
+.rule-shift-time-editor {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: 9px;
+  background: #fafafa;
+}
+
+.rule-shift-time-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rule-shift-time-head > span,
+.rule-shift-time-note {
+  color: #666;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.rule-shift-time-list {
+  display: grid;
+  gap: 8px;
+}
+
+.rule-shift-time-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-shift-time-group {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cfcfcf;
+  border-radius: 7px;
+  background: #fff;
+  font-weight: 800;
+}
+
+.rule-shift-time-pair {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.rule-shift-time-note {
+  margin: 0;
+}
+
 .rule-editor-note {
   margin: 12px 0 0;
   color: #666;
@@ -2857,6 +2994,14 @@ textarea,
   .rules-value-grid,
   .rule-editor-grid {
     grid-template-columns: 1fr;
+  }
+
+  .rules-shift-times-item strong {
+    text-align: left;
+  }
+
+  .rule-shift-time-head {
+    display: grid;
   }
 
   .rule-editor-actions button {

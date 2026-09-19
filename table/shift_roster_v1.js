@@ -10,11 +10,22 @@ const rulePublicLeaveText = document.getElementById('rulePublicLeaveText');
 const ruleConsecutiveText = document.getElementById('ruleConsecutiveText');
 const ruleTurnaroundText = document.getElementById('ruleTurnaroundText');
 const ruleNightText = document.getElementById('ruleNightText');
+const ruleShiftTimesText = document.getElementById('ruleShiftTimesText');
+const ruleBlockedText = document.getElementById('ruleBlockedText');
+const ruleSameDayText = document.getElementById('ruleSameDayText');
+const ruleAdjacentText = document.getElementById('ruleAdjacentText');
+const ruleMeetingText = document.getElementById('ruleMeetingText');
 const rulePublicLeaveSettingInput = document.getElementById('rulePublicLeaveInput');
 const ruleConsecutiveInput = document.getElementById('ruleConsecutiveInput');
 const ruleTurnaroundInput = document.getElementById('ruleTurnaroundInput');
 const ruleNightStartInput = document.getElementById('ruleNightStartInput');
 const ruleNightEndInput = document.getElementById('ruleNightEndInput');
+const ruleSameDayEnabled = document.getElementById('ruleSameDayEnabled');
+const ruleSameDayGrouping = document.getElementById('ruleSameDayGrouping');
+const ruleSameDayMax = document.getElementById('ruleSameDayMax');
+const ruleAdjacentEnabled = document.getElementById('ruleAdjacentEnabled');
+const ruleTurnaroundEnabled = document.getElementById('ruleTurnaroundEnabled');
+const ruleMeetingDefaultInput = document.getElementById('ruleMeetingDefaultInput');
 const ruleSettingsCancel = document.getElementById('ruleSettingsCancel');
 const ruleSettingsApply = document.getElementById('ruleSettingsApply');
 
@@ -28,6 +39,7 @@ const specialModeButton = document.getElementById('specialModeButton');
 const nightModeButton = document.getElementById('nightModeButton');
 const leaveTypeModeButton = document.getElementById('leaveTypeModeButton');
 const meetingModeButton = document.getElementById('meetingModeButton');
+const noteModeButton = document.getElementById('noteModeButton');
 const shiftConfigButton = document.getElementById('shiftConfigButton');
 const leaveCheckButton = document.getElementById('leaveCheckButton');
 const ruleCheckButton = document.getElementById('ruleCheckButton');
@@ -77,6 +89,13 @@ const leaveTypeDialog = document.getElementById('leaveTypeDialog');
 const leaveTypeMessage = document.getElementById('leaveTypeMessage');
 const leaveTypeChoices = document.getElementById('leaveTypeChoices');
 const leaveTypeCancel = document.getElementById('leaveTypeCancel');
+const leaveNoteDialog = document.getElementById('leaveNoteDialog');
+const leaveNoteMessage = document.getElementById('leaveNoteMessage');
+const leaveNoteQuickChoices = document.getElementById('leaveNoteQuickChoices');
+const leaveNoteCustomInput = document.getElementById('leaveNoteCustomInput');
+const leaveNoteNoNote = document.getElementById('leaveNoteNoNote');
+const leaveNoteApplyCustom = document.getElementById('leaveNoteApplyCustom');
+const leaveNoteBack = document.getElementById('leaveNoteBack');
 
 const specialTimeDialog = document.getElementById('specialTimeDialog');
 const specialTimeMessage = document.getElementById('specialTimeMessage');
@@ -93,6 +112,15 @@ const nightTimeEndInput = document.getElementById('nightTimeEndInput');
 const nightTimeApply = document.getElementById('nightTimeApply');
 const nightTimeRemove = document.getElementById('nightTimeRemove');
 const nightTimeBack = document.getElementById('nightTimeBack');
+const dayNoteDialog = document.getElementById('dayNoteDialog');
+const dayNoteMessage = document.getElementById('dayNoteMessage');
+const dayNoteInput = document.getElementById('dayNoteInput');
+const dayNoteCount = document.getElementById('dayNoteCount');
+const extraLeaveLetter = document.getElementById('extraLeaveLetter');
+const extraLeaveType = document.getElementById('extraLeaveType');
+const extraLeaveNote = document.getElementById('extraLeaveNote');
+const dayNoteApply = document.getElementById('dayNoteApply');
+const dayNoteBack = document.getElementById('dayNoteBack');
 
 const leaveCheckDialog = document.getElementById('leaveCheckDialog');
 const leaveCheckMessage = document.getElementById('leaveCheckMessage');
@@ -116,31 +144,55 @@ const outputTimeYes = document.getElementById('outputTimeYes');
 const outputTimeNo = document.getElementById('outputTimeNo');
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-const shifts = [
-  { label: '07 ~ 15', groupLabel: '早' },
-  { label: '15 ~ 23', groupLabel: '中' },
-  { label: '16 ~ 24', groupLabel: '中' },
-  { label: '23 ~ 07', groupLabel: '夜' },
-  { label: '00 ~ 08', groupLabel: '夜' }
-];
+const DEFAULT_SHIFT_RANGES = Object.freeze(['07~15', '15~23', '16~24', '23~07', '00~08']);
+const SHIFT_GROUP_LABELS = Object.freeze(['早', '中', '中', '夜', '夜']);
+let shiftRanges = [...DEFAULT_SHIFT_RANGES];
+
+function formatShiftRangeLabel(rangeText) {
+  return String(rangeText || '').replace(/\s+/g, '').replace('~', ' ~ ');
+}
+
+const shifts = DEFAULT_SHIFT_RANGES.map((rangeText, index) => ({
+  label: formatShiftRangeLabel(rangeText),
+  groupLabel: SHIFT_GROUP_LABELS[index]
+}));
+
+function syncShiftLabels() {
+  shifts.forEach((shift, index) => {
+    shift.label = formatShiftRangeLabel(shiftRanges[index] || DEFAULT_SHIFT_RANGES[index]);
+  });
+}
 
 const LEAVE_TYPE_LABELS = Object.freeze({
   public: '公休',
   annual: '特休',
   leave: '請假',
-  personal: '請假',
-  bereavement: '請假',
-  other: '請假',
   exceptionPublic: '例外排休'
 });
-const FORMAL_LEAVE_TYPES = new Set(['leave', 'personal', 'bereavement', 'other']);
+const FORMAL_LEAVE_TYPES = new Set(['leave']);
+const SAME_DAY_GROUPING_LABELS = Object.freeze({
+  separate: '早｜中｜夜',
+  'early-middle': '早中｜夜',
+  'early-night': '早夜｜中',
+  'middle-night': '早｜中夜',
+  all: '早中夜'
+});
 
 const storage = window.ShiftRosterStorage || null;
 const DEFAULT_SETTINGS = Object.freeze({
   publicLeaveCount: 8,
   maxConsecutiveWorkDays: 6,
   minTurnaroundHours: 12,
-  normalNightRange: '22~06'
+  turnaroundEnabled: true,
+  normalNightRange: '22~06',
+  shiftRanges: [...DEFAULT_SHIFT_RANGES],
+  blockedWeekdays: [6],
+  blockedLeaveTypes: ['public', 'annual'],
+  sameDayLeaveEnabled: true,
+  sameDayLeaveGrouping: 'early-middle',
+  sameDayLeaveMax: 1,
+  adjacentLeaveEnabled: true,
+  meetingDefaultText: '8點櫃檯開會'
 });
 
 // ===== 畫面工作狀態：月份切換時由本機資料層載入／保存。 =====
@@ -151,14 +203,27 @@ let publicLeaveCount = '8';
 let maxConsecutiveWorkDays = 6;
 let minTurnaroundHours = 12;
 let normalNightRange = '22~06';
+let turnaroundEnabled = true;
+let blockedWeekdays = new Set([6]);
+let blockedLeaveTypes = new Set(['public', 'annual']);
+let sameDayLeaveEnabled = true;
+let sameDayLeaveGrouping = 'early-middle';
+let sameDayLeaveMax = 1;
+let adjacentLeaveEnabled = true;
+let meetingDefaultText = '8點櫃檯開會';
 const rosterValues = new Map();
 const blockedVacationOverrides = new Map();
 const specialShiftCells = new Set();
 const nightShiftOverrides = new Map();
 const leaveTypeValues = new Map();
+const leaveNoteValues = new Map();
+const manualNoteValues = new Map();
+const extraLeaveValues = new Map();
+const meetingNoteValues = new Map();
 const specialShiftTimes = new Map();
 const nightShiftTimes = new Map();
 const meetingDays = new Set();
+const annualLeaveReminderSeen = new Set();
 const personnelShiftValues = new Map();
 
 let blockModeEnabled = false;
@@ -166,13 +231,16 @@ let specialModeEnabled = false;
 let nightModeEnabled = false;
 let leaveTypeModeEnabled = false;
 let meetingModeEnabled = false;
+let noteModeEnabled = false;
 let selectedRowFillShiftIndex = null;
 let conflictChoiceResolver = null;
 let blockedLeaveResolver = null;
 let leaveTypeResolver = null;
+let leaveNoteResolver = null;
 let outputTimeResolver = null;
 let specialTimeContext = null;
 let nightTimeContext = null;
+let dayNoteContext = null;
 let leaveCheckItems = [];
 let leaveCheckIndex = 0;
 let leaveCheckCompleteMode = false;
@@ -180,7 +248,6 @@ let ruleCheckItems = [];
 let ruleCheckIndex = 0;
 let ruleCheckCompleteMode = false;
 
-const BATCH_PUBLIC_LEAVE_MAX = 8;
 let batchLeaveLetter = null;
 let batchLeaveSelectedDays = new Set();
 let batchLeaveFailedDays = [];
@@ -213,16 +280,125 @@ function formatRuleNumber(value) {
   return Number.isInteger(number) ? String(number) : String(number).replace(/\.0+$/, '');
 }
 
+function normalizeClockSetting(value, allow24 = false) {
+  let text = String(value || '').trim().replace(/[：]/g, ':').replace(/\s+/g, '');
+  if (/^\d{3,4}$/.test(text)) {
+    text = `${text.slice(0, -2)}:${text.slice(-2)}`;
+  }
+  const match = text.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+  if (!match) return '';
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || minute < 0 || minute > 59) return '';
+  if (hour === 24) {
+    if (!allow24 || minute !== 0) return '';
+    return '24';
+  }
+  if (hour < 0 || hour > 23) return '';
+  const hh = String(hour).padStart(2, '0');
+  return minute === 0 ? hh : `${hh}:${String(minute).padStart(2, '0')}`;
+}
+
+function buildShiftRangeFromInputs(startInput, endInput) {
+  const start = normalizeClockSetting(startInput?.value, false);
+  const end = normalizeClockSetting(endInput?.value, true);
+  if (!start || !end) return '';
+  const range = `${start}~${end}`;
+  return window.ShiftRosterRules?.parseTimeRange(range) ? range : '';
+}
+
+function fillShiftTimeEditor() {
+  shiftRanges.forEach((rangeText, index) => {
+    const parsed = window.ShiftRosterRules?.parseTimeRange(rangeText);
+    const startInput = document.querySelector(`[data-shift-time-start="${index}"]`);
+    const endInput = document.querySelector(`[data-shift-time-end="${index}"]`);
+    if (!startInput || !endInput || !parsed) return;
+    startInput.value = normalizeClockSetting(
+      parsed.start.minute ? `${parsed.start.hour}:${String(parsed.start.minute).padStart(2, '0')}` : String(parsed.start.hour),
+      false
+    );
+    endInput.value = normalizeClockSetting(
+      parsed.end.minute ? `${parsed.end.hour}:${String(parsed.end.minute).padStart(2, '0')}` : String(parsed.end.hour),
+      true
+    );
+  });
+}
+
+function getShiftGroupDetail(groupKey, separator = '、') {
+  const indexes = groupKey === 'early'
+    ? [0]
+    : groupKey === 'middle'
+      ? [1, 2]
+      : groupKey === 'night'
+        ? [3, 4]
+        : groupKey === 'day'
+          ? [0, 1, 2]
+          : [];
+  return indexes.map((index) => shiftRanges[index]).filter(Boolean).join(separator);
+}
+
+function renderShiftSettingText() {
+  if (ruleShiftTimesText) {
+    ruleShiftTimesText.textContent = `早 ${getShiftGroupDetail('early')}｜中 ${getShiftGroupDetail('middle')}｜夜 ${getShiftGroupDetail('night')}`;
+  }
+  document.querySelectorAll('[data-shift-range-index]').forEach((node) => {
+    const index = Number(node.dataset.shiftRangeIndex);
+    if (Number.isInteger(index) && shiftRanges[index]) node.textContent = shiftRanges[index];
+  });
+  document.querySelectorAll('[data-shift-group-detail]').forEach((node) => {
+    const group = node.dataset.shiftGroupDetail;
+    if (!group) return;
+    node.textContent = getShiftGroupDetail(group);
+  });
+}
+
+function getCheckedValues(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  return [...container.querySelectorAll('input[type="checkbox"]:checked')].map((input) => input.value);
+}
+
+function setCheckedValues(containerId, values) {
+  const selected = new Set((values || []).map(String));
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = selected.has(String(input.value));
+  });
+}
+
+function formatBlockedWeekdayText() {
+  if (!blockedWeekdays.size) return '無預設禁休';
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  return order.filter((day) => blockedWeekdays.has(day)).map((day) => weekdays[day]).join('、');
+}
+
+function formatBlockedLeaveTypeText() {
+  const labels = [];
+  if (blockedLeaveTypes.has('public')) labels.push('公休');
+  if (blockedLeaveTypes.has('annual')) labels.push('特休');
+  return labels.length ? labels.join('、') : '不限制假別';
+}
+
 function renderRuleSettingsPage() {
   const publicLeave = publicLeaveCount || '8';
   rulePublicLeaveText.textContent = publicLeave;
   ruleConsecutiveText.textContent = String(maxConsecutiveWorkDays);
-  ruleTurnaroundText.textContent = formatRuleNumber(minTurnaroundHours);
+  ruleTurnaroundText.textContent = turnaroundEnabled ? `${formatRuleNumber(minTurnaroundHours)} 小時` : '停用';
   ruleNightText.textContent = normalNightRange;
+  if (ruleBlockedText) ruleBlockedText.textContent = `${formatBlockedWeekdayText()}｜${formatBlockedLeaveTypeText()}`;
+  if (ruleSameDayText) {
+    ruleSameDayText.textContent = sameDayLeaveEnabled
+      ? `${SAME_DAY_GROUPING_LABELS[sameDayLeaveGrouping] || SAME_DAY_GROUPING_LABELS['early-middle']}；每組 ${sameDayLeaveMax} 人`
+      : '停用';
+  }
+  if (ruleAdjacentText) ruleAdjacentText.textContent = adjacentLeaveEnabled ? '啟用' : '停用';
+  if (ruleMeetingText) ruleMeetingText.textContent = meetingDefaultText || '8點櫃檯開會';
+  renderShiftSettingText();
 
   document.querySelectorAll('[data-rule-public-leave]').forEach((node) => { node.textContent = publicLeave; });
   document.querySelectorAll('[data-rule-consecutive]').forEach((node) => { node.textContent = String(maxConsecutiveWorkDays); });
-  document.querySelectorAll('[data-rule-turnaround]').forEach((node) => { node.textContent = formatRuleNumber(minTurnaroundHours); });
+  document.querySelectorAll('[data-rule-turnaround]').forEach((node) => { node.textContent = turnaroundEnabled ? `${formatRuleNumber(minTurnaroundHours)} 小時` : '停用'; });
   document.querySelectorAll('[data-rule-night]').forEach((node) => { node.textContent = normalNightRange; });
 }
 
@@ -230,7 +406,16 @@ function openRuleSettingsEditor() {
   rulePublicLeaveSettingInput.value = publicLeaveCount || '8';
   ruleConsecutiveInput.value = String(maxConsecutiveWorkDays);
   ruleTurnaroundInput.value = formatRuleNumber(minTurnaroundHours);
+  ruleTurnaroundEnabled.checked = turnaroundEnabled;
   fillHourPair(ruleNightStartInput, ruleNightEndInput, normalNightRange);
+  fillShiftTimeEditor();
+  setCheckedValues('ruleBlockedWeekdays', [...blockedWeekdays]);
+  setCheckedValues('ruleBlockedLeaveTypes', [...blockedLeaveTypes]);
+  ruleSameDayEnabled.checked = sameDayLeaveEnabled;
+  ruleSameDayGrouping.value = sameDayLeaveGrouping;
+  ruleSameDayMax.value = String(sameDayLeaveMax);
+  ruleAdjacentEnabled.checked = adjacentLeaveEnabled;
+  ruleMeetingDefaultInput.value = meetingDefaultText;
   ruleSettingsEditor.hidden = false;
   editRuleSettingsButton.hidden = true;
   requestAnimationFrame(() => rulePublicLeaveSettingInput.focus());
@@ -246,6 +431,16 @@ function applyRuleSettings() {
   const nextConsecutive = Number.parseInt(ruleConsecutiveInput.value, 10);
   const nextTurnaround = Number(ruleTurnaroundInput.value);
   const nextNight = buildHourRange(ruleNightStartInput, ruleNightEndInput);
+  const nextShiftRanges = DEFAULT_SHIFT_RANGES.map((_range, index) => {
+    const startInput = document.querySelector(`[data-shift-time-start="${index}"]`);
+    const endInput = document.querySelector(`[data-shift-time-end="${index}"]`);
+    return buildShiftRangeFromInputs(startInput, endInput);
+  });
+  const nextBlockedWeekdays = getCheckedValues('ruleBlockedWeekdays').map(Number).filter((value) => Number.isInteger(value) && value >= 0 && value <= 6);
+  const nextBlockedLeaveTypes = getCheckedValues('ruleBlockedLeaveTypes').filter((value) => ['public', 'annual'].includes(value));
+  const nextSameDayMax = Number.parseInt(ruleSameDayMax.value, 10);
+  const nextGrouping = String(ruleSameDayGrouping.value || 'early-middle');
+  const nextMeetingText = Array.from(String(ruleMeetingDefaultInput.value || '').trim()).slice(0, 10).join('');
 
   if (!Number.isInteger(nextPublicLeave) || nextPublicLeave < 1 || nextPublicLeave > 31) {
     window.alert('每月公休請輸入 1～31 天。');
@@ -263,13 +458,40 @@ function applyRuleSettings() {
     window.alert('灰底預設時間請分別輸入開始與結束小時，例如 22、06。');
     return;
   }
+  const invalidShiftIndex = nextShiftRanges.findIndex((range) => !range);
+  if (invalidShiftIndex !== -1) {
+    window.alert(`第 ${invalidShiftIndex + 1} 個班別時間格式不正確。可輸入 07、07:30、24 等格式。`);
+    return;
+  }
+  if (!Number.isInteger(nextSameDayMax) || nextSameDayMax < 1 || nextSameDayMax > 6) {
+    window.alert('同組同日最多排休請輸入 1～6 人。');
+    return;
+  }
+  if (!Object.prototype.hasOwnProperty.call(SAME_DAY_GROUPING_LABELS, nextGrouping)) {
+    window.alert('同日排休分組設定不正確。');
+    return;
+  }
+  if (!nextMeetingText) {
+    window.alert('開會預設備註不可空白。');
+    return;
+  }
 
   publicLeaveCount = String(nextPublicLeave);
   maxConsecutiveWorkDays = nextConsecutive;
   minTurnaroundHours = nextTurnaround;
+  turnaroundEnabled = Boolean(ruleTurnaroundEnabled.checked);
   normalNightRange = nextNight;
+  shiftRanges = [...nextShiftRanges];
+  blockedWeekdays = new Set(nextBlockedWeekdays);
+  blockedLeaveTypes = new Set(nextBlockedLeaveTypes);
+  sameDayLeaveEnabled = Boolean(ruleSameDayEnabled.checked);
+  sameDayLeaveGrouping = nextGrouping;
+  sameDayLeaveMax = nextSameDayMax;
+  adjacentLeaveEnabled = Boolean(ruleAdjacentEnabled.checked);
+  meetingDefaultText = nextMeetingText;
+  syncShiftLabels();
   publicLeaveInput.textContent = publicLeaveCount;
-  renderSummary();
+  render();
   renderRuleSettingsPage();
   persistGlobalSettings();
   closeRuleSettingsEditor();
@@ -325,6 +547,12 @@ function makeNightShiftKey(year, month, day, shiftIndex) {
 function makeMeetingDayKey(year, month, day) {
   return `${year}-${month}-${day}-meeting`;
 }
+function makeDayValueKey(year, month, day) {
+  return `${year}-${month}-${day}`;
+}
+function makeAnnualReminderKey(year, month, employeeId) {
+  return `${year}-${month}-${employeeId}`;
+}
 function makePersonnelShiftKey(year, month, letter) {
   return `${year}-${month}-${letter}-personnel-shifts`;
 }
@@ -379,11 +607,16 @@ function clearMonthMemory(year, month) {
   clearMapKeysForMonth(blockedVacationOverrides, year, month);
   clearMapKeysForMonth(nightShiftOverrides, year, month);
   clearMapKeysForMonth(leaveTypeValues, year, month);
+  clearMapKeysForMonth(leaveNoteValues, year, month);
+  clearMapKeysForMonth(manualNoteValues, year, month);
+  clearMapKeysForMonth(extraLeaveValues, year, month);
+  clearMapKeysForMonth(meetingNoteValues, year, month);
   clearMapKeysForMonth(specialShiftTimes, year, month);
   clearMapKeysForMonth(nightShiftTimes, year, month);
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
+  clearSetKeysForMonth(annualLeaveReminderSeen, year, month);
 }
 
 function buildCurrentMonthSnapshot() {
@@ -409,11 +642,16 @@ function buildCurrentMonthSnapshot() {
     specialShiftCells: serializeSetForMonth(specialShiftCells, year, month),
     nightShiftOverrides: serializeMapForMonth(nightShiftOverrides, year, month),
     leaveTypeValues: serializeMapForMonth(leaveTypeValues, year, month),
+    leaveNoteValues: serializeMapForMonth(leaveNoteValues, year, month),
+    manualNotes: serializeMapForMonth(manualNoteValues, year, month),
+    extraLeaves: serializeMapForMonth(extraLeaveValues, year, month),
+    annualLeaveReminderSeen: serializeSetForMonth(annualLeaveReminderSeen, year, month),
     specialShiftTimes: serializeMapForMonth(specialShiftTimes, year, month),
     nightShiftTimes: serializeMapForMonth(nightShiftTimes, year, month),
     meetingDays: serializeSetForMonth(meetingDays, year, month)
       .map((suffix) => Number(String(suffix).replace(/-meeting$/, '')))
-      .filter((day) => Number.isInteger(day))
+      .filter((day) => Number.isInteger(day)),
+    meetingNoteValues: serializeMapForMonth(meetingNoteValues, year, month)
   };
 }
 
@@ -430,7 +668,16 @@ function persistGlobalSettings() {
     publicLeaveCount: Number.parseInt(publicLeaveCount || '8', 10) || 8,
     maxConsecutiveWorkDays,
     minTurnaroundHours,
-    normalNightRange
+    turnaroundEnabled,
+    normalNightRange,
+    shiftRanges: [...shiftRanges],
+    blockedWeekdays: [...blockedWeekdays].sort((a, b) => a - b),
+    blockedLeaveTypes: [...blockedLeaveTypes],
+    sameDayLeaveEnabled,
+    sameDayLeaveGrouping,
+    sameDayLeaveMax,
+    adjacentLeaveEnabled,
+    meetingDefaultText
   });
 }
 
@@ -440,7 +687,21 @@ function loadGlobalSettings() {
   publicLeaveCount = String(Number.parseInt(saved.publicLeaveCount, 10) || DEFAULT_SETTINGS.publicLeaveCount);
   maxConsecutiveWorkDays = Number.parseInt(saved.maxConsecutiveWorkDays, 10) || DEFAULT_SETTINGS.maxConsecutiveWorkDays;
   minTurnaroundHours = Number.isFinite(Number(saved.minTurnaroundHours)) ? Number(saved.minTurnaroundHours) : DEFAULT_SETTINGS.minTurnaroundHours;
+  turnaroundEnabled = typeof saved.turnaroundEnabled === 'boolean' ? saved.turnaroundEnabled : DEFAULT_SETTINGS.turnaroundEnabled;
   normalNightRange = String(saved.normalNightRange || DEFAULT_SETTINGS.normalNightRange);
+  blockedWeekdays = new Set((Array.isArray(saved.blockedWeekdays) ? saved.blockedWeekdays : DEFAULT_SETTINGS.blockedWeekdays).map(Number).filter((value) => Number.isInteger(value) && value >= 0 && value <= 6));
+  blockedLeaveTypes = new Set((Array.isArray(saved.blockedLeaveTypes) ? saved.blockedLeaveTypes : DEFAULT_SETTINGS.blockedLeaveTypes).filter((value) => ['public', 'annual'].includes(value)));
+  sameDayLeaveEnabled = typeof saved.sameDayLeaveEnabled === 'boolean' ? saved.sameDayLeaveEnabled : DEFAULT_SETTINGS.sameDayLeaveEnabled;
+  sameDayLeaveGrouping = Object.prototype.hasOwnProperty.call(SAME_DAY_GROUPING_LABELS, saved.sameDayLeaveGrouping) ? saved.sameDayLeaveGrouping : DEFAULT_SETTINGS.sameDayLeaveGrouping;
+  sameDayLeaveMax = Math.min(6, Math.max(1, Number.parseInt(saved.sameDayLeaveMax, 10) || DEFAULT_SETTINGS.sameDayLeaveMax));
+  adjacentLeaveEnabled = typeof saved.adjacentLeaveEnabled === 'boolean' ? saved.adjacentLeaveEnabled : DEFAULT_SETTINGS.adjacentLeaveEnabled;
+  meetingDefaultText = Array.from(String(saved.meetingDefaultText || DEFAULT_SETTINGS.meetingDefaultText)).slice(0, 10).join('');
+  const savedShiftRanges = Array.isArray(saved.shiftRanges) ? saved.shiftRanges : [];
+  shiftRanges = DEFAULT_SHIFT_RANGES.map((fallback, index) => {
+    const value = String(savedShiftRanges[index] || fallback).replace(/\s+/g, '');
+    return window.ShiftRosterRules?.parseTimeRange(value) ? value : fallback;
+  });
+  syncShiftLabels();
 }
 
 function loadMonthIntoMemory(year, month, data) {
@@ -484,8 +745,14 @@ function loadMonthIntoMemory(year, month, data) {
   }
   restoreMapForMonth(nightShiftOverrides, year, month, nightOverrides);
   restoreMapForMonth(leaveTypeValues, year, month, data?.leaveTypeValues);
+  restoreMapForMonth(leaveNoteValues, year, month, data?.leaveNoteValues);
+  restoreMapForMonth(manualNoteValues, year, month, data?.manualNotes);
+  restoreMapForMonth(extraLeaveValues, year, month, data?.extraLeaves);
+  restoreSetForMonth(annualLeaveReminderSeen, year, month, data?.annualLeaveReminderSeen);
   restoreMapForMonth(specialShiftTimes, year, month, data?.specialShiftTimes);
   restoreMapForMonth(nightShiftTimes, year, month, nightTimes);
+
+  restoreMapForMonth(meetingNoteValues, year, month, data?.meetingNoteValues);
 
   if (Array.isArray(data?.meetingDays)) {
     data.meetingDays.forEach((day) => {
@@ -627,7 +894,7 @@ function clearSetKeysForMonth(set, year, month) {
 }
 
 function getDefaultBlockedState(year, month, day) {
-  return getDayInfo(year, month, day).weekdayIndex === 6;
+  return blockedWeekdays.has(getDayInfo(year, month, day).weekdayIndex);
 }
 function isVacationBlocked(year, month, day) {
   const key = makeBlockedDayKey(year, month, day);
@@ -655,11 +922,18 @@ function setNightGrayState(year, month, day, shiftIndex, enabled) {
 }
 
 function getLeaveType(key) {
-  return leaveTypeValues.get(key) || 'public';
+  const value = leaveTypeValues.get(key) || 'public';
+  return ['public', 'annual', 'leave', 'exceptionPublic'].includes(value) ? value : 'leave';
 }
-function setLeaveType(key, type) {
-  if (!type || type === 'public') leaveTypeValues.delete(key);
-  else leaveTypeValues.set(key, type);
+function getLeaveNote(key) {
+  return String(leaveNoteValues.get(key) || '');
+}
+function setLeaveType(key, type, note = '') {
+  const normalized = ['public', 'annual', 'leave', 'exceptionPublic'].includes(type) ? type : 'public';
+  if (normalized === 'public') leaveTypeValues.delete(key);
+  else leaveTypeValues.set(key, normalized);
+  if (normalized === 'leave' && note) leaveNoteValues.set(key, Array.from(String(note)).slice(0, 4).join(''));
+  else leaveNoteValues.delete(key);
 }
 function isFormalLeaveType(type) {
   return FORMAL_LEAVE_TYPES.has(type || '');
@@ -668,19 +942,37 @@ function isFormalLeaveType(type) {
 function getVacationLettersForDay(year, month, day) {
   return [0, 1].map((slot) => {
     const key = makeRosterKey(year, month, day, 'vacation', slot);
-    return { key, slot, value: rosterValues.get(key) || '', type: getLeaveType(key) };
+    return { key, slot, value: rosterValues.get(key) || '', type: getLeaveType(key), note: getLeaveNote(key), extra: false };
   });
 }
+function getExtraLeaveForDay(year, month, day) {
+  const key = makeDayValueKey(year, month, day);
+  const raw = extraLeaveValues.get(key);
+  if (!raw || typeof raw !== 'object') return null;
+  const letter = cleanEnglishLetter(raw.letter || '');
+  if (!letter) return null;
+  const type = ['public', 'annual', 'leave', 'exceptionPublic'].includes(raw.type) ? raw.type : 'public';
+  const note = type === 'leave' ? Array.from(String(raw.note || '')).slice(0, 4).join('') : '';
+  return { key, slot: 2, value: letter, letter, type, note, extra: true };
+}
+function getAllLeaveEntriesForDay(year, month, day) {
+  const regular = getVacationLettersForDay(year, month, day);
+  const extra = getExtraLeaveForDay(year, month, day);
+  return extra ? [...regular, extra] : regular;
+}
 function hasVacationLetter(year, month, day, letter) {
-  return Boolean(letter) && getVacationLettersForDay(year, month, day).some((entry) => entry.value === letter);
+  return Boolean(letter) && getAllLeaveEntriesForDay(year, month, day).some((entry) => entry.value === letter);
 }
 function removeVacationLetter(year, month, day, letter) {
   getVacationLettersForDay(year, month, day).forEach((entry) => {
     if (entry.value === letter) {
       rosterValues.delete(entry.key);
       leaveTypeValues.delete(entry.key);
+      leaveNoteValues.delete(entry.key);
     }
   });
+  const extra = getExtraLeaveForDay(year, month, day);
+  if (extra?.value === letter) extraLeaveValues.delete(makeDayValueKey(year, month, day));
 }
 
 function isBatchPublicLeaveType(type) {
@@ -691,8 +983,13 @@ function removeBatchPublicVacationLetter(year, month, day, letter) {
     if (entry.value === letter && isBatchPublicLeaveType(entry.type)) {
       rosterValues.delete(entry.key);
       leaveTypeValues.delete(entry.key);
+      leaveNoteValues.delete(entry.key);
     }
   });
+  const extra = getExtraLeaveForDay(year, month, day);
+  if (extra?.value === letter && isBatchPublicLeaveType(extra.type)) {
+    extraLeaveValues.delete(makeDayValueKey(year, month, day));
+  }
 }
 
 function getShiftEntriesForDay(year, month, day) {
@@ -716,9 +1013,9 @@ function removeShiftLetterForDay(year, month, day, letter) {
 }
 
 const PERSONNEL_SHIFT_GROUPS = Object.freeze([
-  { key: 'early', label: '早班', detail: '07～15' },
-  { key: 'middle', label: '中班', detail: '15～23／16～00' },
-  { key: 'night', label: '夜班', detail: '23～07／00～08' }
+  { key: 'early', label: '早班' },
+  { key: 'middle', label: '中班' },
+  { key: 'night', label: '夜班' }
 ]);
 
 function getPersonnelShifts(year, month, letter) {
@@ -740,7 +1037,8 @@ function deactivateOtherModes(except) {
     special: () => setSpecialMode(false),
     night: () => setNightMode(false),
     leaveType: () => setLeaveTypeMode(false),
-    meeting: () => setMeetingMode(false)
+    meeting: () => setMeetingMode(false),
+    note: () => setNoteMode(false)
   };
   for (const [name, disable] of Object.entries(map)) if (name !== except) disable();
 }
@@ -779,6 +1077,13 @@ function setMeetingMode(enabled) {
   meetingModeButton.classList.toggle('is-active', meetingModeEnabled);
   meetingModeButton.setAttribute('aria-pressed', String(meetingModeEnabled));
   document.body.classList.toggle('meeting-mode', meetingModeEnabled);
+}
+function setNoteMode(enabled) {
+  noteModeEnabled = Boolean(enabled);
+  if (noteModeEnabled) deactivateOtherModes('note');
+  noteModeButton.classList.toggle('is-active', noteModeEnabled);
+  noteModeButton.setAttribute('aria-pressed', String(noteModeEnabled));
+  document.body.classList.toggle('note-mode', noteModeEnabled);
 }
 
 function showConflictChoice(message) {
@@ -837,6 +1142,24 @@ function resolveLeaveTypeChoice(type) {
   resolve(type);
 }
 
+function showLeaveNoteChoice({ message = '請假備註（選填）', currentNote = '' } = {}) {
+  if (leaveNoteResolver) leaveNoteResolver(null);
+  leaveNoteMessage.textContent = message;
+  leaveNoteCustomInput.value = currentNote && !['病假', '事假', '公假', '婚假', '喪假'].includes(currentNote) ? currentNote : '';
+  leaveNoteDialog.hidden = false;
+  return new Promise((resolve) => {
+    leaveNoteResolver = resolve;
+    requestAnimationFrame(() => leaveNoteQuickChoices.querySelector('button')?.focus());
+  });
+}
+function resolveLeaveNoteChoice(note) {
+  if (!leaveNoteResolver) return;
+  const resolve = leaveNoteResolver;
+  leaveNoteResolver = null;
+  leaveNoteDialog.hidden = true;
+  resolve(note);
+}
+
 function openSpecialTimeDialog(year, month, day, shiftIndex) {
   const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
   const letter = rosterValues.get(key) || '';
@@ -846,7 +1169,7 @@ function openSpecialTimeDialog(year, month, day, shiftIndex) {
   }
   const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
   specialTimeContext = { year, month, day, shiftIndex, key, specialKey, letter };
-  specialTimeMessage.textContent = `${month}/${day}　${letter}　特殊班實際時間`;
+  specialTimeMessage.textContent = `${month}/${day}　${letter}　粉底設定\n實際時間可留空；留空時沿用班別時間 ${shifts[shiftIndex]?.label || ''}`;
   fillHourPair(specialTimeStartInput, specialTimeEndInput, specialShiftTimes.get(specialKey) || '');
   specialTimeDialog.hidden = false;
   requestAnimationFrame(() => specialTimeStartInput.focus());
@@ -857,9 +1180,26 @@ function closeSpecialTimeDialog() {
 }
 function applySpecialTime() {
   if (!specialTimeContext) return;
-  const value = buildHourRange(specialTimeStartInput, specialTimeEndInput);
+  const startText = cleanHourInput(specialTimeStartInput.value);
+  const endText = cleanHourInput(specialTimeEndInput.value);
+  specialTimeStartInput.value = startText;
+  specialTimeEndInput.value = endText;
+
+  if (!startText && !endText) {
+    specialShiftCells.add(specialTimeContext.specialKey);
+    specialShiftTimes.delete(specialTimeContext.specialKey);
+    closeSpecialTimeDialog();
+    render();
+    return;
+  }
+  if (!startText || !endText) {
+    window.alert('時間可以完全留空；若要輸入，請把開始與結束時間都填完整。');
+    (startText ? specialTimeEndInput : specialTimeStartInput).focus();
+    return;
+  }
+  const value = `${String(Number(startText)).padStart(2, '0')}~${String(Number(endText)).padStart(2, '0')}`;
   if (!window.ShiftRosterRules?.parseTimeRange(value)) {
-    window.alert('請分別輸入開始與結束小時，例如 12、20。');
+    window.alert('時間格式不正確，請分別輸入開始與結束小時，例如 12、20；或兩格都留空。');
     specialTimeStartInput.focus();
     return;
   }
@@ -868,6 +1208,7 @@ function applySpecialTime() {
   closeSpecialTimeDialog();
   render();
 }
+
 function removeSpecialTime() {
   if (!specialTimeContext) return;
   specialShiftCells.delete(specialTimeContext.specialKey);
@@ -953,11 +1294,16 @@ function clearCurrentMonth() {
   clearMapKeysForMonth(blockedVacationOverrides, year, month);
   clearMapKeysForMonth(nightShiftOverrides, year, month);
   clearMapKeysForMonth(leaveTypeValues, year, month);
+  clearMapKeysForMonth(leaveNoteValues, year, month);
+  clearMapKeysForMonth(manualNoteValues, year, month);
+  clearMapKeysForMonth(extraLeaveValues, year, month);
+  clearMapKeysForMonth(meetingNoteValues, year, month);
   clearMapKeysForMonth(specialShiftTimes, year, month);
   clearMapKeysForMonth(nightShiftTimes, year, month);
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
+  clearSetKeysForMonth(annualLeaveReminderSeen, year, month);
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeClearMonthDialog();
@@ -1067,12 +1413,13 @@ function renderShiftConfigPanel() {
       button.type = 'button';
       button.className = 'shift-config-option';
       button.setAttribute('aria-pressed', current.has(group.key) ? 'true' : 'false');
-      button.setAttribute('aria-label', `${letter} ${group.label} ${group.detail}`);
+      const groupDetail = getShiftGroupDetail(group.key, '／');
+      button.setAttribute('aria-label', `${letter} ${group.label} ${groupDetail}`);
 
       const label = document.createElement('strong');
       label.textContent = group.label;
       const detail = document.createElement('small');
-      detail.textContent = group.detail;
+      detail.textContent = groupDetail;
       button.append(label, detail);
 
       button.addEventListener('click', () => {
@@ -1087,6 +1434,55 @@ function renderShiftConfigPanel() {
     row.append(person, options);
     shiftConfigGrid.appendChild(row);
   }
+}
+
+function getEmployeeIdForLetter(letter) {
+  const index = String(letter || '').charCodeAt(0) - 65;
+  return index >= 0 && index < employeeIds.length ? employeeIds[index] || '' : '';
+}
+
+function getPreviousMonthAnnualCount(letter) {
+  if (!storage) return 0;
+  const employeeId = getEmployeeIdForLetter(letter);
+  if (!employeeId) return 0;
+  const { year, month } = getCurrentYearMonth();
+  const previous = storage.getPreviousYearMonth(year, month);
+  const data = storage.getMonth(previous.year, previous.month);
+  if (!data) return 0;
+  let previousLetter = '';
+  for (const [candidate, person] of Object.entries(data.people || {})) {
+    if (person?.employeeId === employeeId) {
+      previousLetter = candidate;
+      break;
+    }
+  }
+  if (!previousLetter) return 0;
+  const days = getDaysInMonth(previous.year, previous.month);
+  let count = 0;
+  for (let day = 1; day <= days; day += 1) {
+    for (let slot = 0; slot < 2; slot += 1) {
+      const rosterKey = `${day}-vacation-${slot}`;
+      if (String(data.rosterValues?.[rosterKey] || '') === previousLetter && String(data.leaveTypeValues?.[rosterKey] || 'public') === 'annual') count += 1;
+    }
+    const extra = data.extraLeaves?.[String(day)];
+    if (extra?.letter === previousLetter && extra?.type === 'annual') count += 1;
+  }
+  return count;
+}
+
+function maybeRemindPreviousAnnual(letter) {
+  const employeeId = getEmployeeIdForLetter(letter);
+  if (!employeeId) return;
+  const { year, month } = getCurrentYearMonth();
+  const reminderKey = makeAnnualReminderKey(year, month, employeeId);
+  if (annualLeaveReminderSeen.has(reminderKey)) return;
+  const previousCount = getPreviousMonthAnnualCount(letter);
+  if (!previousCount) return;
+  annualLeaveReminderSeen.add(reminderKey);
+  const index = letter.charCodeAt(0) - 65;
+  const person = names[index] ? `${letter} ${names[index]}` : letter;
+  window.alert(`${person} 上個月有排 ${previousCount} 天特休，記得確認本月特休天數是否已更新。`);
+  persistCurrentMonth();
 }
 
 function createLetterInput({ value = '', ariaLabel, onChange, className }) {
@@ -1109,21 +1505,22 @@ function createLetterInput({ value = '', ariaLabel, onChange, className }) {
   return input;
 }
 
-function restoreVacationEntry(key, inputElement, previousLetter, previousType) {
+function restoreVacationEntry(key, inputElement, previousLetter, previousType, previousNote = '') {
   if (previousLetter) rosterValues.set(key, previousLetter);
   else rosterValues.delete(key);
-  if (previousType && previousType !== 'public') leaveTypeValues.set(key, previousType);
-  else leaveTypeValues.delete(key);
+  setLeaveType(key, previousType || 'public', previousNote);
   inputElement.value = previousLetter;
 }
 
 async function handleVacationChange({ year, month, day, key, letter, inputElement }) {
   const previousLetter = inputElement.dataset.previousValue || '';
   const previousType = inputElement.dataset.previousType || 'public';
+  const previousNote = inputElement.dataset.previousNote || '';
 
   if (!letter) {
     rosterValues.delete(key);
     leaveTypeValues.delete(key);
+    leaveNoteValues.delete(key);
     render();
     return;
   }
@@ -1132,22 +1529,26 @@ async function handleVacationChange({ year, month, day, key, letter, inputElemen
     const choice = await showConflictChoice(`${month}/${day}　${letter} 已排班\n要以哪一種為準？`);
     if (choice === 'vacation') removeShiftLetterForDay(year, month, day, letter);
     else {
-      restoreVacationEntry(key, inputElement, previousLetter, previousType);
+      restoreVacationEntry(key, inputElement, previousLetter, previousType, previousNote);
       return;
     }
   }
 
   rosterValues.set(key, letter);
-  if (previousLetter !== letter) leaveTypeValues.delete(key);
+  if (previousLetter !== letter) {
+    leaveTypeValues.delete(key);
+    leaveNoteValues.delete(key);
+  }
 
-  if (isVacationBlocked(year, month, day)) {
+  if (isVacationBlocked(year, month, day) && blockedLeaveTypes.has('public')) {
     const blockedChoice = await showBlockedLeaveChoice(`${month}/${day} 為禁假日，${letter} 要如何處理？`);
     if (blockedChoice === 'exception') {
       setLeaveType(key, 'exceptionPublic');
     } else if (blockedChoice === 'formal') {
-      setLeaveType(key, 'leave');
+      const note = await showLeaveNoteChoice({ message: `${month}/${day}　${letter} 請假備註（選填）` });
+      setLeaveType(key, 'leave', note === null ? '' : note);
     } else {
-      restoreVacationEntry(key, inputElement, previousLetter, previousType);
+      restoreVacationEntry(key, inputElement, previousLetter, previousType, previousNote);
       render();
       return;
     }
@@ -1157,7 +1558,12 @@ async function handleVacationChange({ year, month, day, key, letter, inputElemen
 
   inputElement.dataset.previousValue = rosterValues.get(key) || '';
   inputElement.dataset.previousType = getLeaveType(key);
+  inputElement.dataset.previousNote = getLeaveNote(key);
   render();
+}
+
+function getBatchPublicLeaveMax() {
+  return Math.max(1, Number.parseInt(publicLeaveCount || '8', 10) || 8);
 }
 
 function renderBatchLeaveDates() {
@@ -1186,8 +1592,8 @@ function renderBatchLeaveDates() {
         batchLeaveSelectedDays.delete(day);
         batchLeaveHint.textContent = '點日期可複選；特休／請假請回班表單格輸入。';
       } else {
-        if (batchLeaveSelectedDays.size >= BATCH_PUBLIC_LEAVE_MAX) {
-          batchLeaveHint.textContent = `最多只能選 ${BATCH_PUBLIC_LEAVE_MAX} 天。`;
+        if (batchLeaveSelectedDays.size >= getBatchPublicLeaveMax()) {
+          batchLeaveHint.textContent = `最多只能選 ${getBatchPublicLeaveMax()} 天。`;
           return;
         }
         batchLeaveSelectedDays.add(day);
@@ -1199,8 +1605,8 @@ function renderBatchLeaveDates() {
     batchLeaveDates.appendChild(button);
   }
 
-  batchLeaveCount.textContent = `已選 ${batchLeaveSelectedDays.size} / ${BATCH_PUBLIC_LEAVE_MAX} 天`;
-  batchLeaveApply.disabled = batchLeaveSelectedDays.size < 1 || batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX;
+  batchLeaveCount.textContent = `已選 ${batchLeaveSelectedDays.size} / ${getBatchPublicLeaveMax()} 天`;
+  batchLeaveApply.disabled = batchLeaveSelectedDays.size < 1 || batchLeaveSelectedDays.size > getBatchPublicLeaveMax();
 }
 
 function openBatchLeaveDialog(letter) {
@@ -1213,8 +1619,8 @@ function openBatchLeaveDialog(letter) {
   batchLeaveSelectedDays = new Set(getPublicVacationDatesForLetter(year, month, batchLeaveLetter));
   batchLeaveFailedDays = [];
   batchLeaveMessage.textContent = `${batchLeaveLetter}｜${year} 年 ${month} 月批次排公休`;
-  batchLeaveHint.textContent = batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX
-    ? `目前已有 ${batchLeaveSelectedDays.size} 天公休；批次最多 ${BATCH_PUBLIC_LEAVE_MAX} 天，請先取消日期。`
+  batchLeaveHint.textContent = batchLeaveSelectedDays.size > getBatchPublicLeaveMax()
+    ? `目前已有 ${batchLeaveSelectedDays.size} 天公休；批次最多 ${getBatchPublicLeaveMax()} 天，請先取消日期。`
     : '點日期可複選；特休／請假請回班表單格輸入。';
   renderBatchLeaveDates();
   batchLeaveDialog.hidden = false;
@@ -1264,8 +1670,8 @@ function applyBatchLeave() {
     batchLeaveHint.textContent = '至少要選 1 天。';
     return;
   }
-  if (batchLeaveSelectedDays.size > BATCH_PUBLIC_LEAVE_MAX) {
-    batchLeaveHint.textContent = `最多只能選 ${BATCH_PUBLIC_LEAVE_MAX} 天。`;
+  if (batchLeaveSelectedDays.size > getBatchPublicLeaveMax()) {
+    batchLeaveHint.textContent = `最多只能選 ${getBatchPublicLeaveMax()} 天。`;
     return;
   }
 
@@ -1283,7 +1689,7 @@ function applyBatchLeave() {
 
   for (const day of [...selected].sort((a, b) => a - b)) {
     const entries = getVacationLettersForDay(year, month, day);
-    const ownEntry = entries.find((entry) => entry.value === letter);
+    const ownEntry = getAllLeaveEntriesForDay(year, month, day).find((entry) => entry.value === letter);
 
     if (ownEntry) {
       if (isBatchPublicLeaveType(ownEntry.type)) continue;
@@ -1332,6 +1738,14 @@ function makeTimeNoteLines(letter, value) {
   return [letter, start, '│', end];
 }
 
+function makeLeaveNoteLines(entry) {
+  if (!entry?.value) return [];
+  if (entry.type === 'annual') return [entry.value, '特', '休'];
+  if (entry.type === 'leave') return [entry.value, ...Array.from(entry.note || '請假')];
+  if (entry.extra && ['public', 'exceptionPublic'].includes(entry.type)) return [entry.value, '公', '休'];
+  return [];
+}
+
 function buildDayNotes(year, month, day) {
   const notes = [];
 
@@ -1347,17 +1761,98 @@ function buildDayNotes(year, month, day) {
     if (grayTime) notes.push({ kind: 'time', lines: makeTimeNoteLines(letter, grayTime) });
   }
 
-  for (const entry of getVacationLettersForDay(year, month, day)) {
-    if (!entry.value) continue;
-    if (entry.type === 'annual') notes.push({ kind: 'leave', lines: [entry.value, '特', '休'] });
-    if (isFormalLeaveType(entry.type)) notes.push({ kind: 'leave', lines: [entry.value, '請', '假'] });
+  for (const entry of getAllLeaveEntriesForDay(year, month, day)) {
+    const lines = makeLeaveNoteLines(entry);
+    if (lines.length) notes.push({ kind: 'leave', lines });
   }
 
   if (meetingDays.has(makeMeetingDayKey(year, month, day))) {
-    notes.push({ kind: 'meeting', lines: ['8', '點', '櫃', '檯', '開', '會'] });
+    const text = meetingNoteValues.get(makeDayValueKey(year, month, day)) || meetingDefaultText || '8點櫃檯開會';
+    notes.push({ kind: 'meeting', lines: Array.from(text) });
   }
 
+  const manual = String(manualNoteValues.get(makeDayValueKey(year, month, day)) || '');
+  if (manual) notes.push({ kind: 'manual', lines: Array.from(manual) });
+
   return notes;
+}
+
+function syncExtraLeaveNoteState() {
+  const enabled = extraLeaveType.value === 'leave' && Boolean(extraLeaveLetter.value);
+  extraLeaveNote.disabled = !enabled;
+  if (!enabled) extraLeaveNote.value = '';
+}
+
+function openDayNoteDialog(year, month, day) {
+  dayNoteContext = { year, month, day };
+  const dayKey = makeDayValueKey(year, month, day);
+  dayNoteMessage.textContent = `${month}/${day}　長條備註`;
+  dayNoteInput.value = String(manualNoteValues.get(dayKey) || '');
+  dayNoteCount.textContent = String(Array.from(dayNoteInput.value).length);
+
+  const currentExtra = getExtraLeaveForDay(year, month, day);
+  extraLeaveLetter.innerHTML = '<option value="">不設定</option>';
+  names.forEach((name, index) => {
+    const letter = String.fromCharCode(65 + index);
+    if (!String(name || '').trim() && currentExtra?.value !== letter) return;
+    const option = document.createElement('option');
+    option.value = letter;
+    option.textContent = name ? `${letter}. ${name}` : letter;
+    extraLeaveLetter.appendChild(option);
+  });
+  extraLeaveLetter.value = currentExtra?.value || '';
+  extraLeaveType.value = currentExtra?.type || 'public';
+  extraLeaveNote.value = currentExtra?.note || '';
+  syncExtraLeaveNoteState();
+  dayNoteDialog.hidden = false;
+  requestAnimationFrame(() => dayNoteInput.focus());
+}
+
+function closeDayNoteDialog() {
+  dayNoteDialog.hidden = true;
+  dayNoteContext = null;
+}
+
+function applyDayNote() {
+  if (!dayNoteContext) return;
+  const { year, month, day } = dayNoteContext;
+  const dayKey = makeDayValueKey(year, month, day);
+  const manual = Array.from(String(dayNoteInput.value || '').trim()).slice(0, 10).join('');
+  const letter = cleanEnglishLetter(extraLeaveLetter.value || '');
+  let nextExtra = null;
+
+  if (letter) {
+    const currentExtra = getExtraLeaveForDay(year, month, day);
+    const visibleEntries = getVacationLettersForDay(year, month, day).filter((entry) => entry.value);
+    if (!currentExtra && visibleEntries.length < 2) {
+      window.alert('休假欄還有空格，請先把人員填在上方休假格；第三人休假只在兩格都滿時使用。');
+      return;
+    }
+    if (visibleEntries.some((entry) => entry.value === letter)) {
+      window.alert(`${letter} 已經在當天休假格裡。`);
+      return;
+    }
+    if (hasShiftLetterForDay(year, month, day, letter)) {
+      window.alert(`${letter} 當天已排班，請先處理排班／休假衝突。`);
+      return;
+    }
+    const type = ['public', 'annual', 'leave', 'exceptionPublic'].includes(extraLeaveType.value) ? extraLeaveType.value : 'public';
+    const note = type === 'leave' ? Array.from(String(extraLeaveNote.value || '').trim()).slice(0, 4).join('') : '';
+    nextExtra = { letter, type, note };
+  }
+
+  if (manual) manualNoteValues.set(dayKey, manual);
+  else manualNoteValues.delete(dayKey);
+
+  if (nextExtra) {
+    extraLeaveValues.set(dayKey, nextExtra);
+    if (nextExtra.type === 'annual') maybeRemindPreviousAnnual(nextExtra.letter);
+  } else {
+    extraLeaveValues.delete(dayKey);
+  }
+
+  closeDayNoteDialog();
+  render();
 }
 
 function renderSchedule(year, month) {
@@ -1517,6 +2012,7 @@ function renderSchedule(year, month) {
       const key = makeRosterKey(year, month, day, 'vacation', slot);
       const currentValue = rosterValues.get(key) || '';
       const currentType = getLeaveType(key);
+      const currentNote = getLeaveNote(key);
       const input = createLetterInput({
         value: currentValue,
         ariaLabel: `${month}月${day}日 休假第${slot + 1}格`,
@@ -1527,9 +2023,10 @@ function renderSchedule(year, month) {
       });
       input.dataset.previousValue = currentValue;
       input.dataset.previousType = currentType;
+      input.dataset.previousNote = currentNote;
       input.dataset.leaveKey = key;
       input.classList.toggle('is-formal-leave', isFormalLeaveType(currentType));
-      input.title = currentValue ? `${LEAVE_TYPE_LABELS[currentType] || '公休'}；假別模式可修改` : '';
+      input.title = currentValue ? `${LEAVE_TYPE_LABELS[currentType] || '公休'}${currentNote ? `（${currentNote}）` : ''}；假別模式可修改` : '';
 
       input.addEventListener('pointerdown', (event) => {
         if (!leaveTypeModeEnabled) return;
@@ -1546,7 +2043,14 @@ function renderSchedule(year, month) {
         }
         const type = await showLeaveTypeChoice({ message: `${month}/${day}　${letter} 請選擇假別` });
         if (!type) return;
-        setLeaveType(key, type);
+        let note = '';
+        if (type === 'leave') {
+          const selectedNote = await showLeaveNoteChoice({ message: `${month}/${day}　${letter} 請假備註（選填）`, currentNote: getLeaveNote(key) });
+          if (selectedNote === null) return;
+          note = selectedNote;
+        }
+        setLeaveType(key, type, note);
+        if (type === 'annual') maybeRemindPreviousAnnual(letter);
         render();
       });
       inputs.appendChild(input);
@@ -1669,11 +2173,22 @@ function renderLower(year, month) {
     }
 
     td.addEventListener('click', (event) => {
+      if (noteModeEnabled) {
+        event.preventDefault();
+        openDayNoteDialog(year, month, day);
+        return;
+      }
       if (!meetingModeEnabled) return;
       event.preventDefault();
       const key = makeMeetingDayKey(year, month, day);
-      if (meetingDays.has(key)) meetingDays.delete(key);
-      else meetingDays.add(key);
+      const dayKey = makeDayValueKey(year, month, day);
+      if (meetingDays.has(key)) {
+        meetingDays.delete(key);
+        meetingNoteValues.delete(dayKey);
+      } else {
+        meetingDays.add(key);
+        meetingNoteValues.set(dayKey, meetingDefaultText);
+      }
       renderLower(year, month);
     });
     mainRow.appendChild(td);
@@ -1764,17 +2279,21 @@ function getActiveLettersForCurrentMonth() {
   const model = buildRuleModel();
   return window.ShiftRosterRules?.getActiveLetters(model) || [];
 }
-function getPublicVacationDatesForLetter(year, month, letter) {
-  const dates = [];
+function getLeaveSummaryForLetter(year, month, letter) {
+  const summary = { publicDates: [], annualDates: [], leaveDates: [], totalDates: [] };
   const days = getDaysInMonth(year, month);
   for (let day = 1; day <= days; day += 1) {
-    const match = getVacationLettersForDay(year, month, day).some((entry) => {
-      if (entry.value !== letter) return false;
-      return window.ShiftRosterRules?.isPublicLeaveType(entry.type) ?? ['public', 'exceptionPublic'].includes(entry.type);
-    });
-    if (match) dates.push(day);
+    const entry = getAllLeaveEntriesForDay(year, month, day).find((item) => item.value === letter);
+    if (!entry) continue;
+    summary.totalDates.push(day);
+    if ((window.ShiftRosterRules?.isPublicLeaveType(entry.type) ?? ['public', 'exceptionPublic'].includes(entry.type))) summary.publicDates.push(day);
+    else if (entry.type === 'annual') summary.annualDates.push(day);
+    else if (entry.type === 'leave') summary.leaveDates.push(day);
   }
-  return dates;
+  return summary;
+}
+function getPublicVacationDatesForLetter(year, month, letter) {
+  return getLeaveSummaryForLetter(year, month, letter).publicDates;
 }
 function buildLeaveCheckItems() {
   const { year, month } = getCurrentYearMonth();
@@ -1784,19 +2303,26 @@ function buildLeaveCheckItems() {
   for (const letter of activeLetters) {
     const index = letter.charCodeAt(0) - 65;
     if (index < 0 || index >= 6) continue;
-    const dates = getPublicVacationDatesForLetter(year, month, letter);
-    if (dates.length === target) continue;
-    items.push({ year, month, target, index, letter, name: names[index] || '', dates });
+    const summary = getLeaveSummaryForLetter(year, month, letter);
+    if (summary.publicDates.length === target) continue;
+    items.push({ year, month, target, index, letter, name: names[index] || '', ...summary });
   }
   return items;
 }
 function formatLeaveCheckMessage(item) {
   const person = item.name ? `${item.letter} ${item.name}` : item.letter;
-  const dateText = item.dates.length ? item.dates.map((day) => `${item.month}/${day}`).join('、') : '無';
-  const difference = item.dates.length - item.target;
-  const differenceText = difference < 0 ? `少 ${Math.abs(difference)} 天` : `多 ${difference} 天`;
-  return `${person} 已排公休 ${item.dates.length} 天（應排 ${item.target} 天，${differenceText}）\n公休日期：${dateText}\n\n特休／請假不計入這 ${item.target} 天。\n此排假是否正確？`;
+  const publicCount = item.publicDates.length;
+  const annualCount = item.annualDates.length;
+  const leaveCount = item.leaveDates.length;
+  const total = item.totalDates.length;
+  const composition = `共休 ${total} 天：公休 ${publicCount}、特休 ${annualCount}、請假 ${leaveCount}`;
+  const publicDateText = item.publicDates.length ? item.publicDates.map((day) => `${item.month}/${day}`).join('、') : '無';
+  if (publicCount > item.target) {
+    return `${person} ${composition}。\n公休比設定的 ${item.target} 天多 ${publicCount - item.target} 天。\n公休日期：${publicDateText}\n\n若多出的休假其實是特休／請假，請回班表設定假別。\n此排假是否正確？`;
+  }
+  return `${person} ${composition}。\n公休比設定的 ${item.target} 天少 ${item.target - publicCount} 天。\n公休日期：${publicDateText}\n\n特休／請假不會拿來補公休目標。\n此排假是否正確？`;
 }
+
 function showLeaveCheckItem() {
   const item = leaveCheckItems[leaveCheckIndex];
   if (!item) {
@@ -1851,7 +2377,8 @@ function getStoredRosterValue(monthData, day, type, index) {
 function getStoredActualRange(monthData, year, month, day, shiftIndex) {
   const specialKey = `${day}-shift-${shiftIndex}`;
   if (Array.isArray(monthData?.specialShiftCells) && monthData.specialShiftCells.includes(specialKey)) {
-    return monthData?.specialShiftTimes?.[specialKey] || null;
+    const specialTime = monthData?.specialShiftTimes?.[specialKey] || '';
+    if (specialTime) return specialTime;
   }
 
   const nightKey = `${day}-night-${shiftIndex}`;
@@ -1887,6 +2414,9 @@ function getStoredDayStatus(monthData, year, month, day, letter) {
     if (getStoredRosterValue(monthData, day, 'vacation', slot) === letter) {
       return { status: 'leave', workIntervals: [] };
     }
+  }
+  if (monthData?.extraLeaves?.[String(day)]?.letter === letter) {
+    return { status: 'leave', workIntervals: [] };
   }
   return { status: 'unknown', workIntervals: [] };
 }
@@ -1966,7 +2496,13 @@ function buildRuleModel() {
     settings: {
       maxConsecutiveDays: maxConsecutiveWorkDays,
       minTurnaroundHours,
-      normalNightRange
+      turnaroundEnabled,
+      normalNightRange,
+      blockedLeaveTypes: [...blockedLeaveTypes],
+      sameDayLeaveEnabled,
+      sameDayLeaveGrouping,
+      sameDayLeaveMax,
+      adjacentLeaveEnabled
     },
     employees: names.map((name, index) => {
       const letter = String.fromCharCode(65 + index);
@@ -1979,9 +2515,9 @@ function buildRuleModel() {
       return rosterValues.get(makeRosterKey(year, month, day, 'shift', shiftIndex)) || '';
     },
     getLeaveEntries(day) {
-      return getVacationLettersForDay(year, month, day)
+      return getAllLeaveEntriesForDay(year, month, day)
         .filter((entry) => entry.value)
-        .map((entry) => ({ letter: entry.value, type: entry.type, slot: entry.slot }));
+        .map((entry) => ({ letter: entry.value, type: entry.type, note: entry.note || '', slot: entry.slot, extra: Boolean(entry.extra) }));
     },
     isBlocked(day) {
       return isVacationBlocked(year, month, day);
@@ -2158,6 +2694,7 @@ specialModeButton.addEventListener('click', () => setSpecialMode(!specialModeEna
 nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled));
 leaveTypeModeButton.addEventListener('click', () => setLeaveTypeMode(!leaveTypeModeEnabled));
 meetingModeButton.addEventListener('click', () => setMeetingMode(!meetingModeEnabled));
+noteModeButton.addEventListener('click', () => setNoteMode(!noteModeEnabled));
 shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
 leaveCheckButton.addEventListener('click', startLeaveCheck);
@@ -2186,12 +2723,33 @@ leaveTypeChoices.addEventListener('click', (event) => {
 });
 leaveTypeCancel.addEventListener('click', () => resolveLeaveTypeChoice(null));
 
+leaveNoteQuickChoices.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-leave-note]');
+  if (button) resolveLeaveNoteChoice(button.dataset.leaveNote);
+});
+leaveNoteNoNote.addEventListener('click', () => resolveLeaveNoteChoice(''));
+leaveNoteApplyCustom.addEventListener('click', () => {
+  const note = Array.from(String(leaveNoteCustomInput.value || '').trim()).slice(0, 4).join('');
+  resolveLeaveNoteChoice(note);
+});
+leaveNoteBack.addEventListener('click', () => resolveLeaveNoteChoice(null));
+
 specialTimeApply.addEventListener('click', applySpecialTime);
 specialTimeRemove.addEventListener('click', removeSpecialTime);
 specialTimeBack.addEventListener('click', closeSpecialTimeDialog);
 nightTimeApply.addEventListener('click', applyNightTime);
 nightTimeRemove.addEventListener('click', removeNight);
 nightTimeBack.addEventListener('click', closeNightTimeDialog);
+
+dayNoteApply.addEventListener('click', applyDayNote);
+dayNoteBack.addEventListener('click', closeDayNoteDialog);
+dayNoteInput.addEventListener('input', () => {
+  const text = Array.from(String(dayNoteInput.value || '')).slice(0, 10).join('');
+  if (dayNoteInput.value !== text) dayNoteInput.value = text;
+  dayNoteCount.textContent = String(Array.from(text).length);
+});
+extraLeaveLetter.addEventListener('change', syncExtraLeaveNoteState);
+extraLeaveType.addEventListener('change', syncExtraLeaveNoteState);
 
 leaveCheckCorrect.addEventListener('click', handleLeaveCheckCorrect);
 leaveCheckIncorrect.addEventListener('click', handleLeaveCheckIncorrect);
@@ -2228,9 +2786,11 @@ document.addEventListener('keydown', (event) => {
   if (!batchLeaveResultDialog.hidden) return closeBatchLeaveResult();
   if (!batchLeaveDialog.hidden) return closeBatchLeaveDialog();
   if (!leaveTypeDialog.hidden) return resolveLeaveTypeChoice(null);
+  if (!leaveNoteDialog.hidden) return resolveLeaveNoteChoice(null);
   if (!blockedLeaveDialog.hidden) return resolveBlockedLeaveChoice('back');
   if (!specialTimeDialog.hidden) return closeSpecialTimeDialog();
   if (!nightTimeDialog.hidden) return closeNightTimeDialog();
+  if (!dayNoteDialog.hidden) return closeDayNoteDialog();
   if (!clearMonthDialog.hidden) return closeClearMonthDialog();
   if (!leaveCheckDialog.hidden) return handleLeaveCheckIncorrect();
   if (!ruleCheckDialog.hidden) return handleRuleCheckBack();
