@@ -70,20 +70,15 @@
     <details class="advanced-data-tools">
       <summary>進階資料管理</summary>
       <div class="advanced-data-tools-body">
-        <button id="specialDatesButton" type="button">特殊日期設定</button>
         <button id="cleanupHistoryButton" type="button">清除歷史月份</button>
       </div>
     </details>
-
-    <div id="specialDatesReminder" class="special-dates-reminder" hidden>
-      <span id="specialDatesReminderText"></span>
-      <button id="specialDatesReminderButton" type="button">設定明年特殊日期</button>
-    </div>
 
     <div class="controls-row controls-action-row" aria-label="其他操作">
       <button id="clearMonthButton" type="button">本月清空</button>
       <button id="printButton" type="button">列印</button>
       <button id="exportPngButton" type="button">匯出 PNG</button>
+      <button id="exportExcelButton" type="button">匯出 Excel</button>
     </div>
   </div>
 
@@ -317,33 +312,6 @@
     </div>
   </div>
 
-  <div id="specialDatesDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel special-dates-panel" role="dialog" aria-modal="true" aria-labelledby="specialDatesTitle">
-      <div class="special-dates-head">
-        <div>
-          <strong id="specialDatesTitle">年度休假／補班設定</strong>
-          <p>先選「休假日」或「補班日」，再點全年日期；同一天只會保留一種狀態。</p>
-        </div>
-        <button id="specialDatesClose" type="button" aria-label="關閉特殊日期設定">×</button>
-      </div>
-      <div class="special-dates-toolbar">
-        <label>年份
-          <input id="specialDatesYear" type="number" min="2000" max="2100" inputmode="numeric">
-        </label>
-        <div class="special-dates-mode" aria-label="特殊日期類型">
-          <button id="specialDatesHolidayMode" class="is-active" type="button" aria-pressed="true">休假日</button>
-          <button id="specialDatesWorkdayMode" type="button" aria-pressed="false">補班日</button>
-        </div>
-      </div>
-      <p id="specialDatesStatus" class="special-dates-status"></p>
-      <div id="specialDatesCalendars" class="special-dates-calendars" aria-label="全年日期複選"></div>
-      <div class="app-dialog-actions special-dates-actions">
-        <button id="specialDatesCancel" type="button">取消</button>
-        <button id="specialDatesApply" type="button">套用</button>
-      </div>
-    </div>
-  </div>
-
   <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
     <main class="sheet" id="sheet">
       <header class="sheet-title">
@@ -464,8 +432,7 @@
               <li>班表資料會自動保存在本機瀏覽器，不需要另外按「儲存」。</li>
               <li>「下載 JSON」會得到完整班表資料備份；「匯入 JSON」只接受本工具可辨識的備份格式，格式不符時不會修改現有資料。</li>
               <li>格式正確的 JSON 匯入會先提醒「將覆蓋目前所有本機班表資料與設定」，並提供取消／確認；確認後採整包覆蓋，不做合併。</li>
-              <li>「進階資料管理」預設收合，可開啟「特殊日期設定」一次複選全年休假日／補班日，也可手動清除指定月份以前的歷史資料；建議清除前先下載 JSON 備份。</li>
-              <li>年度特殊日期只改日期呈現與禁休預設：休假日以紅色顯示並預設禁休，補班日即使落在週六也改回一般工作日顯示並取消預設禁休；之後仍可用「禁休」模式逐日人工覆蓋。</li>
+              <li>「進階資料管理」預設收合，可手動清除指定月份以前的歷史資料；建議清除前先下載 JSON 備份。</li>
               <li>若要把整套單機程式搬到另一台電腦，應複製整個班表資料夾或 ZIP；JSON 只負責資料備份，不包含 HTML、CSS、JS 程式本體。</li>
               <li>「本月清空」會先跳出確認；目前設計會保留姓名與公休／特休數字，再清除當月排班與標記資料。</li>
             </ul>
@@ -715,5 +682,7 @@
   <script src="shift_roster_v1.js"></script>
   <script src="shift_roster_backup.js"></script>
   <script src="shift_roster_export.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="shift_roster_excel_export.js"></script>
 </body>
 </html>

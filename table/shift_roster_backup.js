@@ -67,7 +67,7 @@
 
   function showImportConfirm(payload, fileName) {
     pendingImport = payload;
-    importConfirmMessage.textContent = `即將匯入「${fileName}」。\n\n匯入後會覆蓋目前本機所有班表資料、年度特殊日期與設定。建議先下載 JSON 備份。`;
+    importConfirmMessage.textContent = `即將匯入「${fileName}」。\n\n匯入後會覆蓋目前本機所有班表資料與設定。建議先下載 JSON 備份。`;
     importConfirmDialog.hidden = false;
     requestAnimationFrame(() => importConfirmCancel.focus());
   }

@@ -8,6 +8,7 @@ shift_roster_v1｜櫃檯人員排班紀錄表（規則重整壓測版）
 - shift_roster_rules.js：獨立規則檢查
 - shift_roster_backup.js：JSON 備份 / 匯入
 - shift_roster_export.js：Canvas PNG / 列印
+- shift_roster_excel_export.js：目前月份 JSON snapshot → 同版 Excel 匯出
 
 本版規則重點：
 1. B～F 每人只能有一個固定班別：早班 / 中班 / 大夜。
@@ -51,11 +52,17 @@ shift_roster_v1｜櫃檯人員排班紀錄表（規則重整壓測版）
 
 測試期刻意把按鈕攤開；先求每條規則可單獨驗證，不處理介面收納與美化。
 
+Excel 匯出：
+- 「匯出 Excel」會先保存目前畫面，再直接在記憶體取得與「下載 JSON」相同結構的 snapshot，交給 Excel renderer 產生目前月份的 .xlsx。
+- 中間 JSON 不會下載、不需重新上傳；使用者只會收到 Excel。
+- Excel renderer 獨立放在 shift_roster_excel_export.js；主程式與 JSON 備份邏輯不重複實作。
+- 使用 ExcelJS 4.4.0 CDN；開啟頁面時需能載入該元件。
+
 資料版本（本輪清理）：
-- localStorage namespace：elitehotel:shift_roster:v3
-- schemaVersion：3
-- 備份 format：elitehotel-shift-roster-v3
-- 不讀取、不轉換舊版 v2 資料；舊 localStorage 即使仍存在也會被新版完全忽略。
+- localStorage namespace：elitehotel:shift_roster:v2
+- schemaVersion：2
+- 備份 format：elitehotel-shift-roster-v2
+- 不讀取、不轉換舊版 v1 資料；舊 localStorage 即使仍存在也會被新版完全忽略。
 - 已移除上一版遺留的「同日排休分組可切換／人數可調／相鄰排休開關／轉班開關」資料欄位；這些規則現在依定案內容固定。
 - 已移除舊特休提醒旗標與舊夜班灰底 key 相容程式。
 
@@ -65,14 +72,3 @@ shift_roster_v1｜櫃檯人員排班紀錄表（規則重整壓測版）
 - 更換人員身分時，不沿用原槽位的特休起始值；若有同一 employee ID 的前月資料就自動銜接，沒有前月資料但有到職日則依年資自動建立起點；若隔一段時間才重新使用，可在當月再次套用校正。
 - 特休以「自動計算為主、校正選填」：校正輸入本身不會改資料，必須按「套用校正」才生效；可在任何月份重複校正，按「取消校正」則回到系統依前月／到職日計算的值。
 - 完成後再次掃描：未引用函式 0、只宣告未使用的頂層變數 0、HTML 孤兒 ID 0、CSS 無宿主 selector 0；printImage 為匯出列印時動態建立節點，非死碼。
-
-
-年度特殊日期：
-- 使用「進階資料管理 → 特殊日期設定」開啟全年 12 個月日期選單。
-- 先選「休假日」或「補班日」，再複選日期，最後按「套用」一次保存全年設定。
-- 休假日：班表日期以紅色顯示，並成為禁休預設。
-- 補班日：即使原本是週六，也改回一般工作日呈現，並取消禁休預設。
-- 禁休優先序：單日人工修改 > 年度休假／補班設定 > 預設禁休星期。
-- 11、12 月若下一年度尚未設定，班表操作區會顯示下一年度設定提醒；其他月份不顯示提醒，仍可從進階資料管理手動開啟。
-- 年度特殊日期使用獨立年度 localStorage key，會一起包含在 JSON 備份／匯入中。
-- 本版 namespace / schema 已更新為 v3；依需求不讀取舊 v2 本機資料。

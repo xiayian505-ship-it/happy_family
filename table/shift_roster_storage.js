@@ -1,14 +1,13 @@
 (() => {
   'use strict';
 
-  const NAMESPACE = 'elitehotel:shift_roster:v3';
-  const SCHEMA_VERSION = 3;
-  const FORMAT = 'elitehotel-shift-roster-v3';
+  const NAMESPACE = 'elitehotel:shift_roster:v2';
+  const SCHEMA_VERSION = 2;
+  const FORMAT = 'elitehotel-shift-roster-v2';
   const META_KEY = `${NAMESPACE}:meta`;
   const SETTINGS_KEY = `${NAMESPACE}:settings`;
   const EMPLOYEES_KEY = `${NAMESPACE}:employees`;
   const MONTH_PREFIX = `${NAMESPACE}:month:`;
-  const SPECIAL_DAYS_PREFIX = `${NAMESPACE}:special-days:`;
 
   const memoryStore = new Map();
   let persistent = true;
@@ -120,76 +119,6 @@
 
   function makeMonthKey(year, month) {
     return `${MONTH_PREFIX}${makeMonthId(year, month)}`;
-  }
-
-  function makeSpecialDaysKey(year) {
-    return `${SPECIAL_DAYS_PREFIX}${Number(year)}`;
-  }
-
-  function normalizeSpecialDateList(year, values) {
-    const targetYear = Number(year);
-    if (!Number.isInteger(targetYear) || targetYear < 2000 || targetYear > 2100) return [];
-    const seen = new Set();
-    for (const value of Array.isArray(values) ? values : []) {
-      const text = String(value || '');
-      const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (!match || Number(match[1]) !== targetYear) continue;
-      const month = Number(match[2]);
-      const day = Number(match[3]);
-      if (month < 1 || month > 12) continue;
-      const daysInMonth = new Date(targetYear, month, 0).getDate();
-      if (day < 1 || day > daysInMonth) continue;
-      seen.add(`${targetYear}-${pad2(month)}-${pad2(day)}`);
-    }
-    return [...seen].sort();
-  }
-
-  function getSpecialDays(year) {
-    const targetYear = Number(year);
-    if (!Number.isInteger(targetYear) || targetYear < 2000 || targetYear > 2100) {
-      return { year: targetYear, configured: false, holidays: [], workdays: [] };
-    }
-    const raw = readObject(makeSpecialDaysKey(targetYear), {});
-    const holidays = normalizeSpecialDateList(targetYear, raw.holidays);
-    const holidaySet = new Set(holidays);
-    const workdays = normalizeSpecialDateList(targetYear, raw.workdays).filter((date) => !holidaySet.has(date));
-    return {
-      year: targetYear,
-      configured: raw.configured === true,
-      holidays,
-      workdays
-    };
-  }
-
-  function saveSpecialDays(year, data = {}) {
-    const targetYear = Number(year);
-    if (!Number.isInteger(targetYear) || targetYear < 2000 || targetYear > 2100) {
-      throw new Error('年度特殊日期年份格式不正確');
-    }
-    const holidays = normalizeSpecialDateList(targetYear, data.holidays);
-    const holidaySet = new Set(holidays);
-    const workdays = normalizeSpecialDateList(targetYear, data.workdays).filter((date) => !holidaySet.has(date));
-    const normalized = {
-      year: targetYear,
-      configured: data.configured !== false,
-      holidays,
-      workdays,
-      updatedAt: new Date().toISOString()
-    };
-    writeObject(makeSpecialDaysKey(targetYear), normalized);
-    return normalized;
-  }
-
-  function hasSpecialDaysConfig(year) {
-    return getSpecialDays(year).configured === true;
-  }
-
-  function listSpecialDayYears() {
-    return backendKeys()
-      .filter((key) => key.startsWith(SPECIAL_DAYS_PREFIX))
-      .map((key) => Number(key.slice(SPECIAL_DAYS_PREFIX.length)))
-      .filter((year) => Number.isInteger(year) && year >= 2000 && year <= 2100)
-      .sort((a, b) => a - b);
   }
 
   function getPreviousYearMonth(year, month) {
@@ -380,10 +309,6 @@
       const parsed = safeParse(backendGet(`${MONTH_PREFIX}${monthId}`), null);
       if (isPlainObject(parsed)) months[monthId] = parsed;
     }
-    const specialDays = {};
-    for (const year of listSpecialDayYears()) {
-      specialDays[String(year)] = getSpecialDays(year);
-    }
     const meta = getMeta();
     return {
       format: FORMAT,
@@ -392,8 +317,7 @@
       meta,
       settings: getSettings({}),
       employees: getEmployees(),
-      months,
-      specialDays
+      months
     };
   }
 
@@ -514,32 +438,6 @@
     if (!isPlainObject(payload.settings)) return { ok: false, error: 'settings 格式不正確。' };
     if (!isPlainObject(payload.employees)) return { ok: false, error: 'employees 格式不正確。' };
     if (!isPlainObject(payload.months)) return { ok: false, error: 'months 格式不正確。' };
-    if (!isPlainObject(payload.specialDays)) return { ok: false, error: 'specialDays 格式不正確。' };
-
-    for (const [yearText, data] of Object.entries(payload.specialDays)) {
-      const year = Number(yearText);
-      if (!Number.isInteger(year) || year < 2000 || year > 2100 || !isPlainObject(data)) {
-        return { ok: false, error: `年度特殊日期 ${yearText} 格式不正確。` };
-      }
-      if (data.year !== undefined && Number(data.year) !== year) {
-        return { ok: false, error: `年度特殊日期 ${yearText} 的年份不一致。` };
-      }
-      if (typeof data.configured !== 'boolean') {
-        return { ok: false, error: `年度特殊日期 ${yearText} 的設定狀態不正確。` };
-      }
-      const holidays = normalizeSpecialDateList(year, data.holidays);
-      const workdays = normalizeSpecialDateList(year, data.workdays);
-      if (!Array.isArray(data.holidays) || holidays.length !== data.holidays.length) {
-        return { ok: false, error: `年度特殊日期 ${yearText} 的休假日格式不正確。` };
-      }
-      if (!Array.isArray(data.workdays) || workdays.length !== data.workdays.length) {
-        return { ok: false, error: `年度特殊日期 ${yearText} 的補班日格式不正確。` };
-      }
-      const holidaySet = new Set(holidays);
-      if (workdays.some((date) => holidaySet.has(date))) {
-        return { ok: false, error: `年度特殊日期 ${yearText} 同一天不可同時是休假日與補班日。` };
-      }
-    }
 
     const settings = payload.settings;
     if (!Number.isInteger(Number(settings.publicLeaveCount)) || Number(settings.publicLeaveCount) < 1 || Number(settings.publicLeaveCount) > 31) return { ok: false, error: '每月公休設定格式不正確。' };
@@ -623,12 +521,6 @@
       for (const [monthId, monthData] of Object.entries(payload.months)) {
         backendSet(`${MONTH_PREFIX}${monthId}`, JSON.stringify(monthData));
       }
-      for (const [yearText, specialDaysData] of Object.entries(payload.specialDays)) {
-        backendSet(makeSpecialDaysKey(Number(yearText)), JSON.stringify({
-          ...specialDaysData,
-          year: Number(yearText)
-        }));
-      }
       return true;
     } catch (error) {
       restoreSnapshot(before);
@@ -651,10 +543,6 @@
     getEmployees,
     saveEmployees,
     resolveEmployee,
-    getSpecialDays,
-    saveSpecialDays,
-    hasSpecialDaysConfig,
-    listSpecialDayYears,
     removeMonthsBefore,
     exportPayload,
     validateBackup,
