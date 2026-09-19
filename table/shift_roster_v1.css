@@ -5144,3 +5144,140 @@ textarea,
 #settingsView .shift-config-option[aria-pressed="true"] small {
   color: #555;
 }
+
+/* =========================================================
+   2026-09｜班表選單依實際內容排版
+   - 不預留不存在的格子；同層最多 4 個，超過才換列。
+   - 展開下一層時，外層面板跟著實際內容寬度長大。
+   - 只有整體超過視窗時才由最外層 menu-panel 左右滑。
+========================================================= */
+#rosterView .menu-panel {
+  display: grid;
+  grid-auto-flow: row;
+  align-items: start;
+  gap: 0;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* details 只負責開關；summary 與展開內容直接參與父層 grid。 */
+#rosterView .menu-panel > .menu-branch,
+#rosterView .menu-branch-body > .menu-branch {
+  display: contents;
+}
+
+/* 本月班表設定：開會／禁休／假別／特殊，剛好 4 個，不留空格。 */
+#rosterView .toolbar-menu:not(.management-menu):not(.check-menu) > .menu-panel:has(#meetingModeButton) {
+  grid-template-columns: repeat(4, minmax(64px, max-content));
+}
+#rosterView .menu-panel:has(#meetingModeButton) > .menu-actions {
+  display: contents;
+}
+
+/* 管理第一層：一般管理／進階管理。 */
+#rosterView .management-menu > .menu-panel {
+  grid-template-columns: repeat(2, minmax(96px, max-content));
+}
+
+/* 本月班表檢查第一層：完整規則檢查／細項規則檢查。 */
+#rosterView .check-menu > .menu-panel {
+  grid-template-columns: repeat(2, minmax(120px, max-content));
+}
+
+/* 各分支的下一層本身也是「實際幾個就幾個」的 grid。 */
+#rosterView .menu-branch-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(96px, max-content));
+  grid-auto-flow: row;
+  align-items: start;
+  gap: 0;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  white-space: nowrap;
+  padding: 0;
+}
+
+/* 進階管理：特殊日期設定／清空班表文字較長。 */
+#rosterView .menu-branch-body:has(#specialDatesButton) {
+  grid-template-columns: repeat(2, minmax(112px, max-content));
+}
+
+/* 展開內容永遠從下一列左側開始；因此新內容不用再往右找。 */
+#rosterView .menu-branch > .menu-branch-body,
+#rosterView .menu-branch > .menu-actions {
+  grid-column: 1 / -1;
+}
+
+/* 同層按鈕／summary 吃滿自己的格子，但不跨級共用固定寬度。 */
+#rosterView .menu-panel > button,
+#rosterView .menu-panel > .menu-actions > button,
+#rosterView .menu-branch-body > button,
+#rosterView .menu-branch > summary {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 真正的末端操作：各層依自己的字數設定欄寬與實際欄數。 */
+#rosterView .menu-actions {
+  display: grid;
+  grid-auto-flow: row;
+  gap: 0;
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+  white-space: nowrap;
+  padding: 0;
+}
+#rosterView .menu-actions > button {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+#rosterView .menu-actions:has(#nightModeButton) {
+  grid-template-columns: repeat(2, 64px);
+}
+#rosterView .menu-actions:has(#printButton) {
+  grid-template-columns: repeat(3, 72px);
+}
+#rosterView .menu-actions:has(#importJsonButton) {
+  grid-template-columns: repeat(2, 96px);
+}
+#rosterView .menu-actions:has(#clearMonthButton) {
+  grid-template-columns: repeat(2, 120px);
+}
+#rosterView .menu-actions:has(#leaveCheckButton) {
+  grid-template-columns: repeat(4, 64px);
+}
+#rosterView .menu-actions:has(#checkFixedShiftButton) {
+  grid-template-columns: repeat(3, 64px);
+}
+
+@media (max-width: 760px) {
+  #rosterView .menu-panel {
+    max-width: calc(100vw - 16px);
+  }
+}
+
+/* =========================================================
+   2026-09｜班表檢查選單展開方向修正
+   - 手機版原規則把 check-menu 右對齊，內容增加時會往左長。
+   - 改為以「本月班表檢查」左側為起點往右延伸；超出時沿用面板橫向滑動。
+========================================================= */
+@media (max-width: 760px) {
+  #rosterView .check-menu .menu-panel {
+    left: 0;
+    right: auto;
+  }
+}
