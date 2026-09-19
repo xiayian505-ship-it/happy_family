@@ -44,6 +44,7 @@ const leaveTypeModeButton = document.getElementById('leaveTypeModeButton');
 const meetingModeButton = document.getElementById('meetingModeButton');
 const noteModeButton = document.getElementById('noteModeButton');
 const shiftConfigButton = document.getElementById('shiftConfigButton');
+const supervisorConfigButton = document.getElementById('supervisorConfigButton');
 const leaveCheckButton = document.getElementById('leaveCheckButton');
 const ruleCheckButton = document.getElementById('ruleCheckButton');
 const checkBlockedLeaveButton = document.getElementById('checkBlockedLeaveButton');
@@ -57,6 +58,19 @@ const checkConsecutiveButton = document.getElementById('checkConsecutiveButton')
 const checkTurnaroundButton = document.getElementById('checkTurnaroundButton');
 const checkScheduleAllButton = document.getElementById('checkScheduleAllButton');
 const clearMonthButton = document.getElementById('clearMonthButton');
+const specialDatesButton = document.getElementById('specialDatesButton');
+const specialDatesReminder = document.getElementById('specialDatesReminder');
+const specialDatesReminderText = document.getElementById('specialDatesReminderText');
+const specialDatesReminderButton = document.getElementById('specialDatesReminderButton');
+const specialDatesDialog = document.getElementById('specialDatesDialog');
+const specialDatesClose = document.getElementById('specialDatesClose');
+const specialDatesYear = document.getElementById('specialDatesYear');
+const specialDatesHolidayMode = document.getElementById('specialDatesHolidayMode');
+const specialDatesWorkdayMode = document.getElementById('specialDatesWorkdayMode');
+const specialDatesStatus = document.getElementById('specialDatesStatus');
+const specialDatesCalendars = document.getElementById('specialDatesCalendars');
+const specialDatesCancel = document.getElementById('specialDatesCancel');
+const specialDatesApply = document.getElementById('specialDatesApply');
 
 const scheduleTable = document.getElementById('scheduleTable');
 const lowerTable = document.getElementById('lowerTable');
@@ -85,8 +99,10 @@ const batchLeaveResultClose = document.getElementById('batchLeaveResultClose');
 
 const shiftConfigPanel = document.getElementById('shiftConfigPanel');
 const shiftConfigGrid = document.getElementById('shiftConfigGrid');
-const supervisorConfigBody = document.getElementById('supervisorConfigBody');
 const shiftConfigClose = document.getElementById('shiftConfigClose');
+const supervisorConfigPanel = document.getElementById('supervisorConfigPanel');
+const supervisorConfigBody = document.getElementById('supervisorConfigBody');
+const supervisorConfigClose = document.getElementById('supervisorConfigClose');
 
 const conflictDialog = document.getElementById('conflictDialog');
 const conflictDialogMessage = document.getElementById('conflictDialogMessage');
@@ -236,6 +252,10 @@ const meetingDays = new Set();
 const annualGrantDecisionValues = new Map();
 const annualBalanceCalibrationValues = new Map();
 const personnelShiftValues = new Map();
+const specialDaysCache = new Map();
+let specialDatesDraftYear = null;
+let specialDatesDraftMode = 'holiday';
+let specialDatesDraft = new Map();
 const supervisorLeaveDays = new Set();
 
 let blockModeEnabled = false;
@@ -283,6 +303,7 @@ function setMainView(view) {
   if (showRules) {
     closeRowFillPanel();
     closeShiftConfigPanel();
+    closeSupervisorConfigPanel();
     renderRuleSettingsPage();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -526,6 +547,59 @@ function getDayInfo(year, month, day) {
   };
 }
 
+function makeCalendarDateKey(year, month, day) {
+  return `${Number(year)}-${String(Number(month)).padStart(2, '0')}-${String(Number(day)).padStart(2, '0')}`;
+}
+
+function getSpecialDaysForYear(year) {
+  const targetYear = Number(year);
+  if (!Number.isInteger(targetYear)) {
+    return { configured: false, holidays: new Set(), workdays: new Set() };
+  }
+  if (specialDaysCache.has(targetYear)) return specialDaysCache.get(targetYear);
+  const raw = storage?.getSpecialDays?.(targetYear) || { configured: false, holidays: [], workdays: [] };
+  const normalized = {
+    configured: raw.configured === true,
+    holidays: new Set(Array.isArray(raw.holidays) ? raw.holidays : []),
+    workdays: new Set(Array.isArray(raw.workdays) ? raw.workdays : [])
+  };
+  specialDaysCache.set(targetYear, normalized);
+  return normalized;
+}
+
+function getAnnualSpecialDayType(year, month, day) {
+  const data = getSpecialDaysForYear(year);
+  const key = makeCalendarDateKey(year, month, day);
+  if (data.holidays.has(key)) return 'holiday';
+  if (data.workdays.has(key)) return 'workday';
+  return '';
+}
+
+function getCalendarVisualInfo(year, month, day) {
+  const info = getDayInfo(year, month, day);
+  const specialType = getAnnualSpecialDayType(year, month, day);
+  const weekendClass = specialType === 'workday' ? '' : info.className;
+  const specialClass = specialType === 'holiday'
+    ? 'is-calendar-holiday'
+    : specialType === 'workday'
+      ? 'is-calendar-workday'
+      : '';
+  return {
+    ...info,
+    specialType,
+    className: [weekendClass, specialClass].filter(Boolean).join(' ')
+  };
+}
+
+function clearSpecialDaysCache(year = null) {
+  if (year !== null && year !== undefined && Number.isInteger(Number(year))) {
+    specialDaysCache.delete(Number(year));
+  } else {
+    specialDaysCache.clear();
+  }
+}
+
+
 // 上方日期列採「兩白、兩灰」循環，且跨月份不中斷。
 // 以 2026/10/1～10/2 為白底基準。
 function getDateBandClass(year, month, day) {
@@ -688,6 +762,16 @@ function getSupervisorAnnualGrantEvent(year, month) {
   const base = getAnnualGrantEventForRecord(getSupervisorRecord(), year, month);
   if (!base) return null;
   return { ...base, baseDays: base.days, days: Math.ceil(Number(base.days || 0) / 2) };
+}
+
+function getSupervisorAnnualGrantNote(year, month, day) {
+  const supervisor = getSupervisorRecord();
+  if (!supervisor) return null;
+  const grant = getSupervisorAnnualGrantEvent(Number(year), Number(month));
+  if (!grant || Number(grant.day) !== Number(day) || Number(grant.days) <= 0) return null;
+  const code = cleanSupervisorCode(supervisor.code || '');
+  if (!code) return null;
+  return { kind: 'supervisor-annual-grant', lines: [code, String(grant.days)] };
 }
 
 function countAnnualLeaveInMonthData(monthData, letter) {
@@ -1120,6 +1204,9 @@ function clearSetKeysForMonth(set, year, month) {
 }
 
 function getDefaultBlockedState(year, month, day) {
+  const specialType = getAnnualSpecialDayType(year, month, day);
+  if (specialType === 'holiday') return true;
+  if (specialType === 'workday') return false;
   return blockedWeekdays.has(getDayInfo(year, month, day).weekdayIndex);
 }
 function isVacationBlocked(year, month, day) {
@@ -1552,6 +1639,7 @@ function clearCurrentMonth() {
   supervisorLeaveDays.clear();
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   closeClearMonthDialog();
   render();
 }
@@ -1647,6 +1735,7 @@ function openRowFillPanel(shiftIndex) {
   buildRowFillQuickLetters(shiftIndex);
   rowFillBar.hidden = false;
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   rowFillBar.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 function closeRowFillPanel() {
@@ -1682,6 +1771,7 @@ function buildRowFillQuickLetters(shiftIndex = selectedRowFillShiftIndex) {
 function openShiftConfigPanel() {
   commitAllVisibleNames();
   closeRowFillPanel();
+  closeSupervisorConfigPanel();
   renderShiftConfigPanel();
   shiftConfigPanel.hidden = false;
   shiftConfigButton.setAttribute('aria-expanded', 'true');
@@ -1694,6 +1784,24 @@ function closeShiftConfigPanel() {
 function toggleShiftConfigPanel() {
   if (shiftConfigPanel.hidden) openShiftConfigPanel();
   else closeShiftConfigPanel();
+}
+function openSupervisorConfigPanel() {
+  commitAllVisibleNames();
+  closeRowFillPanel();
+  closeShiftConfigPanel();
+  const { year, month } = getCurrentYearMonth();
+  renderSupervisorConfigPanel(year, month);
+  supervisorConfigPanel.hidden = false;
+  supervisorConfigButton.setAttribute('aria-expanded', 'true');
+  supervisorConfigPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function closeSupervisorConfigPanel() {
+  supervisorConfigPanel.hidden = true;
+  supervisorConfigButton.setAttribute('aria-expanded', 'false');
+}
+function toggleSupervisorConfigPanel() {
+  if (supervisorConfigPanel.hidden) openSupervisorConfigPanel();
+  else closeSupervisorConfigPanel();
 }
 function getAnnualBalanceSnapshot(index, year, month) {
   const balanceText = String(specialLeaveValues[index] || '').trim();
@@ -1989,7 +2097,6 @@ function renderShiftConfigPanel() {
     row.append(person, options, meta);
     shiftConfigGrid.appendChild(row);
   }
-  renderSupervisorConfigPanel(year, month);
 }
 
 function renderSupervisorConfigPanel(year, month) {
@@ -2058,6 +2165,7 @@ function renderSupervisorConfigPanel(year, month) {
     updateSupervisorRecord({ code: value });
     renderLower(year, month);
   });
+  codeInput.addEventListener('blur', () => renderSupervisorConfigPanel(year, month));
 
   const hireInput = document.createElement('input');
   hireInput.type = 'date';
@@ -2082,7 +2190,9 @@ function renderSupervisorConfigPanel(year, month) {
   if (!record.hireDate) {
     status.textContent = '輸入到職日後，主管特休會依一般特休天數折半，0.5 天進位。';
   } else if (grant) {
-    status.textContent = `${month}/${grant.day} ${grant.label}：主管特休 ${grant.days} 天（一般 ${grant.baseDays} 天 ÷ 2）`;
+    const code = cleanSupervisorCode(record.code || '');
+    const notePreview = code ? `；長條顯示 ${code} / ${grant.days}` : '；請先輸入主管代號才會顯示長條';
+    status.textContent = `${month}/${grant.day} ${grant.label}：主管特休 ${grant.days} 天（一般 ${grant.baseDays} 天 ÷ 2）${notePreview}`;
   } else {
     status.textContent = '本月沒有主管特休取得日；取得日依到職日計算。';
   }
@@ -2261,6 +2371,7 @@ function openBatchLeaveDialog(letter) {
 
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   batchLeaveSelectedDays = new Set(getPublicVacationDatesForLetter(year, month, batchLeaveLetter));
   batchLeaveFailedDays = [];
   batchLeaveMessage.textContent = `${batchLeaveLetter}｜${year} 年 ${month} 月批次排公休`;
@@ -2420,12 +2531,8 @@ function buildDayNotes(year, month, day) {
     notes.push({ kind: 'annual-grant', lines: [letter, String(grant.days)] });
   }
 
-  const supervisor = getSupervisorRecord();
-  const supervisorGrant = getSupervisorAnnualGrantEvent(year, month);
-  const supervisorCode = cleanSupervisorCode(supervisor?.code || '');
-  if (supervisorCode && supervisorGrant?.day === day && supervisorGrant.days > 0) {
-    notes.push({ kind: 'supervisor-annual-grant', lines: [supervisorCode, String(supervisorGrant.days)] });
-  }
+  const supervisorGrantNote = getSupervisorAnnualGrantNote(year, month, day);
+  if (supervisorGrantNote) notes.push(supervisorGrantNote);
 
   if (meetingDays.has(makeMeetingDayKey(year, month, day))) {
     const text = meetingNoteValues.get(makeDayValueKey(year, month, day)) || meetingDefaultText || '8點櫃檯開會';
@@ -2531,8 +2638,9 @@ function renderSchedule(year, month) {
   labelHead.textContent = '日期';
   dateRow.appendChild(labelHead);
   for (let day = 1; day <= days; day += 1) {
+    const visual = getCalendarVisualInfo(year, month, day);
     const th = document.createElement('th');
-    th.className = `date-cell ${getDateBandClass(year, month, day)}`;
+    th.className = `date-cell ${getDateBandClass(year, month, day)} ${visual.specialType === 'holiday' ? 'is-calendar-holiday' : visual.specialType === 'workday' ? 'is-calendar-workday' : ''}`.trim();
     th.textContent = day;
     dateRow.appendChild(th);
   }
@@ -2544,7 +2652,7 @@ function renderSchedule(year, month) {
   weekdayHead.textContent = '星期';
   weekdayRow.appendChild(weekdayHead);
   for (let day = 1; day <= days; day += 1) {
-    const info = getDayInfo(year, month, day);
+    const info = getCalendarVisualInfo(year, month, day);
     const th = document.createElement('th');
     th.className = `weekday-cell ${info.className}`.trim();
     th.textContent = info.weekday;
@@ -2655,7 +2763,7 @@ function renderSchedule(year, month) {
   vacationRow.appendChild(vacationLabel);
 
   for (let day = 1; day <= days; day += 1) {
-    const info = getDayInfo(year, month, day);
+    const info = getCalendarVisualInfo(year, month, day);
     const td = document.createElement('td');
     td.className = `vacation-cell ${info.className}`.trim();
     td.dataset.day = String(day);
@@ -3004,6 +3112,7 @@ function showLeaveCheckItem() {
 function startLeaveCheck() {
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   leaveCheckItems = buildLeaveCheckItems();
   leaveCheckIndex = 0;
   showLeaveCheckItem();
@@ -3240,6 +3349,7 @@ function startRuleCheckByKind(kind = 'all', label = '規則') {
   persistCurrentMonth();
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   if (!window.ShiftRosterRules) {
     window.alert('規則模組未載入。');
     return;
@@ -3333,6 +3443,156 @@ async function prepareOutputTimestamp() {
   };
 }
 
+function setSpecialDatesMode(mode) {
+  specialDatesDraftMode = mode === 'workday' ? 'workday' : 'holiday';
+  specialDatesHolidayMode?.classList.toggle('is-active', specialDatesDraftMode === 'holiday');
+  specialDatesHolidayMode?.setAttribute('aria-pressed', String(specialDatesDraftMode === 'holiday'));
+  specialDatesWorkdayMode?.classList.toggle('is-active', specialDatesDraftMode === 'workday');
+  specialDatesWorkdayMode?.setAttribute('aria-pressed', String(specialDatesDraftMode === 'workday'));
+}
+
+function loadSpecialDatesDraft(year) {
+  const targetYear = Number(year);
+  if (!Number.isInteger(targetYear) || targetYear < 2000 || targetYear > 2100) return false;
+  specialDatesDraftYear = targetYear;
+  specialDatesDraft = new Map();
+  const data = getSpecialDaysForYear(targetYear);
+  data.holidays.forEach((date) => specialDatesDraft.set(date, 'holiday'));
+  data.workdays.forEach((date) => specialDatesDraft.set(date, 'workday'));
+  if (specialDatesYear) specialDatesYear.value = String(targetYear);
+  renderSpecialDatesCalendars();
+  updateSpecialDatesStatus();
+  return true;
+}
+
+function updateSpecialDatesStatus() {
+  if (!specialDatesStatus) return;
+  let holidayCount = 0;
+  let workdayCount = 0;
+  for (const type of specialDatesDraft.values()) {
+    if (type === 'holiday') holidayCount += 1;
+    if (type === 'workday') workdayCount += 1;
+  }
+  const configured = specialDatesDraftYear != null && getSpecialDaysForYear(specialDatesDraftYear).configured;
+  specialDatesStatus.textContent = `${specialDatesDraftYear || ''} 年：休假日 ${holidayCount} 天／補班日 ${workdayCount} 天${configured ? '；已存在年度設定，套用會更新。' : '；尚未套用年度設定。'}`;
+}
+
+function updateSpecialDateDayButton(button, type) {
+  button.classList.toggle('is-holiday', type === 'holiday');
+  button.classList.toggle('is-workday', type === 'workday');
+  button.setAttribute('aria-pressed', String(Boolean(type)));
+  button.title = type === 'holiday' ? '休假日' : type === 'workday' ? '補班日' : '';
+}
+
+function renderSpecialDatesCalendars() {
+  if (!specialDatesCalendars || !Number.isInteger(specialDatesDraftYear)) return;
+  specialDatesCalendars.innerHTML = '';
+  const weekdayLabels = ['日', '一', '二', '三', '四', '五', '六'];
+
+  for (let month = 1; month <= 12; month += 1) {
+    const card = document.createElement('section');
+    card.className = 'special-date-month';
+
+    const title = document.createElement('h3');
+    title.className = 'special-date-month-title';
+    title.textContent = `${month} 月`;
+    card.appendChild(title);
+
+    const weekdayRow = document.createElement('div');
+    weekdayRow.className = 'special-date-weekdays';
+    weekdayLabels.forEach((label) => {
+      const cell = document.createElement('span');
+      cell.textContent = label;
+      weekdayRow.appendChild(cell);
+    });
+    card.appendChild(weekdayRow);
+
+    const dayGrid = document.createElement('div');
+    dayGrid.className = 'special-date-days';
+    const firstWeekday = new Date(specialDatesDraftYear, month - 1, 1).getDay();
+    const days = getDaysInMonth(specialDatesDraftYear, month);
+
+    for (let blank = 0; blank < firstWeekday; blank += 1) {
+      const spacer = document.createElement('span');
+      spacer.className = 'special-date-blank';
+      dayGrid.appendChild(spacer);
+    }
+
+    for (let day = 1; day <= days; day += 1) {
+      const dateKey = makeCalendarDateKey(specialDatesDraftYear, month, day);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'special-date-day';
+      button.textContent = String(day);
+      button.dataset.date = dateKey;
+      button.setAttribute('aria-label', `${specialDatesDraftYear}年${month}月${day}日`);
+      updateSpecialDateDayButton(button, specialDatesDraft.get(dateKey) || '');
+      button.addEventListener('click', () => {
+        const current = specialDatesDraft.get(dateKey) || '';
+        if (current === specialDatesDraftMode) specialDatesDraft.delete(dateKey);
+        else specialDatesDraft.set(dateKey, specialDatesDraftMode);
+        updateSpecialDateDayButton(button, specialDatesDraft.get(dateKey) || '');
+        updateSpecialDatesStatus();
+      });
+      dayGrid.appendChild(button);
+    }
+
+    card.appendChild(dayGrid);
+    specialDatesCalendars.appendChild(card);
+  }
+}
+
+function openSpecialDatesDialog(year = null) {
+  const current = getCurrentYearMonth();
+  const targetYear = Number(year ?? current.year);
+  if (!loadSpecialDatesDraft(targetYear)) return;
+  setSpecialDatesMode('holiday');
+  specialDatesDialog.hidden = false;
+  requestAnimationFrame(() => specialDatesHolidayMode?.focus());
+}
+
+function closeSpecialDatesDialog() {
+  if (!specialDatesDialog) return;
+  specialDatesDialog.hidden = true;
+  specialDatesDraftYear = null;
+  specialDatesDraft = new Map();
+}
+
+function applySpecialDates() {
+  if (!storage?.saveSpecialDays || !Number.isInteger(specialDatesDraftYear)) return;
+  const holidays = [];
+  const workdays = [];
+  for (const [date, type] of specialDatesDraft.entries()) {
+    if (type === 'holiday') holidays.push(date);
+    if (type === 'workday') workdays.push(date);
+  }
+  storage.saveSpecialDays(specialDatesDraftYear, {
+    configured: true,
+    holidays: holidays.sort(),
+    workdays: workdays.sort()
+  });
+  clearSpecialDaysCache(specialDatesDraftYear);
+  closeSpecialDatesDialog();
+  render();
+}
+
+function updateSpecialDatesReminder(year, month) {
+  if (!specialDatesReminder || !specialDatesReminderText || !specialDatesReminderButton) return;
+  if (![11, 12].includes(Number(month))) {
+    specialDatesReminder.hidden = true;
+    return;
+  }
+  const targetYear = Number(year) + 1;
+  const configured = getSpecialDaysForYear(targetYear).configured;
+  specialDatesReminder.hidden = configured;
+  if (!configured) {
+    specialDatesReminderText.textContent = `${targetYear} 年休假／補班日期尚未設定。`;
+    specialDatesReminderButton.textContent = `設定 ${targetYear}`;
+    specialDatesReminderButton.dataset.year = String(targetYear);
+  }
+}
+
+
 function render() {
   let year = Number(yearInput.value);
   let month = Number(monthSelect.value);
@@ -3350,7 +3610,9 @@ function render() {
   renderSchedule(year, month);
   renderLower(year, month);
   renderSummary();
+  updateSpecialDatesReminder(year, month);
   if (!shiftConfigPanel.hidden) renderShiftConfigPanel();
+  if (!supervisorConfigPanel.hidden) renderSupervisorConfigPanel(year, month);
 }
 function changeMonth(offset) {
   commitAllVisibleNames();
@@ -3369,6 +3631,7 @@ function changeMonth(offset) {
   monthSelect.value = month;
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   loadMonth(year, month);
   render();
 }
@@ -3386,6 +3649,7 @@ yearInput.addEventListener('change', () => {
   if (!Number.isInteger(year) || year < 2000 || year > 2100) return render();
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   loadMonth(year, month);
   render();
 });
@@ -3393,6 +3657,7 @@ monthSelect.addEventListener('change', () => {
   const { year, month } = getCurrentYearMonth();
   closeRowFillPanel();
   closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
   loadMonth(year, month);
   render();
 });
@@ -3405,7 +3670,9 @@ leaveTypeModeButton.addEventListener('click', () => setLeaveTypeMode(!leaveTypeM
 meetingModeButton.addEventListener('click', () => setMeetingMode(!meetingModeEnabled));
 noteModeButton.addEventListener('click', () => setNoteMode(!noteModeEnabled));
 shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
+supervisorConfigButton.addEventListener('click', toggleSupervisorConfigPanel);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
+supervisorConfigClose.addEventListener('click', closeSupervisorConfigPanel);
 leaveCheckButton.addEventListener('click', startLeaveCheck);
 ruleCheckButton.addEventListener('click', startRuleCheck);
 checkBlockedLeaveButton?.addEventListener('click', () => startRuleCheckByKind('blocked-leave', '禁休日'));
@@ -3418,6 +3685,28 @@ checkFixedShiftButton?.addEventListener('click', () => startRuleCheckByKind('fix
 checkConsecutiveButton?.addEventListener('click', () => startRuleCheckByKind('consecutive', '連勤'));
 checkTurnaroundButton?.addEventListener('click', () => startRuleCheckByKind('turnaround', '轉班 12 小時'));
 checkScheduleAllButton?.addEventListener('click', () => startRuleCheckByKind('schedule-all', '排班規則全部'));
+specialDatesButton?.addEventListener('click', () => openSpecialDatesDialog());
+specialDatesReminderButton?.addEventListener('click', () => {
+  const targetYear = Number(specialDatesReminderButton.dataset.year);
+  openSpecialDatesDialog(Number.isInteger(targetYear) ? targetYear : null);
+});
+specialDatesClose?.addEventListener('click', closeSpecialDatesDialog);
+specialDatesCancel?.addEventListener('click', closeSpecialDatesDialog);
+specialDatesApply?.addEventListener('click', applySpecialDates);
+specialDatesHolidayMode?.addEventListener('click', () => setSpecialDatesMode('holiday'));
+specialDatesWorkdayMode?.addEventListener('click', () => setSpecialDatesMode('workday'));
+function syncSpecialDatesYearFromInput() {
+  const year = Number(specialDatesYear?.value);
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) return false;
+  if (year === specialDatesDraftYear) return true;
+  return loadSpecialDatesDraft(year);
+}
+specialDatesYear?.addEventListener('input', syncSpecialDatesYearFromInput);
+specialDatesYear?.addEventListener('change', () => {
+  if (!syncSpecialDatesYearFromInput() && specialDatesDraftYear != null) {
+    specialDatesYear.value = String(specialDatesDraftYear);
+  }
+});
 batchLeaveApply.addEventListener('click', applyBatchLeave);
 batchLeaveCancel.addEventListener('click', closeBatchLeaveDialog);
 batchLeaveResultClose.addEventListener('click', closeBatchLeaveResult);
@@ -3501,6 +3790,7 @@ bindHourPair(ruleNightStartInput, ruleNightEndInput, applyRuleSettings);
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
   if (!ruleSettingsEditor.hidden) return closeRuleSettingsEditor();
+  if (specialDatesDialog && !specialDatesDialog.hidden) return closeSpecialDatesDialog();
   if (!outputTimeDialog.hidden) return resolveOutputTimeChoice(false);
   if (!batchLeaveResultDialog.hidden) return closeBatchLeaveResult();
   if (!batchLeaveDialog.hidden) return closeBatchLeaveDialog();
@@ -3515,6 +3805,7 @@ document.addEventListener('keydown', (event) => {
   if (!ruleCheckDialog.hidden) return handleRuleCheckBack();
   if (!rowFillBar.hidden) return closeRowFillPanel();
   if (!shiftConfigPanel.hidden) return closeShiftConfigPanel();
+  if (!supervisorConfigPanel.hidden) return closeSupervisorConfigPanel();
 });
 
 window.ShiftRosterOutput = Object.freeze({
@@ -3529,6 +3820,7 @@ window.ShiftRosterApp = Object.freeze({
     persistGlobalSettings();
   },
   reloadFromStorage: () => {
+    clearSpecialDaysCache();
     loadGlobalSettings();
     publicLeaveInput.textContent = publicLeaveCount;
     const { year, month } = getCurrentYearMonth();
