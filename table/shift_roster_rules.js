@@ -128,6 +128,7 @@
       if (!model.isBlocked(day)) continue;
       for (const leave of model.getLeaveEntries(day)) {
         if (!leave.letter) continue;
+        if (leave.letter === 'A' && model.isSupervisorLeave?.(day)) continue;
         const type = leave.type || 'public';
         if (!blockedTypes.has(type)) continue;
         const label = type === 'annual' ? '特休' : '公休';
@@ -199,6 +200,22 @@
           message: `${formatDate(model.month, day)} ${letter} 同一天同時有排班與休假。`
         });
       }
+    }
+  }
+
+  function collectSupervisorLeaveAIssues(model, issues, mode = 'all') {
+    if (typeof model.isSupervisorLeave !== 'function') return;
+    for (let day = 1; day <= model.days; day += 1) {
+      if (!model.isSupervisorLeave(day)) continue;
+      const hasAWork = Array.from({ length: model.shifts.length }, (_, shiftIndex) => model.getShiftLetter(day, shiftIndex)).includes('A');
+      const hasALeave = model.getLeaveEntries(day).some((entry) => entry.letter === 'A');
+      const shouldReport = mode === 'work' ? hasAWork : mode === 'leave' ? hasALeave : (hasAWork || hasALeave);
+      if (!shouldReport) continue;
+      issues.push({
+        code: 'a-supervisor-leave',
+        title: 'A不可排',
+        message: `${formatDate(model.month, day)} A不可排`
+      });
     }
   }
 
@@ -409,6 +426,7 @@
     switch (kind) {
       case 'blocked-leave':
         collectBlockedLeaveIssues(model, issues);
+        collectSupervisorLeaveAIssues(model, issues, 'leave');
         break;
       case 'same-group-leave':
         collectPersonnelShiftIssues(model, issues);
@@ -444,6 +462,7 @@
         collectSameGroupLeaveIssues(model, issues);
         collectAdjacentLeaveOrderIssues(model, issues);
         collectWorkLeaveConflictIssues(model, issues);
+        collectSupervisorLeaveAIssues(model, issues, 'leave');
         break;
       case 'schedule-all':
         collectPersonnelShiftIssues(model, issues);
@@ -451,6 +470,7 @@
         collectPreviousMonthDataIssues(model, issues);
         collectConsecutiveWorkIssues(model, issues);
         collectRestGapIssues(model, issues);
+        collectSupervisorLeaveAIssues(model, issues, 'work');
         break;
       default:
         collectBlockedLeaveIssues(model, issues);
@@ -462,6 +482,7 @@
         collectPreviousMonthDataIssues(model, issues);
         collectConsecutiveWorkIssues(model, issues);
         collectRestGapIssues(model, issues);
+        collectSupervisorLeaveAIssues(model, issues);
         break;
     }
     return issues;

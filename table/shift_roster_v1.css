@@ -448,6 +448,11 @@ table {
   z-index: 3;
 }
 
+.vacation-inputs.is-supervisor-leave::after {
+  background: var(--formal-leave-red);
+  height: 2px;
+}
+
 .block-mode .vacation-cell {
   cursor: crosshair;
 }
@@ -2214,6 +2219,115 @@ textarea,
   color: #eee;
 }
 
+.supervisor-config-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #d7d7d7;
+}
+
+.supervisor-config-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+
+.supervisor-config-head strong {
+  font-size: 16px;
+}
+
+.supervisor-config-head span {
+  color: #666;
+  font-size: 12px;
+}
+
+.supervisor-config-card {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.supervisor-config-fields {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.5fr) minmax(120px, .8fr) minmax(90px, .55fr) minmax(150px, 1fr);
+  gap: 8px;
+}
+
+.supervisor-config-field input {
+  background: #fff;
+}
+
+.supervisor-annual-status {
+  padding: 7px 8px;
+  border: 1px dashed #aaa;
+  border-radius: 7px;
+  background: #fff;
+  color: #555;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.supervisor-leave-box {
+  display: grid;
+  gap: 7px;
+}
+
+.supervisor-leave-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.supervisor-leave-head span {
+  color: #666;
+  font-size: 12px;
+}
+
+.supervisor-leave-dates {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.supervisor-leave-date {
+  min-width: 0;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  padding: 3px 1px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+  cursor: pointer;
+}
+
+.supervisor-leave-date strong {
+  font-size: 13px;
+}
+
+.supervisor-leave-date small {
+  color: #777;
+  font-size: 9px;
+}
+
+.supervisor-leave-date[aria-pressed="true"] {
+  border-color: var(--formal-leave-red);
+  background: var(--formal-leave-red);
+  color: #fff;
+}
+
+.supervisor-leave-date[aria-pressed="true"] small {
+  color: #fff;
+}
+
 /* ===== 共用功能對話框 ===== */
 .app-dialog[hidden] {
   display: none !important;
@@ -2445,6 +2559,10 @@ textarea,
   font-weight: 700;
 }
 
+.vacation-input.is-annual-leave {
+  font-weight: 700;
+}
+
 .leave-type-mode .vacation-cell,
 .meeting-mode .day-blank,
 .note-mode .day-blank {
@@ -2499,6 +2617,10 @@ textarea,
 .day-note-time-separator {
   line-height: .78;
   font-size: .92em;
+}
+
+.day-note-supervisor-annual-grant {
+  font-weight: 700;
 }
 
 .output-timestamp {
@@ -3176,4 +3298,24 @@ textarea,
 
 .special-leave-input[readonly] {
   cursor: default;
+}
+
+@media (max-width: 760px) {
+  .supervisor-config-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .supervisor-leave-dates {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 460px) {
+  .supervisor-config-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .supervisor-leave-dates {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
 }

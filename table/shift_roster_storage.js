@@ -1,9 +1,9 @@
 (() => {
   'use strict';
 
-  const NAMESPACE = 'elitehotel:shift_roster:v2';
-  const SCHEMA_VERSION = 2;
-  const FORMAT = 'elitehotel-shift-roster-v2';
+  const NAMESPACE = 'elitehotel:shift_roster:v3';
+  const SCHEMA_VERSION = 3;
+  const FORMAT = 'elitehotel-shift-roster-v3';
   const META_KEY = `${NAMESPACE}:meta`;
   const SETTINGS_KEY = `${NAMESPACE}:settings`;
   const EMPLOYEES_KEY = `${NAMESPACE}:employees`;
@@ -149,7 +149,8 @@
       specialShiftTimes: {},
       nightShiftTimes: {},
       meetingDays: [],
-      meetingNoteValues: {}
+      meetingNoteValues: {},
+      supervisorLeaveDays: []
     };
   }
 
@@ -263,7 +264,7 @@
 
     const employees = getEmployees();
     const current = currentEmployeeId && employees[currentEmployeeId];
-    if (current && normalizeEmployeeName(current.name) === normalized) {
+    if (current && current.role !== 'supervisor' && normalizeEmployeeName(current.name) === normalized) {
       current.active = true;
       current.updatedAt = new Date().toISOString();
       saveEmployees(employees);
@@ -271,7 +272,9 @@
     }
 
     const knownId = Object.keys(employees).find((employeeId) => {
-      return normalizeEmployeeName(employees[employeeId]?.name) === normalized;
+      const employee = employees[employeeId];
+      if (employee?.role === 'supervisor') return false;
+      return normalizeEmployeeName(employee?.name) === normalized;
     });
     if (knownId) {
       employees[knownId].active = true;
@@ -428,6 +431,9 @@
         if (!/^\d{1,2}$/.test(key) || typeof value !== 'string' || Array.from(value).length > 10) return false;
       }
     }
+    if (!Array.isArray(data.supervisorLeaveDays)) return false;
+    if (!data.supervisorLeaveDays.every((item) => Number.isInteger(item) && item >= 1 && item <= daysInMonth)) return false;
+    if (new Set(data.supervisorLeaveDays).size !== data.supervisorLeaveDays.length) return false;
     return true;
   }
 
@@ -465,6 +471,13 @@
       }
       if (employee.hireDate !== undefined && employee.hireDate !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(String(employee.hireDate))) {
         return { ok: false, error: `員工資料 ${employeeId} 的到職日格式不正確。` };
+      }
+      if (employee.role !== undefined && !['staff', 'supervisor'].includes(String(employee.role))) {
+        return { ok: false, error: `員工資料 ${employeeId} 的角色格式不正確。` };
+      }
+      if (employee.role === 'supervisor') {
+        if (employee.code !== undefined && !/^[A-Z]?$/.test(String(employee.code))) return { ok: false, error: '主管代號格式不正確。' };
+        if (employee.displayChar !== undefined && Array.from(String(employee.displayChar)).length > 1) return { ok: false, error: '主管班表顯示字只能 1 個字。' };
       }
     }
 

@@ -85,6 +85,7 @@ const batchLeaveResultClose = document.getElementById('batchLeaveResultClose');
 
 const shiftConfigPanel = document.getElementById('shiftConfigPanel');
 const shiftConfigGrid = document.getElementById('shiftConfigGrid');
+const supervisorConfigBody = document.getElementById('supervisorConfigBody');
 const shiftConfigClose = document.getElementById('shiftConfigClose');
 
 const conflictDialog = document.getElementById('conflictDialog');
@@ -183,6 +184,7 @@ const LEAVE_TYPE_LABELS = Object.freeze({
   exceptionPublic: '例外排休'
 });
 const FORMAL_LEAVE_TYPES = new Set(['leave']);
+const SUPERVISOR_ID = 'emp_supervisor';
 const DEFAULT_ANNUAL_LEAVE_RULES = Object.freeze({
   sixMonths: 3,
   year1: 7,
@@ -234,6 +236,7 @@ const meetingDays = new Set();
 const annualGrantDecisionValues = new Map();
 const annualBalanceCalibrationValues = new Map();
 const personnelShiftValues = new Map();
+const supervisorLeaveDays = new Set();
 
 let blockModeEnabled = false;
 let specialModeEnabled = false;
@@ -594,6 +597,45 @@ function updateEmployeeRecord(employeeId, patch) {
   storage.saveEmployees(employees);
 }
 
+function getSupervisorRecord() {
+  const record = getEmployeeRecord(SUPERVISOR_ID);
+  return record?.role === 'supervisor' ? record : null;
+}
+
+function updateSupervisorRecord(patch) {
+  if (!storage) return;
+  const employees = storage.getEmployees();
+  const now = new Date().toISOString();
+  const current = employees[SUPERVISOR_ID] || {};
+  employees[SUPERVISOR_ID] = {
+    ...current,
+    name: typeof current.name === 'string' ? current.name : '',
+    role: 'supervisor',
+    active: true,
+    createdAt: current.createdAt || now,
+    ...patch,
+    updatedAt: now
+  };
+  storage.saveEmployees(employees);
+}
+
+function cleanSupervisorCode(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+}
+
+function cleanSupervisorDisplayChar(value) {
+  return Array.from(String(value || '').trim()).slice(0, 1).join('');
+}
+
+function cleanSupervisorName(value) {
+  return Array.from(String(value || '').trim()).slice(0, 20).join('');
+}
+
+function isSupervisorLeaveDay(year, month, day) {
+  const current = getCurrentYearMonth();
+  return current.year === Number(year) && current.month === Number(month) && supervisorLeaveDays.has(Number(day));
+}
+
 function addMonthsClamped(date, months) {
   const year = date.getFullYear();
   const month = date.getMonth() + months;
@@ -619,8 +661,7 @@ function getAnnualGrantDaysForYears(years) {
   return 0;
 }
 
-function getAnnualGrantEventForEmployee(employeeId, year, month) {
-  const record = getEmployeeRecord(employeeId);
+function getAnnualGrantEventForRecord(record, year, month) {
   const match = String(record?.hireDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
   const hireDate = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
@@ -637,6 +678,16 @@ function getAnnualGrantEventForEmployee(employeeId, year, month) {
     }
   }
   return null;
+}
+
+function getAnnualGrantEventForEmployee(employeeId, year, month) {
+  return getAnnualGrantEventForRecord(getEmployeeRecord(employeeId), year, month);
+}
+
+function getSupervisorAnnualGrantEvent(year, month) {
+  const base = getAnnualGrantEventForRecord(getSupervisorRecord(), year, month);
+  if (!base) return null;
+  return { ...base, baseDays: base.days, days: Math.ceil(Number(base.days || 0) / 2) };
 }
 
 function countAnnualLeaveInMonthData(monthData, letter) {
@@ -786,6 +837,7 @@ function clearMonthMemory(year, month) {
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
+  supervisorLeaveDays.clear();
 }
 
 function buildCurrentMonthSnapshot() {
@@ -821,7 +873,8 @@ function buildCurrentMonthSnapshot() {
     meetingDays: serializeSetForMonth(meetingDays, year, month)
       .map((suffix) => Number(String(suffix).replace(/-meeting$/, '')))
       .filter((day) => Number.isInteger(day)),
-    meetingNoteValues: serializeMapForMonth(meetingNoteValues, year, month)
+    meetingNoteValues: serializeMapForMonth(meetingNoteValues, year, month),
+    supervisorLeaveDays: [...supervisorLeaveDays].sort((a, b) => a - b)
   };
 }
 
@@ -914,6 +967,13 @@ function loadMonthIntoMemory(year, month, data) {
   if (Array.isArray(data?.meetingDays)) {
     data.meetingDays.forEach((day) => {
       if (Number.isInteger(day) && day >= 1 && day <= 31) meetingDays.add(makeMeetingDayKey(year, month, day));
+    });
+  }
+
+  if (Array.isArray(data?.supervisorLeaveDays)) {
+    const daysInMonth = getDaysInMonth(year, month);
+    data.supervisorLeaveDays.forEach((day) => {
+      if (Number.isInteger(day) && day >= 1 && day <= daysInMonth) supervisorLeaveDays.add(day);
     });
   }
 }
@@ -1063,6 +1123,7 @@ function getDefaultBlockedState(year, month, day) {
   return blockedWeekdays.has(getDayInfo(year, month, day).weekdayIndex);
 }
 function isVacationBlocked(year, month, day) {
+  if (isSupervisorLeaveDay(year, month, day)) return true;
   const key = makeBlockedDayKey(year, month, day);
   return blockedVacationOverrides.has(key) ? blockedVacationOverrides.get(key) : getDefaultBlockedState(year, month, day);
 }
@@ -1488,49 +1549,93 @@ function clearCurrentMonth() {
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
+  supervisorLeaveDays.clear();
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeClearMonthDialog();
   render();
 }
 
-async function applyLetterToShiftRow(shiftIndex, letter) {
+function getActualShiftRange(year, month, day, shiftIndex) {
+  const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
+  if (specialShiftCells.has(specialKey)) {
+    const specialTime = specialShiftTimes.get(specialKey) || '';
+    if (specialTime) return specialTime;
+  }
+
+  if (isNightGray(year, month, day, shiftIndex)) {
+    const nightTime = nightShiftTimes.get(makeNightShiftKey(year, month, day, shiftIndex)) || '';
+    if (nightTime) return nightTime;
+    if (shiftIndex === 3) return normalNightRange || '22~06';
+  }
+
+  return shiftRanges[shiftIndex] || DEFAULT_SHIFT_RANGES[shiftIndex] || '';
+}
+
+function timeRangeToDailySegments(rangeText) {
+  const parsed = window.ShiftRosterRules?.parseTimeRange(rangeText);
+  if (!parsed) return [];
+  const start = parsed.start.hour * 60 + parsed.start.minute;
+  const end = parsed.end.hour * 60 + parsed.end.minute;
+  if (end > start) return [[start, end]];
+  if (end === start) return [[0, 1440]];
+  return [[start, 1440], [0, end]];
+}
+
+function doShiftRangesOverlap(firstRange, secondRange) {
+  const firstSegments = timeRangeToDailySegments(firstRange);
+  const secondSegments = timeRangeToDailySegments(secondRange);
+  if (!firstSegments.length || !secondSegments.length) return false;
+  return firstSegments.some(([firstStart, firstEnd]) => (
+    secondSegments.some(([secondStart, secondEnd]) => Math.max(firstStart, secondStart) < Math.min(firstEnd, secondEnd))
+  ));
+}
+
+function hasOverlappingShiftForLetter(year, month, day, targetShiftIndex, letter) {
+  const targetRange = getActualShiftRange(year, month, day, targetShiftIndex);
+  if (!targetRange) return false;
+  for (let shiftIndex = 0; shiftIndex < shifts.length; shiftIndex += 1) {
+    if (shiftIndex === targetShiftIndex) continue;
+    const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
+    if ((rosterValues.get(key) || '') !== letter) continue;
+    const otherRange = getActualShiftRange(year, month, day, shiftIndex);
+    if (otherRange && doShiftRangesOverlap(targetRange, otherRange)) return true;
+  }
+  return false;
+}
+
+function clearShiftCellForRowFill(year, month, day, shiftIndex) {
+  const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
+  rosterValues.delete(key);
+  const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
+  specialShiftCells.delete(specialKey);
+  specialShiftTimes.delete(specialKey);
+  nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
+}
+
+function applyLetterToShiftRow(shiftIndex, letter) {
   const { year, month } = getCurrentYearMonth();
   const cleaned = cleanEnglishLetter(letter);
   if (shiftIndex == null || shiftIndex < 0 || shiftIndex >= shifts.length) return;
   const days = getDaysInMonth(year, month);
 
   if (!cleaned) {
-    for (let day = 1; day <= days; day += 1) {
-      const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
-      rosterValues.delete(key);
-      const specialKey = makeSpecialShiftKey(year, month, day, shiftIndex);
-      specialShiftCells.delete(specialKey);
-      specialShiftTimes.delete(specialKey);
-      nightShiftTimes.delete(makeNightShiftKey(year, month, day, shiftIndex));
-    }
+    for (let day = 1; day <= days; day += 1) clearShiftCellForRowFill(year, month, day, shiftIndex);
     closeRowFillPanel();
     render();
     return;
   }
 
-  const conflictDays = [];
   for (let day = 1; day <= days; day += 1) {
-    if (hasVacationLetter(year, month, day, cleaned)) conflictDays.push(day);
-  }
+    const key = makeRosterKey(year, month, day, 'shift', shiftIndex);
+    const shouldStayBlank = hasVacationLetter(year, month, day, cleaned)
+      || hasOverlappingShiftForLetter(year, month, day, shiftIndex, cleaned);
 
-  let conflictChoice = null;
-  if (conflictDays.length) {
-    const dateText = conflictDays.map((day) => `${month}/${day}`).join('、');
-    conflictChoice = await showConflictChoice(`${dateText}　${cleaned} 已排休\n要以哪一種為準？`);
-    if (conflictChoice === 'schedule') conflictDays.forEach((day) => removeVacationLetter(year, month, day, cleaned));
-    else conflictDays.forEach((day) => removeShiftLetterForDay(year, month, day, cleaned));
-  }
-
-  const conflictDaySet = new Set(conflictDays);
-  for (let day = 1; day <= days; day += 1) {
-    if (conflictChoice === 'vacation' && conflictDaySet.has(day)) continue;
-    rosterValues.set(makeRosterKey(year, month, day, 'shift', shiftIndex), cleaned);
+    if (shouldStayBlank) {
+      clearShiftCellForRowFill(year, month, day, shiftIndex);
+      continue;
+    }
+    rosterValues.set(key, cleaned);
   }
   closeRowFillPanel();
   render();
@@ -1884,6 +1989,144 @@ function renderShiftConfigPanel() {
     row.append(person, options, meta);
     shiftConfigGrid.appendChild(row);
   }
+  renderSupervisorConfigPanel(year, month);
+}
+
+function renderSupervisorConfigPanel(year, month) {
+  if (!supervisorConfigBody) return;
+  supervisorConfigBody.innerHTML = '';
+  const record = getSupervisorRecord() || {};
+
+  const card = document.createElement('div');
+  card.className = 'supervisor-config-card';
+
+  const fields = document.createElement('div');
+  fields.className = 'supervisor-config-fields';
+
+  const makeField = (caption, input) => {
+    const label = document.createElement('label');
+    label.className = 'shift-config-field supervisor-config-field';
+    const span = document.createElement('span');
+    span.textContent = caption;
+    label.append(span, input);
+    return label;
+  };
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.autocomplete = 'off';
+  nameInput.value = String(record.name || '');
+  nameInput.placeholder = '主管姓名';
+  nameInput.addEventListener('blur', () => {
+    const value = cleanSupervisorName(nameInput.value);
+    nameInput.value = value;
+    updateSupervisorRecord({ name: value });
+  });
+
+  const displayInput = document.createElement('input');
+  displayInput.type = 'text';
+  displayInput.autocomplete = 'off';
+  displayInput.value = String(record.displayChar || '');
+  displayInput.placeholder = '姓';
+  displayInput.setAttribute('aria-label', '主管班表顯示字');
+  const commitSupervisorDisplayChar = () => {
+    const value = cleanSupervisorDisplayChar(displayInput.value);
+    if (displayInput.value !== value) displayInput.value = value;
+    updateSupervisorRecord({ displayChar: value });
+  };
+  displayInput.addEventListener('compositionstart', () => { displayInput.dataset.composing = 'true'; });
+  displayInput.addEventListener('compositionend', () => {
+    displayInput.dataset.composing = 'false';
+    commitSupervisorDisplayChar();
+  });
+  displayInput.addEventListener('input', () => {
+    if (displayInput.dataset.composing === 'true') return;
+    commitSupervisorDisplayChar();
+  });
+
+  const codeInput = document.createElement('input');
+  codeInput.type = 'text';
+  codeInput.autocomplete = 'off';
+  codeInput.autocapitalize = 'characters';
+  codeInput.spellcheck = false;
+  codeInput.value = String(record.code || '');
+  codeInput.placeholder = 'L';
+  codeInput.setAttribute('aria-label', '主管代號');
+  codeInput.addEventListener('input', () => {
+    const value = cleanSupervisorCode(codeInput.value);
+    if (codeInput.value !== value) codeInput.value = value;
+    updateSupervisorRecord({ code: value });
+    renderLower(year, month);
+  });
+
+  const hireInput = document.createElement('input');
+  hireInput.type = 'date';
+  hireInput.value = String(record.hireDate || '');
+  hireInput.addEventListener('change', () => {
+    updateSupervisorRecord({ hireDate: hireInput.value || '' });
+    renderLower(year, month);
+    renderSupervisorConfigPanel(year, month);
+  });
+
+  fields.append(
+    makeField('姓名', nameInput),
+    makeField('班表顯示字（1 字）', displayInput),
+    makeField('代號', codeInput),
+    makeField('到職日', hireInput)
+  );
+  card.appendChild(fields);
+
+  const status = document.createElement('div');
+  status.className = 'supervisor-annual-status';
+  const grant = getSupervisorAnnualGrantEvent(year, month);
+  if (!record.hireDate) {
+    status.textContent = '輸入到職日後，主管特休會依一般特休天數折半，0.5 天進位。';
+  } else if (grant) {
+    status.textContent = `${month}/${grant.day} ${grant.label}：主管特休 ${grant.days} 天（一般 ${grant.baseDays} 天 ÷ 2）`;
+  } else {
+    status.textContent = '本月沒有主管特休取得日；取得日依到職日計算。';
+  }
+  card.appendChild(status);
+
+  const leaveBox = document.createElement('div');
+  leaveBox.className = 'supervisor-leave-box';
+  const leaveHead = document.createElement('div');
+  leaveHead.className = 'supervisor-leave-head';
+  const leaveTitle = document.createElement('strong');
+  leaveTitle.textContent = '當月休假';
+  const leaveCount = document.createElement('span');
+  leaveCount.textContent = `已選 ${supervisorLeaveDays.size} 天`;
+  leaveHead.append(leaveTitle, leaveCount);
+  leaveBox.appendChild(leaveHead);
+
+  const leaveDates = document.createElement('div');
+  leaveDates.className = 'supervisor-leave-dates';
+  const days = getDaysInMonth(year, month);
+  for (let day = 1; day <= days; day += 1) {
+    const info = getDayInfo(year, month, day);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'supervisor-leave-date';
+    button.setAttribute('aria-pressed', supervisorLeaveDays.has(day) ? 'true' : 'false');
+    button.setAttribute('aria-label', `${month}月${day}日主管休假`);
+    const dayText = document.createElement('strong');
+    dayText.textContent = String(day);
+    const weekText = document.createElement('small');
+    weekText.textContent = info.weekday;
+    button.append(dayText, weekText);
+    button.addEventListener('click', () => {
+      if (supervisorLeaveDays.has(day)) supervisorLeaveDays.delete(day);
+      else supervisorLeaveDays.add(day);
+      persistCurrentMonth();
+      renderSchedule(year, month);
+      renderSupervisorConfigPanel(year, month);
+    });
+    leaveDates.appendChild(button);
+  }
+  leaveBox.appendChild(leaveDates);
+  card.appendChild(leaveBox);
+
+  supervisorConfigBody.appendChild(card);
 }
 
 
@@ -2177,6 +2420,13 @@ function buildDayNotes(year, month, day) {
     notes.push({ kind: 'annual-grant', lines: [letter, String(grant.days)] });
   }
 
+  const supervisor = getSupervisorRecord();
+  const supervisorGrant = getSupervisorAnnualGrantEvent(year, month);
+  const supervisorCode = cleanSupervisorCode(supervisor?.code || '');
+  if (supervisorCode && supervisorGrant?.day === day && supervisorGrant.days > 0) {
+    notes.push({ kind: 'supervisor-annual-grant', lines: [supervisorCode, String(supervisorGrant.days)] });
+  }
+
   if (meetingDays.has(makeMeetingDayKey(year, month, day))) {
     const text = meetingNoteValues.get(makeDayValueKey(year, month, day)) || meetingDefaultText || '8點櫃檯開會';
     notes.push({ kind: 'meeting', lines: Array.from(text) });
@@ -2417,6 +2667,7 @@ function renderSchedule(year, month) {
     const inputs = document.createElement('div');
     inputs.className = 'vacation-inputs';
     inputs.classList.toggle('is-blocked', isVacationBlocked(year, month, day));
+    inputs.classList.toggle('is-supervisor-leave', isSupervisorLeaveDay(year, month, day));
 
     for (let slot = 0; slot < 2; slot += 1) {
       const key = makeRosterKey(year, month, day, 'vacation', slot);
@@ -2436,6 +2687,7 @@ function renderSchedule(year, month) {
       input.dataset.previousNote = currentNote;
       input.dataset.leaveKey = key;
       input.classList.toggle('is-formal-leave', isFormalLeaveType(currentType));
+      input.classList.toggle('is-annual-leave', currentType === 'annual');
       input.title = currentValue ? `${LEAVE_TYPE_LABELS[currentType] || '公休'}${currentNote ? `（${currentNote}）` : ''}；假別模式可修改` : '';
 
       input.addEventListener('pointerdown', (event) => {
@@ -2473,6 +2725,7 @@ function renderSchedule(year, month) {
     td.addEventListener('click', (event) => {
       if (!blockModeEnabled) return;
       event.preventDefault();
+      if (isSupervisorLeaveDay(year, month, day)) return;
       const nextBlockedState = !isVacationBlocked(year, month, day);
       setVacationBlockedState(year, month, day, nextBlockedState);
       persistCurrentMonth();
@@ -2917,6 +3170,9 @@ function buildRuleModel() {
     },
     isBlocked(day) {
       return isVacationBlocked(year, month, day);
+    },
+    isSupervisorLeave(day) {
+      return isSupervisorLeaveDay(year, month, day);
     },
     isSpecial(day, shiftIndex) {
       return specialShiftCells.has(makeSpecialShiftKey(year, month, day, shiftIndex));
