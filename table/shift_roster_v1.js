@@ -1,9 +1,20 @@
 'use strict';
 
 const rosterViewTab = document.getElementById('rosterViewTab');
+const settingsViewTab = document.getElementById('settingsViewTab');
 const rulesViewTab = document.getElementById('rulesViewTab');
 const rosterView = document.getElementById('rosterView');
+const settingsView = document.getElementById('settingsView');
 const rulesView = document.getElementById('rulesView');
+const basicSettingsButton = document.getElementById('basicSettingsButton');
+const basicSettingsPanel = document.getElementById('basicSettingsPanel');
+const basicSettingsLiveButton = document.getElementById('basicSettingsLiveButton');
+const shiftPeopleButton = document.getElementById('shiftPeopleButton');
+const supervisorPeopleButton = document.getElementById('supervisorPeopleButton');
+const operationGuideButton = document.getElementById('operationGuideButton');
+const companyRulesButton = document.getElementById('companyRulesButton');
+const operationGuidePanel = document.getElementById('operationGuidePanel');
+const companyRulesPanel = document.getElementById('companyRulesPanel');
 const editRuleSettingsButton = document.getElementById('editRuleSettingsButton');
 const ruleSettingsEditor = document.getElementById('ruleSettingsEditor');
 const rulePublicLeaveText = document.getElementById('rulePublicLeaveText');
@@ -12,6 +23,8 @@ const ruleTurnaroundText = document.getElementById('ruleTurnaroundText');
 const ruleNightText = document.getElementById('ruleNightText');
 const ruleShiftTimesText = document.getElementById('ruleShiftTimesText');
 const ruleBlockedText = document.getElementById('ruleBlockedText');
+const ruleBlockedTypesText = document.getElementById('ruleBlockedTypesText');
+const ruleBlockedWeekdaysText = document.getElementById('ruleBlockedWeekdaysText');
 const ruleSameDayText = document.getElementById('ruleSameDayText');
 const ruleAdjacentText = document.getElementById('ruleAdjacentText');
 const ruleMeetingText = document.getElementById('ruleMeetingText');
@@ -285,6 +298,8 @@ let ruleCheckIndex = 0;
 let ruleCheckCompleteMode = false;
 let ruleCheckName = '規則';
 
+let expandedShiftConfigIndex = null;
+
 let batchLeaveLetter = null;
 let batchLeaveSelectedDays = new Set();
 let batchLeaveFailedDays = [];
@@ -297,20 +312,90 @@ for (let month = 1; month <= 12; month += 1) {
 }
 
 function setMainView(view) {
+  const showRoster = view === 'roster';
+  const showSettings = view === 'settings';
   const showRules = view === 'rules';
-  rosterView.hidden = showRules;
+
+  rosterView.hidden = !showRoster;
+  settingsView.hidden = !showSettings;
   rulesView.hidden = !showRules;
-  rosterViewTab.classList.toggle('is-active', !showRules);
+
+  rosterViewTab.classList.toggle('is-active', showRoster);
+  settingsViewTab.classList.toggle('is-active', showSettings);
   rulesViewTab.classList.toggle('is-active', showRules);
-  rosterViewTab.setAttribute('aria-selected', String(!showRules));
+  rosterViewTab.setAttribute('aria-selected', String(showRoster));
+  settingsViewTab.setAttribute('aria-selected', String(showSettings));
   rulesViewTab.setAttribute('aria-selected', String(showRules));
-  if (showRules) {
-    closeRowFillPanel();
+
+  closeRowFillPanel();
+  if (!showSettings) {
     closeShiftConfigPanel();
     closeSupervisorConfigPanel();
+    if (basicSettingsPanel) basicSettingsPanel.hidden = true;
+  }
+
+  if (showSettings) {
     renderRuleSettingsPage();
+    resetSettingsSection();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  if (showRules) {
+    renderRuleSettingsPage();
+    resetGuideSection();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function setSettingsTopActive(button) {
+  [basicSettingsButton, shiftConfigButton, supervisorConfigButton].forEach((item) => {
+    item?.classList.toggle('is-active', item === button);
+  });
+}
+
+function resetSettingsSection() {
+  if (basicSettingsPanel) basicSettingsPanel.hidden = true;
+  if (shiftConfigPanel) shiftConfigPanel.hidden = true;
+  if (supervisorConfigPanel) supervisorConfigPanel.hidden = true;
+  setSettingsTopActive(null);
+  closeRuleSettingsEditor();
+}
+
+function showBasicSettings() {
+  closeShiftConfigPanel();
+  closeSupervisorConfigPanel();
+  basicSettingsPanel.hidden = false;
+  setSettingsTopActive(basicSettingsButton);
+  renderRuleSettingsPage();
+}
+
+function showShiftSettings() {
+  if (basicSettingsPanel) basicSettingsPanel.hidden = true;
+  closeSupervisorConfigPanel();
+  openShiftConfigPanel();
+  setSettingsTopActive(shiftConfigButton);
+}
+
+function showSupervisorSettings() {
+  if (basicSettingsPanel) basicSettingsPanel.hidden = true;
+  closeShiftConfigPanel();
+  openSupervisorConfigPanel();
+  setSettingsTopActive(supervisorConfigButton);
+}
+
+function resetGuideSection() {
+  if (operationGuidePanel) operationGuidePanel.hidden = true;
+  if (companyRulesPanel) companyRulesPanel.hidden = true;
+  operationGuideButton?.classList.remove('is-active');
+  companyRulesButton?.classList.remove('is-active');
+}
+
+function showGuideSection(kind) {
+  const operation = kind === 'operation';
+  operationGuidePanel.hidden = !operation;
+  companyRulesPanel.hidden = operation;
+  operationGuideButton.classList.toggle('is-active', operation);
+  companyRulesButton.classList.toggle('is-active', !operation);
 }
 
 function formatRuleNumber(value) {
@@ -425,8 +510,10 @@ function renderRuleSettingsPage() {
   ruleTurnaroundText.textContent = `${formatRuleNumber(minTurnaroundHours)} 小時`;
   ruleNightText.textContent = normalNightRange;
   if (ruleBlockedText) ruleBlockedText.textContent = `${formatBlockedWeekdayText()}｜${formatBlockedLeaveTypeText()}`;
-  if (ruleSameDayText) ruleSameDayText.textContent = '早中｜夜；各組同日最多 1 人（固定）';
-  if (ruleAdjacentText) ruleAdjacentText.textContent = '中班休 → 隔天早班休禁止（固定）';
+  if (ruleBlockedTypesText) ruleBlockedTypesText.textContent = formatBlockedLeaveTypeText();
+  if (ruleBlockedWeekdaysText) ruleBlockedWeekdaysText.textContent = `${formatBlockedWeekdayText()}、國定假日`;
+  if (ruleSameDayText) ruleSameDayText.textContent = '早中｜夜';
+  if (ruleAdjacentText) ruleAdjacentText.textContent = '中班休假隔日，早班禁休';
   if (ruleMeetingText) ruleMeetingText.textContent = meetingDefaultText || '8點櫃檯開會';
   renderShiftSettingText();
 
@@ -867,20 +954,26 @@ function renderSupervisorSeniorityInfo() {
   supervisorSeniorityInfo.appendChild(item);
 }
 
-function toggleShiftSeniorityInfo() {
-  if (!shiftSeniorityButton || !shiftSeniorityInfo) return;
-  const expanded = shiftSeniorityInfo.hidden;
-  shiftSeniorityInfo.hidden = !expanded;
-  shiftSeniorityButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-  if (expanded) renderShiftSeniorityInfo();
+function showShiftSubsection(kind) {
+  const showSeniority = kind === 'seniority';
+  shiftSeniorityInfo.hidden = !showSeniority;
+  shiftConfigGrid.hidden = showSeniority;
+  shiftSeniorityButton.setAttribute('aria-expanded', String(showSeniority));
+  shiftSeniorityButton.classList.toggle('is-active', showSeniority);
+  shiftPeopleButton?.classList.toggle('is-active', !showSeniority);
+  shiftPeopleButton?.setAttribute('aria-pressed', String(!showSeniority));
+  if (showSeniority) renderShiftSeniorityInfo();
 }
 
-function toggleSupervisorSeniorityInfo() {
-  if (!supervisorSeniorityButton || !supervisorSeniorityInfo) return;
-  const expanded = supervisorSeniorityInfo.hidden;
-  supervisorSeniorityInfo.hidden = !expanded;
-  supervisorSeniorityButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-  if (expanded) renderSupervisorSeniorityInfo();
+function showSupervisorSubsection(kind) {
+  const showSeniority = kind === 'seniority';
+  supervisorSeniorityInfo.hidden = !showSeniority;
+  supervisorConfigBody.hidden = showSeniority;
+  supervisorSeniorityButton.setAttribute('aria-expanded', String(showSeniority));
+  supervisorSeniorityButton.classList.toggle('is-active', showSeniority);
+  supervisorPeopleButton?.classList.toggle('is-active', !showSeniority);
+  supervisorPeopleButton?.setAttribute('aria-pressed', String(!showSeniority));
+  if (showSeniority) renderSupervisorSeniorityInfo();
 }
 
 function collapseSeniorityInfo(button, info) {
@@ -1925,15 +2018,21 @@ function openShiftConfigPanel() {
   commitAllVisibleNames();
   closeRowFillPanel();
   closeSupervisorConfigPanel();
+  expandedShiftConfigIndex = null;
   renderShiftConfigPanel();
   shiftConfigPanel.hidden = false;
   shiftConfigButton.setAttribute('aria-expanded', 'true');
-  shiftConfigPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  shiftSeniorityInfo.hidden = true;
+  shiftConfigGrid.hidden = true;
+  shiftSeniorityButton.classList.remove('is-active');
+  shiftPeopleButton?.classList.remove('is-active');
 }
 function closeShiftConfigPanel() {
   shiftConfigPanel.hidden = true;
   shiftConfigButton.setAttribute('aria-expanded', 'false');
   collapseSeniorityInfo(shiftSeniorityButton, shiftSeniorityInfo);
+  if (shiftConfigGrid) shiftConfigGrid.hidden = true;
+  shiftPeopleButton?.classList.remove('is-active');
 }
 function toggleShiftConfigPanel() {
   if (shiftConfigPanel.hidden) openShiftConfigPanel();
@@ -1947,12 +2046,17 @@ function openSupervisorConfigPanel() {
   renderSupervisorConfigPanel(year, month);
   supervisorConfigPanel.hidden = false;
   supervisorConfigButton.setAttribute('aria-expanded', 'true');
-  supervisorConfigPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  supervisorSeniorityInfo.hidden = true;
+  supervisorConfigBody.hidden = true;
+  supervisorSeniorityButton.classList.remove('is-active');
+  supervisorPeopleButton?.classList.remove('is-active');
 }
 function closeSupervisorConfigPanel() {
   supervisorConfigPanel.hidden = true;
   supervisorConfigButton.setAttribute('aria-expanded', 'false');
   collapseSeniorityInfo(supervisorSeniorityButton, supervisorSeniorityInfo);
+  if (supervisorConfigBody) supervisorConfigBody.hidden = true;
+  supervisorPeopleButton?.classList.remove('is-active');
 }
 function toggleSupervisorConfigPanel() {
   if (supervisorConfigPanel.hidden) openSupervisorConfigPanel();
@@ -2088,7 +2192,7 @@ function renderShiftConfigPanel() {
     if (letter === 'A') {
       const exception = document.createElement('div');
       exception.className = 'shift-config-exception';
-      exception.textContent = '例外：早班／中班／大夜皆可；排班規則不檢查 A';
+      exception.textContent = '所有規則不檢查';
       options.appendChild(exception);
     } else {
       options.setAttribute('aria-label', `${letter} 固定班別，只能單選`);
@@ -2130,7 +2234,7 @@ function renderShiftConfigPanel() {
     const calibrationLabel = document.createElement('label');
     calibrationLabel.className = 'shift-config-field annual-balance-field';
     const calibrationCaption = document.createElement('span');
-    calibrationCaption.textContent = '本月特休校正（選填）';
+    calibrationCaption.textContent = '本月特休校正';
     const calibrationInput = document.createElement('input');
     calibrationInput.type = 'number';
     calibrationInput.min = '0';
@@ -2187,7 +2291,7 @@ function renderShiftConfigPanel() {
     annualStatus.className = 'annual-balance-status';
     const availableText = annual.available == null ? '未設定' : `${annual.available} 天`;
     const remainingText = annual.remaining == null ? '—' : `${annual.remaining} 天`;
-    annualStatus.innerHTML = `<span>本月可用 <strong>${availableText}</strong></span><span>已排特休 <strong>${annual.used} 天</strong></span><span>目前剩餘 <strong>${remainingText}</strong></span>`;
+    annualStatus.innerHTML = `<span>本月可用 <strong>${availableText}</strong></span><span>已排 <strong>${annual.used} 天</strong></span><span>目前剩餘 <strong>${remainingText}</strong></span>`;
     if (annual.overused > 0) {
       const warning = document.createElement('strong');
       warning.className = 'annual-balance-warning';
@@ -2215,7 +2319,6 @@ function renderShiftConfigPanel() {
     } else {
       carry.textContent = '輸入到職日後會自動計算；若實際現況不同，可在任何月份使用「本月特休校正」。';
     }
-    meta.appendChild(carry);
 
     if (employeeId) {
       const grant = getAnnualGrantEventForEmployee(employeeId, year, month);
@@ -2245,11 +2348,29 @@ function renderShiftConfigPanel() {
           renderLower(year, month);
         });
         grantBox.append(grantText, addButton, resetButton);
-        meta.appendChild(grantBox);
       }
     }
 
-    row.append(person, options, meta);
+    const summary = document.createElement('div');
+    summary.className = 'shift-config-summary';
+    const summaryCode = document.createElement('strong');
+    summaryCode.textContent = letter;
+    const summaryName = document.createElement('span');
+    summaryName.textContent = names[index] || '未設定';
+    const editButton = document.createElement('button');
+    editButton.type = 'button';
+    editButton.textContent = '編輯';
+    editButton.addEventListener('click', () => {
+      expandedShiftConfigIndex = expandedShiftConfigIndex === index ? null : index;
+      renderShiftConfigPanel();
+    });
+    summary.append(summaryCode, summaryName, editButton);
+
+    const detail = document.createElement('div');
+    detail.className = 'shift-config-detail';
+    detail.hidden = expandedShiftConfigIndex !== index;
+    detail.append(person, options, meta);
+    row.append(summary, detail);
     shiftConfigGrid.appendChild(row);
   }
   renderShiftSeniorityInfo();
@@ -2290,7 +2411,8 @@ function renderSupervisorConfigPanel(year, month) {
   displayInput.type = 'text';
   displayInput.autocomplete = 'off';
   displayInput.value = String(record.displayChar || '');
-  displayInput.placeholder = '姓';
+  displayInput.placeholder = '1 字';
+  displayInput.maxLength = 1;
   displayInput.setAttribute('aria-label', '主管班表顯示字');
   const commitSupervisorDisplayChar = () => {
     const value = cleanSupervisorDisplayChar(displayInput.value);
@@ -2334,25 +2456,13 @@ function renderSupervisorConfigPanel(year, month) {
 
   fields.append(
     makeField('姓名', nameInput),
-    makeField('班表顯示字（1 字）', displayInput),
+    makeField('班表顯示', displayInput),
     makeField('代號', codeInput),
     makeField('到職日', hireInput)
   );
   card.appendChild(fields);
 
-  const status = document.createElement('div');
-  status.className = 'supervisor-annual-status';
-  const grant = getSupervisorAnnualGrantEvent(year, month);
-  if (!record.hireDate) {
-    status.textContent = '輸入到職日後，主管特休會依一般特休天數折半，0.5 天進位。';
-  } else if (grant) {
-    const code = cleanSupervisorCode(record.code || '');
-    const notePreview = code ? `；長條顯示 ${code} / ${grant.days}` : '；請先輸入主管代號才會顯示長條';
-    status.textContent = `${month}/${grant.day} ${grant.label}：主管特休 ${grant.days} 天（一般 ${grant.baseDays} 天 ÷ 2）${notePreview}`;
-  } else {
-    status.textContent = '本月沒有主管特休取得日；取得日依到職日計算。';
-  }
-  card.appendChild(status);
+
 
   const leaveBox = document.createElement('div');
   leaveBox.className = 'supervisor-leave-box';
@@ -2391,6 +2501,24 @@ function renderSupervisorConfigPanel(year, month) {
   }
   leaveBox.appendChild(leaveDates);
   card.appendChild(leaveBox);
+
+  const applyButton = document.createElement('button');
+  applyButton.type = 'button';
+  applyButton.className = 'supervisor-apply-button';
+  applyButton.textContent = '套用';
+  applyButton.addEventListener('click', () => {
+    const name = cleanSupervisorName(nameInput.value);
+    const displayChar = cleanSupervisorDisplayChar(displayInput.value);
+    const code = cleanSupervisorCode(codeInput.value);
+    nameInput.value = name;
+    displayInput.value = displayChar;
+    codeInput.value = code;
+    updateSupervisorRecord({ name, displayChar, code, hireDate: hireInput.value || '' });
+    persistCurrentMonth();
+    renderSchedule(year, month);
+    renderLower(year, month);
+  });
+  card.appendChild(applyButton);
 
   supervisorConfigBody.appendChild(card);
   renderSupervisorSeniorityInfo();
@@ -3795,8 +3923,24 @@ function changeMonth(offset) {
 
 // ===== 事件 =====
 rosterViewTab.addEventListener('click', () => setMainView('roster'));
+settingsViewTab.addEventListener('click', () => setMainView('settings'));
 rulesViewTab.addEventListener('click', () => setMainView('rules'));
+basicSettingsButton.addEventListener('click', showBasicSettings);
+operationGuideButton.addEventListener('click', () => showGuideSection('operation'));
+companyRulesButton.addEventListener('click', () => showGuideSection('company'));
+basicSettingsLiveButton.addEventListener('click', closeRuleSettingsEditor);
 editRuleSettingsButton.addEventListener('click', openRuleSettingsEditor);
+document.querySelectorAll('.setting-row-edit').forEach((button) => {
+  button.addEventListener('click', () => {
+    openRuleSettingsEditor();
+    requestAnimationFrame(() => {
+      const target = button.dataset.ruleFocus
+        ? document.getElementById(button.dataset.ruleFocus)
+        : document.querySelector(button.dataset.ruleFocusSelector || '');
+      target?.focus();
+    });
+  });
+});
 ruleSettingsCancel.addEventListener('click', closeRuleSettingsEditor);
 ruleSettingsApply.addEventListener('click', applyRuleSettings);
 
@@ -3826,12 +3970,14 @@ nightModeButton.addEventListener('click', () => setNightMode(!nightModeEnabled))
 leaveTypeModeButton.addEventListener('click', () => setLeaveTypeMode(!leaveTypeModeEnabled));
 meetingModeButton.addEventListener('click', () => setMeetingMode(!meetingModeEnabled));
 noteModeButton.addEventListener('click', () => setNoteMode(!noteModeEnabled));
-shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
-supervisorConfigButton.addEventListener('click', toggleSupervisorConfigPanel);
+shiftConfigButton.addEventListener('click', showShiftSettings);
+supervisorConfigButton.addEventListener('click', showSupervisorSettings);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
 supervisorConfigClose.addEventListener('click', closeSupervisorConfigPanel);
-shiftSeniorityButton?.addEventListener('click', toggleShiftSeniorityInfo);
-supervisorSeniorityButton?.addEventListener('click', toggleSupervisorSeniorityInfo);
+shiftSeniorityButton?.addEventListener('click', () => showShiftSubsection('seniority'));
+shiftPeopleButton?.addEventListener('click', () => showShiftSubsection('people'));
+supervisorSeniorityButton?.addEventListener('click', () => showSupervisorSubsection('seniority'));
+supervisorPeopleButton?.addEventListener('click', () => showSupervisorSubsection('people'));
 leaveCheckButton.addEventListener('click', startLeaveCheck);
 ruleCheckButton.addEventListener('click', startRuleCheck);
 checkBlockedLeaveButton?.addEventListener('click', () => startRuleCheckByKind('blocked-leave', '禁休日'));

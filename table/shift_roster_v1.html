@@ -1,743 +1,575 @@
 <!DOCTYPE html>
+
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>櫃檯人員排班紀錄表</title>
-  <link rel="stylesheet" href="shift_roster_v1.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, user-scalable=yes" name="viewport"/>
+<title>櫃檯人員排班紀錄表</title>
+<link href="shift_roster_v1.css" rel="stylesheet"/>
 </head>
 <body>
-  <nav class="page-tabs" aria-label="排班工具頁面">
-    <button id="rosterViewTab" class="page-tab is-active" type="button" aria-selected="true" aria-controls="rosterView">班表</button>
-    <button id="rulesViewTab" class="page-tab" type="button" aria-selected="false" aria-controls="rulesView">說明</button>
-  </nav>
+<nav aria-label="排班工具頁面" class="page-tabs"><button aria-controls="rosterView" aria-selected="true" class="page-tab is-active" id="rosterViewTab" type="button">班表</button><button aria-controls="settingsView" aria-selected="false" class="page-tab" id="settingsViewTab" type="button">設定</button><button aria-controls="rulesView" aria-selected="false" class="page-tab" id="rulesViewTab" type="button">說明</button></nav>
+<div class="page-view" id="rosterView">
+<div aria-label="排班表操作" class="controls roster-controls">
+<div class="roster-primary-row">
+<div aria-label="月份控制" class="month-controls">
+<button id="prevMonth" type="button">上個月</button>
+<label class="date-control date-control-year">
+<input aria-label="年份" id="yearInput" inputmode="numeric" max="2100" min="2000" type="number" value="2026"/>
+<span>年</span>
+</label>
+<label class="date-control date-control-month">
+<select aria-label="月份" id="monthSelect"></select>
+</label>
+<button id="nextMonth" type="button">下個月</button>
+</div>
+<details class="toolbar-menu management-menu">
+<summary>管理</summary>
+<div class="menu-panel menu-panel-right">
+<details class="menu-branch">
+<summary>一般管理</summary>
+<div class="menu-branch-body">
+<details class="menu-branch nested-menu">
+<summary>輸出班表</summary>
+<div class="menu-actions">
+<button id="printButton" type="button">列印</button>
+<button id="exportPngButton" type="button">PNG</button>
+<button id="exportExcelButton" type="button">EXCEL</button>
+</div>
+</details>
+<details class="menu-branch nested-menu">
+<summary>備份班表</summary>
+<div class="menu-actions">
+<button id="importJsonButton" type="button">匯入 JSON</button>
+<button id="downloadJsonButton" type="button">匯出 JSON</button>
+<input accept=".json,application/json" hidden="" id="importJsonInput" type="file"/>
+</div>
+</details>
+</div>
+</details>
+<details class="menu-branch">
+<summary>進階管理</summary>
+<div class="menu-branch-body">
+<button id="specialDatesButton" type="button">特殊日期設定</button>
+<details class="menu-branch nested-menu">
+<summary>清空班表</summary>
+<div class="menu-actions">
+<button id="clearMonthButton" type="button">清空本月班表</button>
+<button id="cleanupHistoryButton" type="button">清空歷史班表</button>
+</div>
+</details>
+</div>
+</details>
+</div>
+</details>
+</div>
+<div aria-label="本月操作" class="roster-secondary-row">
+<details class="toolbar-menu">
+<summary>本月班表設定</summary>
+<div class="menu-panel">
+<div class="menu-actions">
+<button aria-pressed="false" id="meetingModeButton" type="button">開會</button>
+<button aria-pressed="false" id="blockModeButton" type="button">禁休</button>
+<button aria-pressed="false" id="leaveTypeModeButton" type="button">假別</button>
+</div>
+<details class="menu-branch nested-menu">
+<summary>特殊</summary>
+<div class="menu-actions">
+<button aria-pressed="false" id="nightModeButton" type="button">灰底</button>
+<button aria-pressed="false" id="specialModeButton" type="button">粉底</button>
+</div>
+</details>
+</div>
+</details>
+<details class="toolbar-menu check-menu">
+<summary>本月班表檢查</summary>
+<div class="menu-panel">
+<button id="ruleCheckButton" type="button">完整規則檢查</button>
+<details class="menu-branch nested-menu">
+<summary>細項規則檢查</summary>
+<div class="menu-branch-body">
+<details class="menu-branch nested-menu">
+<summary>休假規則</summary>
+<div class="menu-actions">
+<button id="leaveCheckButton" type="button">天數</button>
+<button id="checkBlockedLeaveButton" type="button">禁休</button>
+<button id="checkSameGroupLeaveButton" type="button">撞休</button>
+<button id="checkAdjacentLeaveButton" type="button">排序</button>
+<button id="checkWorkLeaveConflictButton" type="button">衝突</button>
+<button id="checkAnnualLeaveButton" type="button">特殊</button>
+</div>
+</details>
+<details class="menu-branch nested-menu">
+<summary>排班規則</summary>
+<div class="menu-actions">
+<button id="checkFixedShiftButton" type="button">班別</button>
+<button id="checkTurnaroundButton" type="button">轉班</button>
+<button id="checkConsecutiveButton" type="button">連勤</button>
+</div>
+</details>
+</div>
+</details>
+</div>
+</details>
+<button aria-pressed="false" class="secondary-main-button" id="noteModeButton" type="button">本月班表備註</button>
+</div>
+<div class="special-dates-reminder" hidden="" id="specialDatesReminder">
+<span id="specialDatesReminderText"></span>
+<button id="specialDatesReminderButton" type="button">設定明年特殊日期</button>
+</div>
+</div>
+<div aria-live="polite" class="row-fill-bar" hidden="" id="rowFillBar">
+<div class="row-fill-head">
+<strong id="rowFillTitle">整列填入</strong>
+<button aria-label="關閉" class="row-fill-close" id="rowFillClose" type="button">×</button>
+</div>
+<div aria-label="快速選擇英文字母" class="row-fill-quick" id="rowFillQuickLetters"></div>
+<div class="row-fill-custom">
+<button id="rowFillClearRow" type="button">清空整列</button>
+</div>
+</div>
 
-  <div id="rosterView" class="page-view">
-  <div class="controls" aria-label="排班表操作">
-    <div class="controls-row controls-date-row" aria-label="月份控制">
-      <button id="prevMonth" type="button">‹ 上月</button>
-      <label class="date-control">
-        <span>年</span>
-        <input id="yearInput" type="number" min="2000" max="2100" value="2026" inputmode="numeric">
-      </label>
-      <label class="date-control">
-        <span>月</span>
-        <select id="monthSelect"></select>
-      </label>
-      <button id="nextMonth" type="button">下月 ›</button>
-    </div>
 
-    <div class="controls-row controls-mark-row" aria-label="標記工具">
-      <button id="blockModeButton" type="button" aria-pressed="false">禁休</button>
-      <button id="specialModeButton" type="button" aria-pressed="false">粉底</button>
-      <button id="nightModeButton" type="button" aria-pressed="false">灰底</button>
-      <button id="leaveTypeModeButton" type="button" aria-pressed="false">假別</button>
-      <button id="meetingModeButton" type="button" aria-pressed="false">開會</button>
-      <button id="noteModeButton" type="button" aria-pressed="false">備註</button>
-    </div>
-
-    <div class="controls-row controls-check-row" aria-label="設定與檢查">
-      <button id="shiftConfigButton" type="button" aria-expanded="false">櫃檯人員資料</button>
-      <button id="supervisorConfigButton" type="button" aria-expanded="false">主管人員資料</button>
-      <button id="leaveCheckButton" type="button">檢查公休天數</button>
-      <button id="ruleCheckButton" type="button">完整規則檢查</button>
-    </div>
-
-    <section class="rule-test-panel" aria-label="規則壓測按鈕">
-      <strong>休假規則壓測</strong>
-      <div class="rule-test-buttons">
-        <button id="checkBlockedLeaveButton" type="button">檢查禁休日</button>
-        <button id="checkSameGroupLeaveButton" type="button">檢查同組撞休</button>
-        <button id="checkAdjacentLeaveButton" type="button">檢查早中排休順序</button>
-        <button id="checkWorkLeaveConflictButton" type="button">檢查班休衝突</button>
-        <button id="checkAnnualLeaveButton" type="button">檢查特休</button>
-        <button id="checkLeaveAllButton" type="button">休假規則全部</button>
-      </div>
-      <strong>排班規則壓測（A 不檢查）</strong>
-      <div class="rule-test-buttons">
-        <button id="checkFixedShiftButton" type="button">檢查固定班別</button>
-        <button id="checkConsecutiveButton" type="button">檢查連勤 6 天</button>
-        <button id="checkTurnaroundButton" type="button">檢查轉班 12 小時</button>
-        <button id="checkScheduleAllButton" type="button">排班規則全部</button>
-      </div>
-    </section>
-
-    <div class="controls-row controls-data-row" aria-label="資料檔案">
-      <button id="importJsonButton" type="button">匯入 JSON</button>
-      <button id="downloadJsonButton" type="button">下載 JSON</button>
-      <input id="importJsonInput" type="file" accept=".json,application/json" hidden>
-    </div>
-
-    <details class="advanced-data-tools">
-      <summary>進階資料管理</summary>
-      <div class="advanced-data-tools-body">
-        <button id="specialDatesButton" type="button">特殊日期設定</button>
-        <button id="cleanupHistoryButton" type="button">清除歷史月份</button>
-      </div>
-    </details>
-
-    <div id="specialDatesReminder" class="special-dates-reminder" hidden>
-      <span id="specialDatesReminderText"></span>
-      <button id="specialDatesReminderButton" type="button">設定明年特殊日期</button>
-    </div>
-
-    <div class="controls-row controls-action-row" aria-label="其他操作">
-      <button id="clearMonthButton" type="button">本月清空</button>
-      <button id="printButton" type="button">列印</button>
-      <button id="exportPngButton" type="button">匯出 PNG</button>
-      <button id="exportExcelButton" type="button">匯出 Excel</button>
-    </div>
-  </div>
-
-  <div id="rowFillBar" class="row-fill-bar" hidden aria-live="polite">
-    <div class="row-fill-head">
-      <strong id="rowFillTitle">整列填入</strong>
-      <button id="rowFillClose" class="row-fill-close" type="button" aria-label="關閉">×</button>
-    </div>
-    <div id="rowFillQuickLetters" class="row-fill-quick" aria-label="快速選擇英文字母"></div>
-    <div class="row-fill-custom">
-      <button id="rowFillClearRow" type="button">清空整列</button>
-    </div>
-  </div>
-
-  <div id="shiftConfigPanel" class="shift-config-panel" hidden aria-live="polite">
-    <div class="shift-config-head">
-      <strong>櫃檯人員資料</strong>
-      <span>櫃檯姓名、到職日、固定班別與特休都在這裡設定。</span>
-      <button id="shiftConfigClose" type="button" aria-label="關閉櫃檯人員資料">×</button>
-    </div>
-    <div class="seniority-info-control">
-      <button id="shiftSeniorityButton" class="seniority-info-button" type="button" aria-expanded="false">年資資訊</button>
-      <div id="shiftSeniorityInfo" class="seniority-info-list" hidden></div>
-    </div>
-    <div id="shiftConfigGrid" class="shift-config-grid"></div>
-  </div>
-
-  <div id="supervisorConfigPanel" class="shift-config-panel supervisor-config-panel" hidden aria-live="polite">
-    <div class="shift-config-head">
-      <strong>主管人員資料</strong>
-      <span>主管姓名、班表顯示字、代號、到職日與當月休假都在這裡設定。</span>
-      <button id="supervisorConfigClose" type="button" aria-label="關閉主管人員資料">×</button>
-    </div>
-    <div class="seniority-info-control">
-      <button id="supervisorSeniorityButton" class="seniority-info-button" type="button" aria-expanded="false">年資資訊</button>
-      <div id="supervisorSeniorityInfo" class="seniority-info-list" hidden></div>
-    </div>
-    <div id="supervisorConfigBody" class="supervisor-config-body"></div>
-  </div>
-
-  <div id="conflictDialog" class="conflict-dialog" hidden>
-    <div class="conflict-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="conflictDialogMessage">
-      <p id="conflictDialogMessage" class="conflict-dialog-message"></p>
-      <div class="conflict-dialog-actions">
-        <button id="conflictChooseSchedule" type="button">排班</button>
-        <button id="conflictChooseVacation" type="button">休假</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="blockedLeaveDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="blockedLeaveMessage">
-      <p id="blockedLeaveMessage" class="app-dialog-message"></p>
-      <div class="app-dialog-actions three-actions">
-        <button id="blockedLeaveException" type="button">例外排休</button>
-        <button id="blockedLeaveFormal" type="button">請假</button>
-        <button id="blockedLeaveBack" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="leaveTypeDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="leaveTypeMessage">
-      <p id="leaveTypeMessage" class="app-dialog-message"></p>
-      <div id="leaveTypeChoices" class="leave-type-choices">
-        <button type="button" data-leave-type="public">公休</button>
-        <button type="button" data-leave-type="annual">特休</button>
-        <button type="button" data-leave-type="leave">請假</button>
-        <button type="button" data-leave-type="exceptionPublic">例外排休</button>
-      </div>
-      <button id="leaveTypeCancel" class="app-dialog-wide-button" type="button">返回</button>
-    </div>
-  </div>
-
-  <div id="leaveNoteDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="leaveNoteMessage">
-      <p id="leaveNoteMessage" class="app-dialog-message">請假備註（選填）</p>
-      <div id="leaveNoteQuickChoices" class="leave-note-choices">
-        <button type="button" data-leave-note="病假">病假</button>
-        <button type="button" data-leave-note="事假">事假</button>
-        <button type="button" data-leave-note="公假">公假</button>
-        <button type="button" data-leave-note="婚假">婚假</button>
-        <button type="button" data-leave-note="喪假">喪假</button>
-      </div>
-      <label class="dialog-field">其他
-        <input id="leaveNoteCustomInput" type="text" maxlength="4" autocomplete="off" placeholder="其他假別">
-      </label>
-      <div class="app-dialog-actions three-actions">
-        <button id="leaveNoteNoNote" type="button">不備註</button>
-        <button id="leaveNoteApplyCustom" type="button">套用其他</button>
-        <button id="leaveNoteBack" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="batchLeaveDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel batch-leave-panel" role="dialog" aria-modal="true" aria-labelledby="batchLeaveMessage">
-      <p id="batchLeaveMessage" class="app-dialog-message batch-leave-message"></p>
-      <div class="batch-leave-meta">
-        <strong id="batchLeaveCount">已選 0 / 8 天</strong>
-        <span id="batchLeaveHint">點日期可複選；特休／請假請回班表單格輸入。</span>
-      </div>
-      <div id="batchLeaveDates" class="batch-leave-dates" aria-label="當月批次排休日期"></div>
-      <div class="app-dialog-actions batch-leave-actions">
-        <button id="batchLeaveApply" type="button">套用</button>
-        <button id="batchLeaveCancel" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="batchLeaveResultDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="batchLeaveResultMessage">
-      <p id="batchLeaveResultMessage" class="app-dialog-message"></p>
-      <button id="batchLeaveResultClose" class="app-dialog-wide-button" type="button">回班表修改</button>
-    </div>
-  </div>
-
-  <div id="specialTimeDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="specialTimeMessage">
-      <p id="specialTimeMessage" class="app-dialog-message"></p>
-      <label class="dialog-field">實際時間（選填）
-        <span class="time-pair" aria-label="特殊班實際時間">
-          <input id="specialTimeStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="12" autocomplete="off" aria-label="開始時間">
-          <span aria-hidden="true">～</span>
-          <input id="specialTimeEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="20" autocomplete="off" aria-label="結束時間">
-        </span>
-      </label>
-      <div class="app-dialog-actions three-actions">
-        <button id="specialTimeApply" type="button">套用</button>
-        <button id="specialTimeRemove" type="button">取消粉底</button>
-        <button id="specialTimeBack" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="nightTimeDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="nightTimeMessage">
-      <p id="nightTimeMessage" class="app-dialog-message"></p>
-      <label class="dialog-field">實際時間（選填）
-        <span class="time-pair" aria-label="灰底實際時間">
-          <input id="nightTimeStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="22" autocomplete="off" aria-label="開始時間">
-          <span aria-hidden="true">～</span>
-          <input id="nightTimeEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="06" autocomplete="off" aria-label="結束時間">
-        </span>
-      </label>
-      <div class="app-dialog-actions three-actions">
-        <button id="nightTimeApply" type="button">套用</button>
-        <button id="nightTimeRemove" type="button">取消灰底</button>
-        <button id="nightTimeBack" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="dayNoteDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="dayNoteMessage">
-      <p id="dayNoteMessage" class="app-dialog-message"></p>
-      <label class="dialog-field">自由備註
-        <input id="dayNoteInput" type="text" maxlength="10" autocomplete="off" placeholder="最多 10 字">
-      </label>
-      <p class="dialog-subnote"><span id="dayNoteCount">0</span> / 10 字；不會取代系統備註。</p>
-      <div class="dialog-section">
-        <strong>第三人休假（選填）</strong>
-        <label class="dialog-field">人員
+<div class="conflict-dialog" hidden="" id="conflictDialog">
+<div aria-labelledby="conflictDialogMessage" aria-modal="true" class="conflict-dialog-panel" role="dialog">
+<p class="conflict-dialog-message" id="conflictDialogMessage"></p>
+<div class="conflict-dialog-actions">
+<button id="conflictChooseSchedule" type="button">排班</button>
+<button id="conflictChooseVacation" type="button">休假</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="blockedLeaveDialog">
+<div aria-labelledby="blockedLeaveMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="blockedLeaveMessage"></p>
+<div class="app-dialog-actions three-actions">
+<button id="blockedLeaveException" type="button">例外排休</button>
+<button id="blockedLeaveFormal" type="button">請假</button>
+<button id="blockedLeaveBack" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="leaveTypeDialog">
+<div aria-labelledby="leaveTypeMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="leaveTypeMessage"></p>
+<div class="leave-type-choices" id="leaveTypeChoices">
+<button data-leave-type="public" type="button">公休</button>
+<button data-leave-type="annual" type="button">特休</button>
+<button data-leave-type="leave" type="button">請假</button>
+<button data-leave-type="exceptionPublic" type="button">例外排休</button>
+</div>
+<button class="app-dialog-wide-button" id="leaveTypeCancel" type="button">返回</button>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="leaveNoteDialog">
+<div aria-labelledby="leaveNoteMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="leaveNoteMessage">請假備註（選填）</p>
+<div class="leave-note-choices" id="leaveNoteQuickChoices">
+<button data-leave-note="病假" type="button">病假</button>
+<button data-leave-note="事假" type="button">事假</button>
+<button data-leave-note="公假" type="button">公假</button>
+<button data-leave-note="婚假" type="button">婚假</button>
+<button data-leave-note="喪假" type="button">喪假</button>
+</div>
+<label class="dialog-field">其他
+        <input autocomplete="off" id="leaveNoteCustomInput" maxlength="4" placeholder="其他假別" type="text"/>
+</label>
+<div class="app-dialog-actions three-actions">
+<button id="leaveNoteNoNote" type="button">不備註</button>
+<button id="leaveNoteApplyCustom" type="button">套用其他</button>
+<button id="leaveNoteBack" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="batchLeaveDialog">
+<div aria-labelledby="batchLeaveMessage" aria-modal="true" class="app-dialog-panel batch-leave-panel" role="dialog">
+<p class="app-dialog-message batch-leave-message" id="batchLeaveMessage"></p>
+<div class="batch-leave-meta">
+<strong id="batchLeaveCount">已選 0 / 8 天</strong>
+<span id="batchLeaveHint">點日期可複選；特休／請假請回班表單格輸入。</span>
+</div>
+<div aria-label="當月批次排休日期" class="batch-leave-dates" id="batchLeaveDates"></div>
+<div class="app-dialog-actions batch-leave-actions">
+<button id="batchLeaveApply" type="button">套用</button>
+<button id="batchLeaveCancel" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="batchLeaveResultDialog">
+<div aria-labelledby="batchLeaveResultMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="batchLeaveResultMessage"></p>
+<button class="app-dialog-wide-button" id="batchLeaveResultClose" type="button">回班表修改</button>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="specialTimeDialog">
+<div aria-labelledby="specialTimeMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="specialTimeMessage"></p>
+<label class="dialog-field">實際時間（選填）
+        <span aria-label="特殊班實際時間" class="time-pair">
+<input aria-label="開始時間" autocomplete="off" id="specialTimeStartInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="12" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="結束時間" autocomplete="off" id="specialTimeEndInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="20" type="text"/>
+</span>
+</label>
+<div class="app-dialog-actions three-actions">
+<button id="specialTimeApply" type="button">套用</button>
+<button id="specialTimeRemove" type="button">取消粉底</button>
+<button id="specialTimeBack" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="nightTimeDialog">
+<div aria-labelledby="nightTimeMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="nightTimeMessage"></p>
+<label class="dialog-field">實際時間（選填）
+        <span aria-label="灰底實際時間" class="time-pair">
+<input aria-label="開始時間" autocomplete="off" id="nightTimeStartInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="22" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="結束時間" autocomplete="off" id="nightTimeEndInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="06" type="text"/>
+</span>
+</label>
+<div class="app-dialog-actions three-actions">
+<button id="nightTimeApply" type="button">套用</button>
+<button id="nightTimeRemove" type="button">取消灰底</button>
+<button id="nightTimeBack" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="dayNoteDialog">
+<div aria-labelledby="dayNoteMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="dayNoteMessage"></p>
+<label class="dialog-field">自由備註
+        <input autocomplete="off" id="dayNoteInput" maxlength="10" placeholder="最多 10 字" type="text"/>
+</label>
+<p class="dialog-subnote"><span id="dayNoteCount">0</span> / 10 字；不會取代系統備註。</p>
+<div class="dialog-section">
+<strong>第三人休假（選填）</strong>
+<label class="dialog-field">人員
           <select id="extraLeaveLetter"><option value="">不設定</option></select>
-        </label>
-        <label class="dialog-field">假別
+</label>
+<label class="dialog-field">假別
           <select id="extraLeaveType">
-            <option value="public">公休</option>
-            <option value="annual">特休</option>
-            <option value="leave">請假</option>
-            <option value="exceptionPublic">例外排休</option>
-          </select>
-        </label>
-        <label class="dialog-field">請假備註
-          <input id="extraLeaveNote" type="text" maxlength="4" list="extraLeaveNoteSuggestions" autocomplete="off" placeholder="病假、事假…">
-        </label>
-        <datalist id="extraLeaveNoteSuggestions">
-          <option value="病假"></option><option value="事假"></option><option value="公假"></option><option value="婚假"></option><option value="喪假"></option>
-        </datalist>
-      </div>
-      <div class="app-dialog-actions">
-        <button id="dayNoteApply" type="button">套用</button>
-        <button id="dayNoteBack" type="button">返回</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="clearMonthDialog" class="clear-month-dialog" hidden>
-    <div class="clear-month-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="clearMonthDialogMessage">
-      <p id="clearMonthDialogMessage" class="clear-month-dialog-message"></p>
-      <div class="clear-month-dialog-actions">
-        <button id="clearMonthCancel" type="button">取消</button>
-        <button id="clearMonthConfirm" type="button">清空</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="leaveCheckDialog" class="leave-check-dialog" hidden>
-    <div class="leave-check-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="leaveCheckMessage">
-      <p id="leaveCheckMessage" class="leave-check-message"></p>
-      <div id="leaveCheckActions" class="leave-check-actions">
-        <button id="leaveCheckCorrect" type="button">正確</button>
-        <button id="leaveCheckIncorrect" type="button">不正確</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="ruleCheckDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="ruleCheckMessage">
-      <p id="ruleCheckMessage" class="app-dialog-message rule-check-message"></p>
-      <div id="ruleCheckActions" class="app-dialog-actions">
-        <button id="ruleCheckException" type="button">例外安排</button>
-        <button id="ruleCheckBack" type="button">回去修改</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="outputTimeDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="outputTimeMessage">
-      <p id="outputTimeMessage" class="app-dialog-message">這次輸出要加入右上角時間嗎？</p>
-      <div class="app-dialog-actions">
-        <button id="outputTimeYes" type="button">加時間</button>
-        <button id="outputTimeNo" type="button">不加時間</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="importConfirmDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="importConfirmMessage">
-      <p id="importConfirmMessage" class="app-dialog-message"></p>
-      <div class="app-dialog-actions">
-        <button id="importConfirmCancel" type="button">取消</button>
-        <button id="importConfirmApply" type="button">確認匯入</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="cleanupHistoryDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="cleanupMessage">
-      <p id="cleanupMessage" class="app-dialog-message">選定月份以前的歷史班表會被刪除。建議先下載 JSON 備份。</p>
-      <label class="dialog-field">清除月份以前
-        <input id="cleanupBeforeMonth" type="month" aria-label="清除歷史資料截止月份">
-      </label>
-      <div class="app-dialog-actions">
-        <button id="cleanupCancel" type="button">取消</button>
-        <button id="cleanupConfirm" type="button">確認清除</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="specialDatesDialog" class="app-dialog" hidden>
-    <div class="app-dialog-panel special-dates-panel" role="dialog" aria-modal="true" aria-labelledby="specialDatesTitle">
-      <div class="special-dates-head">
-        <div>
-          <strong id="specialDatesTitle">年度休假／補班設定</strong>
-          <p>先選「休假日」或「補班日」，再點全年日期；同一天只會保留一種狀態。</p>
-        </div>
-        <button id="specialDatesClose" type="button" aria-label="關閉特殊日期設定">×</button>
-      </div>
-      <div class="special-dates-toolbar">
-        <label>年份
-          <input id="specialDatesYear" type="number" min="2000" max="2100" inputmode="numeric">
-        </label>
-        <div class="special-dates-mode" aria-label="特殊日期類型">
-          <button id="specialDatesHolidayMode" class="is-active" type="button" aria-pressed="true">休假日</button>
-          <button id="specialDatesWorkdayMode" type="button" aria-pressed="false">補班日</button>
-        </div>
-      </div>
-      <p id="specialDatesStatus" class="special-dates-status"></p>
-      <div id="specialDatesCalendars" class="special-dates-calendars" aria-label="全年日期複選"></div>
-      <div class="app-dialog-actions special-dates-actions">
-        <button id="specialDatesCancel" type="button">取消</button>
-        <button id="specialDatesApply" type="button">套用</button>
-      </div>
-    </div>
-  </div>
-
-
-  <div class="sheet-viewport" aria-label="排班表橫向瀏覽區">
-    <main class="sheet" id="sheet">
-      <header class="sheet-title">
-        <div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
-        <h1>櫃檯人員排班紀錄表</h1>
-        <div id="outputTimestamp" class="output-timestamp" hidden aria-label="輸出時間"></div>
-      </header>
-
-      <div class="sheet-body">
-        <div class="sheet-main">
-          <table class="schedule-table" id="scheduleTable" aria-label="排班表"></table>
-          <table class="lower-table" id="lowerTable" aria-label="姓名與月曆備註表"></table>
-          <div class="summary-grid" id="summaryGrid" aria-label="休假統計"></div>
-        </div>
-
-        <aside class="side-note" aria-label="排假說明">
-          <span class="side-note-text">請每人先各排</span>
-          <span id="publicLeaveInput" class="side-note-number" contenteditable="true" role="textbox" inputmode="numeric" aria-label="每人公休天數">8</span>
-          <span class="side-note-text">天月假，等大家全部都排完再排特休。</span>
-        </aside>
-      </div>
-    </main>
-  </div>
-
-  </div>
-
-  <section id="rulesView" class="rules-view" hidden aria-labelledby="rulesPageTitle">
-    <header class="rules-page-head">
-      <div>
-        <p class="rules-page-kicker">SHIFT ROSTER GUIDE</p>
-        <h1 id="rulesPageTitle">使用說明</h1>
-        <p class="rules-page-intro">班表功能很多，不用一次全部看完。需要哪一段再展開；排假規則只有目前生效的基本值直接顯示，其餘內容都收在標題裡。</p>
-      </div>
-    </header>
-
-    <section class="guide-group" aria-labelledby="inputGuideTitle">
-      <div class="guide-group-head">
-        <div>
-          <p class="guide-group-kicker">ROSTER INPUT</p>
-          <h2 id="inputGuideTitle">班表輸入</h2>
-        </div>
-        <p>日常填表、標記、檢查與資料操作。</p>
-      </div>
-
-      <div class="guide-accordion">
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">基本資料怎麼填</span>
-            <span class="guide-summary-note">年月、櫃檯／主管人員資料、特休</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>開啟時會依裝置日期預設顯示下個月；最上方仍可用「上月／下月」切換，也可直接輸入年份、選擇月份。</li>
-              <li>A～F 是當月班表代號，不是永久人員身分；跨月會由系統用內部人員 ID 銜接。F 仍可作預留欄，只有填入姓名的人員才會進入排假與排班規則檢查。</li>
-              <li>「櫃檯人員資料」可直接輸入櫃檯姓名、到職日與固定班別；「主管人員資料」另外獨立設定主管資料與當月休假。櫃檯特休平常依到職日／前月資料自動計算；若實際現況不同，可在任何月份輸入「本月特休校正」並按「套用校正」。</li>
-              <li>特休會顯示「本月可用／已排特休／目前剩餘」；班表姓名旁的小數字固定顯示本月月初可用值，當月排入特休不會立即扣數字，會在下個月結轉時才扣除。校正輸入不會立即生效，按「套用校正」後本月才改以校正值為起點，後續正常結轉；按「取消校正」則恢復系統計算。遇到取得日仍依累加或重置設定帶到次月。</li>
-              <li>「櫃檯人員資料」中，B～F 每人只能設定一個固定班別：早班／中班／大夜。A 固定視為例外，可排三班，且不參與固定班別、連勤、轉班與早中排休順序等排班規則檢查。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">排班與休假怎麼輸入</span>
-            <span class="guide-summary-note">單格、整列、休假欄與衝突處理</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>班別格與休假格都輸入單一英文字母，輸入小寫會自動轉成大寫。</li>
-              <li>點班別左側的時間，例如「<span data-shift-range-index="0">07~15</span>」，可開啟整列填入，一次把 A～F 的員工代號套到整月；套用後仍可逐格修改。</li>
-              <li>休假列每一天有兩個位置，可填當天休假的員工代號。</li>
-              <li>點下方姓名區的 A～F 代號，可開啟當月「批次排公休」日期選單；一次最多可選目前設定的 <span data-rule-public-leave>8</span> 天，既有公休會預先勾選，特休／請假仍用休假格單獨處理。</li>
-              <li>批次排休若遇到某天兩個休假位置都已有人，該日不會覆蓋原資料；其他日期仍會照常排入，最後再提醒回班表單獨調整。</li>
-              <li>同一人同一天若已排班又輸入休假，系統會詢問要保留「排班」或「休假」，不會直接替使用者決定；批次排休遇到已排班日期則先略過，留給單格調整。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">標記工具怎麼用</span>
-            <span class="guide-summary-note">禁休、粉底、灰底、假別、開會、備註</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li><strong>禁休：</strong>開啟後點休假日期，可切換該日是否顯示禁休斜線。</li>
-              <li><strong>粉底：</strong>開啟後點未變色的排班格可套用粉底，實際時間可選填；若要輸入需把開始與結束都填完整。再點已是粉底的格子會直接取消；有填時間才會在下方長條註記並覆蓋原班時間參與轉班檢查。</li>
-              <li><strong>灰底：</strong>開啟後點未變色的排班格可套用灰底，實際時間可選填；若要輸入則開始與結束時間分兩格輸入數字，不必輸入「~」。再點已是灰底的格子會直接取消灰底；未填時間時沿用該班別設定時間；第四列夜班灰底仍使用灰底預設時間。</li>
-              <li><strong>假別：</strong>開啟後點已填入的休假格，可指定公休、特休、請假或例外排休。</li>
-              <li><strong>開會：</strong>開啟後點下方日期長條格，可加入或取消目前設定的開會預設備註。</li>
-              <li><strong>備註：</strong>開啟後點下方日期長條格，可輸入最多 10 字的自由備註；若休假兩格已滿，也可在這裡登記第三人休假。</li>
-              <li>禁休、粉底、灰底、假別、開會、備註都是點格模式；使用完可再按一次同一按鈕關閉。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">檢查功能</span>
-            <span class="guide-summary-note">排假檢查與規則檢查</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li><strong>排假檢查：</strong>確認每位有效員工的公休天數是否符合目前設定；特休、請假不會拿來補公休。</li>
-              <li><strong>規則壓測：</strong>班表頁直接攤開獨立按鈕，可分別測公休、禁休日、同組撞休、早中排休順序、班休衝突、特休、固定班別、連勤與轉班，不必一次看全部警告。</li>
-              <li>檢查結果一次顯示一項；遇到現場已協調好的特殊情況，可選「例外安排」，否則選「回去修改」。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">資料檔與本月清空</span>
-            <span class="guide-summary-note">JSON、副檔名、備份與清除</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>班表資料會自動保存在本機瀏覽器，不需要另外按「儲存」。</li>
-              <li>「下載 JSON」會得到完整班表資料備份；「匯入 JSON」只接受本工具可辨識的備份格式，格式不符時不會修改現有資料。</li>
-              <li>格式正確的 JSON 匯入會先提醒「將覆蓋目前所有本機班表資料與設定」，並提供取消／確認；確認後採整包覆蓋，不做合併。</li>
-              <li>「進階資料管理」預設收合，可開啟「特殊日期設定」一次複選全年休假日／補班日，也可手動清除指定月份以前的歷史資料；建議清除前先下載 JSON 備份。</li>
-              <li>年度特殊日期只改日期呈現與禁休預設：休假日以紅色顯示並預設禁休，補班日即使落在原本紅色日期也改回一般工作日顯示並取消預設禁休；之後仍可用「禁休」模式逐日人工覆蓋。</li>
-              <li>若要把整套單機程式搬到另一台電腦，應複製整個班表資料夾或 ZIP；JSON 只負責資料備份，不包含 HTML、CSS、JS 程式本體。</li>
-              <li>「本月清空」會先跳出確認；目前設計會保留姓名與公休／特休數字，再清除當月排班與標記資料。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">列印與匯出 PNG</span>
-            <span class="guide-summary-note">A4 橫式、右上角輸出時間</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>正式班表固定以 <strong>A4 橫式</strong>輸出，目前列印安全邊界為 6mm。</li>
-              <li>列印或匯出 PNG 前會詢問是否加入輸出時間；若選擇加入，時間顯示在班表右上角。</li>
-              <li>「說明」頁與上方操作按鈕只供螢幕使用，不會一起印進正式班表或 PNG。</li>
-            </ul>
-          </div>
-        </details>
-      </div>
-    </section>
-
-    <section class="guide-group guide-rules-group" aria-labelledby="leaveRulesTitle">
-      <div class="guide-group-head">
-        <div>
-          <p class="guide-group-kicker">LEAVE RULES</p>
-          <h2 id="leaveRulesTitle">排假規則</h2>
-        </div>
-        <p>基本值直接顯示；細節需要時再展開。</p>
-      </div>
-
-      <section class="rules-live-settings" aria-labelledby="rulesLiveSettingsTitle">
-        <div class="rules-section-head">
-          <div>
-            <h3 id="rulesLiveSettingsTitle">目前生效的基本值</h3>
-            <p>這些數值會直接影響排假／規則檢查。</p>
-          </div>
-          <button id="editRuleSettingsButton" class="rules-edit-button" type="button">編輯基本值</button>
-        </div>
-        <div class="rules-value-grid">
-          <div class="rules-value-item"><span>每人每月公休</span><strong><span id="rulePublicLeaveText">8</span> 天</strong></div>
-          <div class="rules-value-item"><span>連續上班上限</span><strong><span id="ruleConsecutiveText">6</span> 天</strong></div>
-          <div class="rules-value-item"><span>轉班不能低於</span><strong><span id="ruleTurnaroundText">12 小時</span></strong></div>
-          <div class="rules-value-item"><span>灰底預設時間</span><strong id="ruleNightText">22~06</strong></div>
-          <div class="rules-value-item rules-shift-times-item">
-            <span>班別時間</span>
-            <strong id="ruleShiftTimesText">早 07~15｜中 15~23、16~24｜夜 23~07、00~08</strong>
-          </div>
-          <div class="rules-value-item"><span>預設禁休</span><strong id="ruleBlockedText">六｜公休、特休</strong></div>
-          <div class="rules-value-item"><span>同日排休</span><strong id="ruleSameDayText">早中｜夜；各組同日最多 1 人（固定）</strong></div>
-          <div class="rules-value-item"><span>相鄰排休</span><strong id="ruleAdjacentText">中班休 → 隔天早班休禁止（固定）</strong></div>
-          <div class="rules-value-item"><span>開會預設</span><strong id="ruleMeetingText">8點櫃檯開會</strong></div>
-        </div>
-
-        <div id="ruleSettingsEditor" class="rule-settings-editor" hidden>
-          <div class="rule-editor-grid">
-            <label>每人每月公休
-              <span class="rule-editor-field"><input id="rulePublicLeaveInput" type="number" min="1" max="31" inputmode="numeric"><span>天</span></span>
-            </label>
-            <label>連續上班上限
-              <span class="rule-editor-field"><input id="ruleConsecutiveInput" type="number" min="1" max="31" inputmode="numeric"><span>天</span></span>
-            </label>
-            <label>轉班不能低於
-              <span class="rule-editor-field"><input id="ruleTurnaroundInput" type="number" min="0" max="24" step="0.5" inputmode="decimal"><span>小時</span></span>
-            </label>
-            <fieldset class="rule-option-group annual-rule-editor">
-              <legend>特休取得級距（可改）</legend>
-              <label>滿 6 個月 <span class="rule-editor-field"><input id="ruleAnnualSixMonthInput" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>滿 1 年 <span class="rule-editor-field"><input id="ruleAnnualYear1Input" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>滿 2 年 <span class="rule-editor-field"><input id="ruleAnnualYear2Input" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>滿 3～未滿 5 年 <span class="rule-editor-field"><input id="ruleAnnualYears3to4Input" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>滿 5～未滿 10 年 <span class="rule-editor-field"><input id="ruleAnnualYears5to9Input" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>滿 10 年基準 <span class="rule-editor-field"><input id="ruleAnnualYear10BaseInput" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>10 年後每年增加 <span class="rule-editor-field"><input id="ruleAnnualAfter10IncrementInput" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-              <label>最高 <span class="rule-editor-field"><input id="ruleAnnualMaxInput" type="number" min="0" max="99" inputmode="numeric"><span>天</span></span></label>
-            </fieldset>
-            <label>灰底預設時間
+<option value="public">公休</option>
+<option value="annual">特休</option>
+<option value="leave">請假</option>
+<option value="exceptionPublic">例外排休</option>
+</select>
+</label>
+<label class="dialog-field">請假備註
+          <input autocomplete="off" id="extraLeaveNote" list="extraLeaveNoteSuggestions" maxlength="4" placeholder="病假、事假…" type="text"/>
+</label>
+<datalist id="extraLeaveNoteSuggestions">
+<option value="病假"></option><option value="事假"></option><option value="公假"></option><option value="婚假"></option><option value="喪假"></option>
+</datalist>
+</div>
+<div class="app-dialog-actions">
+<button id="dayNoteApply" type="button">套用</button>
+<button id="dayNoteBack" type="button">返回</button>
+</div>
+</div>
+</div>
+<div class="clear-month-dialog" hidden="" id="clearMonthDialog">
+<div aria-labelledby="clearMonthDialogMessage" aria-modal="true" class="clear-month-dialog-panel" role="dialog">
+<p class="clear-month-dialog-message" id="clearMonthDialogMessage"></p>
+<div class="clear-month-dialog-actions">
+<button id="clearMonthCancel" type="button">取消</button>
+<button id="clearMonthConfirm" type="button">清空</button>
+</div>
+</div>
+</div>
+<div class="leave-check-dialog" hidden="" id="leaveCheckDialog">
+<div aria-labelledby="leaveCheckMessage" aria-modal="true" class="leave-check-dialog-panel" role="dialog">
+<p class="leave-check-message" id="leaveCheckMessage"></p>
+<div class="leave-check-actions" id="leaveCheckActions">
+<button id="leaveCheckCorrect" type="button">正確</button>
+<button id="leaveCheckIncorrect" type="button">不正確</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="ruleCheckDialog">
+<div aria-labelledby="ruleCheckMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message rule-check-message" id="ruleCheckMessage"></p>
+<div class="app-dialog-actions" id="ruleCheckActions">
+<button id="ruleCheckException" type="button">例外安排</button>
+<button id="ruleCheckBack" type="button">回去修改</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="outputTimeDialog">
+<div aria-labelledby="outputTimeMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="outputTimeMessage">這次輸出要加入右上角時間嗎？</p>
+<div class="app-dialog-actions">
+<button id="outputTimeYes" type="button">加時間</button>
+<button id="outputTimeNo" type="button">不加時間</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="importConfirmDialog">
+<div aria-labelledby="importConfirmMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="importConfirmMessage"></p>
+<div class="app-dialog-actions">
+<button id="importConfirmCancel" type="button">取消</button>
+<button id="importConfirmApply" type="button">確認匯入</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="cleanupHistoryDialog">
+<div aria-labelledby="cleanupMessage" aria-modal="true" class="app-dialog-panel" role="dialog">
+<p class="app-dialog-message" id="cleanupMessage">選定月份以前的歷史班表會被刪除。建議先下載 JSON 備份。</p>
+<label class="dialog-field">清除月份以前
+        <input aria-label="清除歷史資料截止月份" id="cleanupBeforeMonth" type="month"/>
+</label>
+<div class="app-dialog-actions">
+<button id="cleanupCancel" type="button">取消</button>
+<button id="cleanupConfirm" type="button">確認清除</button>
+</div>
+</div>
+</div>
+<div class="app-dialog" hidden="" id="specialDatesDialog">
+<div aria-labelledby="specialDatesTitle" aria-modal="true" class="app-dialog-panel special-dates-panel" role="dialog">
+<div class="special-dates-head">
+<div>
+<strong id="specialDatesTitle">年度休假／補班設定</strong>
+<p>先選「休假日」或「補班日」，再點全年日期；同一天只會保留一種狀態。</p>
+</div>
+<button aria-label="關閉特殊日期設定" id="specialDatesClose" type="button">×</button>
+</div>
+<div class="special-dates-toolbar">
+<label>年份
+          <input id="specialDatesYear" inputmode="numeric" max="2100" min="2000" type="number"/>
+</label>
+<div aria-label="特殊日期類型" class="special-dates-mode">
+<button aria-pressed="true" class="is-active" id="specialDatesHolidayMode" type="button">休假日</button>
+<button aria-pressed="false" id="specialDatesWorkdayMode" type="button">補班日</button>
+</div>
+</div>
+<p class="special-dates-status" id="specialDatesStatus"></p>
+<div aria-label="全年日期複選" class="special-dates-calendars" id="specialDatesCalendars"></div>
+<div class="app-dialog-actions special-dates-actions">
+<button id="specialDatesCancel" type="button">取消</button>
+<button id="specialDatesApply" type="button">套用</button>
+</div>
+</div>
+</div>
+<div aria-label="排班表橫向瀏覽區" class="sheet-viewport">
+<main class="sheet" id="sheet">
+<header class="sheet-title">
+<div class="sheet-month"><span id="titleYear">2026</span> 年 <span id="titleMonth">11</span> 月</div>
+<h1>櫃檯人員排班紀錄表</h1>
+<div aria-label="輸出時間" class="output-timestamp" hidden="" id="outputTimestamp"></div>
+</header>
+<div class="sheet-body">
+<div class="sheet-main">
+<table aria-label="排班表" class="schedule-table" id="scheduleTable"></table>
+<table aria-label="姓名與月曆備註表" class="lower-table" id="lowerTable"></table>
+<div aria-label="休假統計" class="summary-grid" id="summaryGrid"></div>
+</div>
+<aside aria-label="排假說明" class="side-note">
+<span class="side-note-text">請每人先各排</span>
+<span aria-label="每人公休天數" class="side-note-number" contenteditable="true" id="publicLeaveInput" inputmode="numeric" role="textbox">8</span>
+<span class="side-note-text">天月假，等大家全部都排完再排特休。</span>
+</aside>
+</div>
+</main>
+</div>
+</div>
+<section aria-label="設定" class="settings-view" hidden="" id="settingsView">
+<div class="settings-top-tabs">
+<button id="basicSettingsButton" type="button">基本值設定</button>
+<button aria-expanded="false" id="shiftConfigButton" type="button">櫃檯人員資料</button>
+<button aria-expanded="false" id="supervisorConfigButton" type="button">主管人員資料</button>
+</div>
+<div aria-hidden="true" class="settings-divider"></div>
+<section class="settings-panel" hidden="" id="basicSettingsPanel">
+<div class="settings-subtabs basic-setting-tabs">
+<button aria-pressed="true" class="is-active" id="basicSettingsLiveButton" type="button">目前生效設定</button>
+<button id="editRuleSettingsButton" type="button">編輯</button>
+</div>
+<div class="basic-settings-live" id="basicSettingsLive">
+<div class="basic-setting-row"><span>每人每月公休</span><strong><span id="rulePublicLeaveText">8</span> 天</strong><button class="setting-row-edit" data-rule-focus="rulePublicLeaveInput" type="button">修改</button></div>
+<div class="basic-setting-row"><span>連續出勤上限</span><strong><span id="ruleConsecutiveText">6</span> 天</strong><button class="setting-row-edit" data-rule-focus="ruleConsecutiveInput" type="button">修改</button></div>
+<div class="basic-setting-row"><span>轉班最低時數</span><strong id="ruleTurnaroundText">12 小時</strong><button class="setting-row-edit" data-rule-focus="ruleTurnaroundInput" type="button">修改</button></div>
+<div class="basic-setting-row"><span>班別起始時間</span><strong id="ruleShiftTimesText">早 07~15｜中 15~23、16~24｜夜 23~07、00~08</strong><button class="setting-row-edit" data-rule-focus-selector="[data-shift-time-start='0']" type="button">修改</button></div>
+<div class="basic-setting-row"><span>同日排休限制</span><strong id="ruleSameDayText">早中｜夜</strong></div>
+<div class="basic-setting-row"><span>同組當日最多一人</span><strong>1 人</strong></div>
+<div class="basic-setting-row"><span>特殊排休限制</span><strong id="ruleAdjacentText">中班休假隔日，早班禁休</strong></div>
+<div class="basic-setting-row"><span>預設禁排</span><strong id="ruleBlockedTypesText">公休、特休</strong><button class="setting-row-edit" data-rule-focus-selector="#ruleBlockedLeaveTypes input" type="button">修改</button></div>
+<div class="basic-setting-row"><span>禁休日</span><strong id="ruleBlockedWeekdaysText">六、國定假日</strong><button class="setting-row-edit" data-rule-focus-selector="#ruleBlockedWeekdays input" type="button">修改</button></div>
+<div class="basic-setting-row"><span>開會預設</span><strong id="ruleMeetingText">8點櫃檯開會</strong><button class="setting-row-edit" data-rule-focus="ruleMeetingDefaultInput" type="button">修改</button></div>
+</div>
+<span class="ui-hidden-control" id="ruleNightText">22~06</span>
+<div class="rule-settings-editor" hidden="" id="ruleSettingsEditor">
+<div class="rule-editor-grid">
+<label>每人每月公休
+              <span class="rule-editor-field"><input id="rulePublicLeaveInput" inputmode="numeric" max="31" min="1" type="number"/><span>天</span></span>
+</label>
+<label>連續上班上限
+              <span class="rule-editor-field"><input id="ruleConsecutiveInput" inputmode="numeric" max="31" min="1" type="number"/><span>天</span></span>
+</label>
+<label>轉班不能低於
+              <span class="rule-editor-field"><input id="ruleTurnaroundInput" inputmode="decimal" max="24" min="0" step="0.5" type="number"/><span>小時</span></span>
+</label>
+<fieldset class="rule-option-group annual-rule-editor">
+<legend>特休取得級距（可改）</legend>
+<label>滿 6 個月 <span class="rule-editor-field"><input id="ruleAnnualSixMonthInput" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>滿 1 年 <span class="rule-editor-field"><input id="ruleAnnualYear1Input" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>滿 2 年 <span class="rule-editor-field"><input id="ruleAnnualYear2Input" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>滿 3～未滿 5 年 <span class="rule-editor-field"><input id="ruleAnnualYears3to4Input" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>滿 5～未滿 10 年 <span class="rule-editor-field"><input id="ruleAnnualYears5to9Input" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>滿 10 年基準 <span class="rule-editor-field"><input id="ruleAnnualYear10BaseInput" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>10 年後每年增加 <span class="rule-editor-field"><input id="ruleAnnualAfter10IncrementInput" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+<label>最高 <span class="rule-editor-field"><input id="ruleAnnualMaxInput" inputmode="numeric" max="99" min="0" type="number"/><span>天</span></span></label>
+</fieldset>
+<label>灰底預設時間
               <span class="rule-editor-field time-pair rule-time-pair">
-                <input id="ruleNightStartInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="22" autocomplete="off" aria-label="灰底預設開始時間">
-                <span aria-hidden="true">～</span>
-                <input id="ruleNightEndInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="06" autocomplete="off" aria-label="灰底預設結束時間">
-              </span>
-            </label>
+<input aria-label="灰底預設開始時間" autocomplete="off" id="ruleNightStartInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="22" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="灰底預設結束時間" autocomplete="off" id="ruleNightEndInput" inputmode="numeric" maxlength="2" pattern="[0-9]*" placeholder="06" type="text"/>
+</span>
+</label>
+<fieldset class="rule-option-group">
+<legend>預設禁休星期</legend>
+<div class="rule-checkbox-list" id="ruleBlockedWeekdays">
+<label><input type="checkbox" value="1"/>一</label><label><input type="checkbox" value="2"/>二</label><label><input type="checkbox" value="3"/>三</label><label><input type="checkbox" value="4"/>四</label><label><input type="checkbox" value="5"/>五</label><label><input type="checkbox" value="6"/>六</label><label><input type="checkbox" value="0"/>日</label>
+</div>
+</fieldset>
+<fieldset class="rule-option-group">
+<legend>禁休限制假別</legend>
+<div class="rule-checkbox-list" id="ruleBlockedLeaveTypes">
+<label><input type="checkbox" value="public"/>公休</label>
+<label><input type="checkbox" value="annual"/>特休</label>
+</div>
+</fieldset>
+<label>開會預設備註
+              <input autocomplete="off" id="ruleMeetingDefaultInput" maxlength="10" type="text"/>
+</label>
+<div aria-label="班別時間設定" class="rule-shift-time-editor">
+<div class="rule-shift-time-head">
+<strong>班別時間</strong>
 
-            <fieldset class="rule-option-group">
-              <legend>預設禁休星期</legend>
-              <div class="rule-checkbox-list" id="ruleBlockedWeekdays">
-                <label><input type="checkbox" value="1">一</label><label><input type="checkbox" value="2">二</label><label><input type="checkbox" value="3">三</label><label><input type="checkbox" value="4">四</label><label><input type="checkbox" value="5">五</label><label><input type="checkbox" value="6">六</label><label><input type="checkbox" value="0">日</label>
-              </div>
-            </fieldset>
-            <fieldset class="rule-option-group">
-              <legend>禁休限制假別</legend>
-              <div class="rule-checkbox-list" id="ruleBlockedLeaveTypes">
-                <label><input type="checkbox" value="public">公休</label>
-                <label><input type="checkbox" value="annual">特休</label>
-              </div>
-            </fieldset>
-            <label>開會預設備註
-              <input id="ruleMeetingDefaultInput" type="text" maxlength="10" autocomplete="off">
-            </label>
+</div>
+<div class="rule-shift-time-list">
+<div class="rule-shift-time-row">
+<span class="rule-shift-time-group">早</span>
+<span class="rule-editor-field time-pair rule-shift-time-pair">
+<input aria-label="第一班開始時間" autocomplete="off" data-shift-time-start="0" maxlength="5" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="第一班結束時間" autocomplete="off" data-shift-time-end="0" maxlength="5" type="text"/>
+</span>
+</div>
+<div class="rule-shift-time-row">
+<span class="rule-shift-time-group">中</span>
+<span class="rule-editor-field time-pair rule-shift-time-pair">
+<input aria-label="第二班開始時間" autocomplete="off" data-shift-time-start="1" maxlength="5" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="第二班結束時間" autocomplete="off" data-shift-time-end="1" maxlength="5" type="text"/>
+</span>
+</div>
+<div class="rule-shift-time-row">
+<span class="rule-shift-time-group">中</span>
+<span class="rule-editor-field time-pair rule-shift-time-pair">
+<input aria-label="第三班開始時間" autocomplete="off" data-shift-time-start="2" maxlength="5" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="第三班結束時間" autocomplete="off" data-shift-time-end="2" maxlength="5" type="text"/>
+</span>
+</div>
+<div class="rule-shift-time-row">
+<span class="rule-shift-time-group">夜</span>
+<span class="rule-editor-field time-pair rule-shift-time-pair">
+<input aria-label="第四班開始時間" autocomplete="off" data-shift-time-start="3" maxlength="5" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="第四班結束時間" autocomplete="off" data-shift-time-end="3" maxlength="5" type="text"/>
+</span>
+</div>
+<div class="rule-shift-time-row">
+<span class="rule-shift-time-group">夜</span>
+<span class="rule-editor-field time-pair rule-shift-time-pair">
+<input aria-label="第五班開始時間" autocomplete="off" data-shift-time-start="4" maxlength="5" type="text"/>
+<span aria-hidden="true">～</span>
+<input aria-label="第五班結束時間" autocomplete="off" data-shift-time-end="4" maxlength="5" type="text"/>
+</span>
+</div>
+</div>
 
-            <div class="rule-shift-time-editor" aria-label="班別時間設定">
-              <div class="rule-shift-time-head">
-                <strong>班別時間</strong>
-                <span>早／中／夜分類固定，只調整上下班時間。</span>
-              </div>
-              <div class="rule-shift-time-list">
-                <div class="rule-shift-time-row">
-                  <span class="rule-shift-time-group">早</span>
-                  <span class="rule-editor-field time-pair rule-shift-time-pair">
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第一班開始時間" data-shift-time-start="0">
-                    <span aria-hidden="true">～</span>
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第一班結束時間" data-shift-time-end="0">
-                  </span>
-                </div>
-                <div class="rule-shift-time-row">
-                  <span class="rule-shift-time-group">中</span>
-                  <span class="rule-editor-field time-pair rule-shift-time-pair">
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第二班開始時間" data-shift-time-start="1">
-                    <span aria-hidden="true">～</span>
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第二班結束時間" data-shift-time-end="1">
-                  </span>
-                </div>
-                <div class="rule-shift-time-row">
-                  <span class="rule-shift-time-group">中</span>
-                  <span class="rule-editor-field time-pair rule-shift-time-pair">
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第三班開始時間" data-shift-time-start="2">
-                    <span aria-hidden="true">～</span>
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第三班結束時間" data-shift-time-end="2">
-                  </span>
-                </div>
-                <div class="rule-shift-time-row">
-                  <span class="rule-shift-time-group">夜</span>
-                  <span class="rule-editor-field time-pair rule-shift-time-pair">
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第四班開始時間" data-shift-time-start="3">
-                    <span aria-hidden="true">～</span>
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第四班結束時間" data-shift-time-end="3">
-                  </span>
-                </div>
-                <div class="rule-shift-time-row">
-                  <span class="rule-shift-time-group">夜</span>
-                  <span class="rule-editor-field time-pair rule-shift-time-pair">
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第五班開始時間" data-shift-time-start="4">
-                    <span aria-hidden="true">～</span>
-                    <input type="text" maxlength="5" autocomplete="off" aria-label="第五班結束時間" data-shift-time-end="4">
-                  </span>
-                </div>
-              </div>
-              <p class="rule-shift-time-note">可輸入 07、07:30、24 等格式；結束時間可用 24。</p>
-            </div>
-          </div>
-          <p class="rule-editor-note">這些基本值會自動保存在本機，之後開啟仍會沿用。</p>
-          <div class="rule-editor-actions">
-            <button id="ruleSettingsCancel" type="button">取消</button>
-            <button id="ruleSettingsApply" type="button">套用</button>
-          </div>
-        </div>
-      </section>
+</div>
+</div>
 
-      <div class="guide-accordion rules-accordion">
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">人員、班別與公休</span>
-            <span class="guide-summary-note">A～F、固定班別、公休／特休／請假</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li><strong>A～F 是當月班表代號，不是永久人員 ID，也不是班別順序。</strong>跨月時會用內部人員 ID 銜接；排休與轉班判斷仍依實際班別。</li>
-              <li>人數不一定固定為 6 人；規則檢查只處理當月實際有姓名、班別、排班或休假的人員。</li>
-              <li>班別分類為：早班（<span data-shift-group-detail="early">07~15</span>）、中班（<span data-shift-group-detail="middle">15~23、16~24</span>）、大夜（<span data-shift-group-detail="night">23~07、00~08</span>）。B～F 每人固定單一班別；A 為三班例外。</li>
-              <li>主管資料另存姓名、1 字顯示字、代號與到職日；主管特休依同一套年資級距計算後折半，0.5 天進位。</li>
-              <li>每人每月先排 <strong><span data-rule-public-leave>8</span> 天公休</strong>；特休、請假都不計入這個公休數量。</li>
-              <li>例如 8 天公休＋1 天特休，共休 9 天是正常狀況。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">禁休與例外</span>
-            <span class="guide-summary-note">斜線、例外排休與正式請假</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>預設禁休星期可在上方「編輯基本值」複選；班表以斜線標示，仍可用「禁休」模式逐日取消或補上例外。</li>
-              <li>主管資料登記「當月休假」後，該日以紅斜線顯示並視為禁休；若 A 出現在當日排班或排休，完整規則檢查會提示「A不可排」，仍可人工確認例外。</li>
-              <li>禁休要限制公休、特休或兩者皆限制，可在設定中勾選；例外協調仍可使用「例外排休」。</li>
-              <li>實際發生請假時仍可登記，不會因禁休日而禁止輸入。</li>
-              <li>系統以提醒為主，不會因規則直接鎖死班表。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">同組排休與前後順序</span>
-            <span class="guide-summary-note">分組、同日人數上限與相鄰排休</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>同日排休固定分為「早中｜大夜」：早班與中班同組，大夜自己一組；每組同一天最多排休 1 人。A 不參與這個組別檢查。</li>
-              <li>早班休假後，隔天中班休假可以正常安排。</li>
-              <li>「中班休假 → 隔天早班休假」提醒可啟用／停用；啟用時仍依人員當月班別判斷。</li>
-              <li>例如 C 是早班、B 是中班時，在相鄰排休提醒啟用下：C 休 → 隔天 B 休可以；B 休 → 隔天 C 休會提醒。班別換人時，規則跟著角色換，不跟字母走。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">連續上班與轉班</span>
-            <span class="guide-summary-note"><span data-rule-consecutive>6</span> 天上限、轉班至少 <span data-rule-turnaround>12 小時</span></span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>同一人原則上不得連續上班超過 <strong><span data-rule-consecutive>6</span> 天</strong>；超過時規則檢查會提醒。</li>
-              <li>若一次連續上班 10 天，系統會顯示一個完整區間，例如「11/1～11/10 連續上班 10 天」，不會從第 7 天開始每天重複跳提醒。</li>
-              <li><strong>轉班最低間隔可設定，也可停用檢查。</strong>啟用時若前一班結束到下一班開始低於 <span data-rule-turnaround>12 小時</span> 就會提醒。</li>
-              <li>月初檢查會往前讀前月月底資料；月份切換不會把連續上班天數歸零，前月最後一班也會參與本月第一班的轉班間隔檢查。</li>
-              <li>第一次使用時前月不必整月補齊，可只補月底銜接需要的日期；若需要的日期仍是空白，規則檢查會提醒資料不足，不會把空白當休假。</li>
-              <li>跨午夜班依實際日期與時間計算；粉底、灰底若有填實際時間，就用登記時間參與轉班檢查；沒填則沿用班別時間（第四列週六預設灰底仍沿用灰底預設時間）。</li>
-              <li>因人力或其他協調而出現特殊安排時，可人工確認為例外。</li>
-            </ul>
-          </div>
-        </details>
-
-        <details class="guide-details">
-          <summary>
-            <span class="guide-summary-title">特殊班、大夜與長條註記</span>
-            <span class="guide-summary-note">粉紅、灰底、假別、開會與自由備註</span>
-          </summary>
-          <div class="guide-details-body">
-            <ul>
-              <li>粉紅底代表特殊班；實際時間可填可不填。若有輸入，會以下方長條直排記錄，例如「A／12／│／20」，並用實際時間參與轉班檢查；留空則沿用該班別設定時間。</li>
-              <li>灰底可標記任一班別；若有輸入實際時間，就以該時間參與規則檢查並在下方長條註記。未輸入時沿用該班別設定時間；第四列夜班灰底則使用預設時間 <strong><span data-rule-night>22~06</span></strong>。</li>
-              <li>特殊班仍算上班 1 天，會參與連續上班與轉班檢查。</li>
-              <li>特休會在下方長條格顯示「員工代號／特／休」；請假可選填病假、事假、公假、婚假、喪假或其他備註，並在長條直排顯示。</li>
-              <li>開會文字使用目前設定的預設備註；另外可用「備註」模式加入短文字或第三人休假。這些純備註不算班別、不算工作日；第三人休假則會正常參與排假／規則檢查。</li>
-            </ul>
-          </div>
-        </details>
-      </div>
-    </section>
-
-    <p class="rules-page-footnote">這份工具的定位是排班／排假檢查器：先把可能有問題的地方提醒出來，最後仍由使用者依實際狀況決定。</p>
-  </section>
-  <script src="shift_roster_storage.js"></script>
-  <script src="shift_roster_rules.js"></script>
-  <script src="shift_roster_v1.js"></script>
-  <script src="shift_roster_backup.js"></script>
-  <script src="shift_roster_export.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="shift_roster_excel_export.js"></script>
+<div class="rule-editor-actions">
+<button id="ruleSettingsCancel" type="button">取消</button>
+<button id="ruleSettingsApply" type="button">套用</button>
+</div>
+</div></section><div aria-live="polite" class="shift-config-panel" hidden="" id="shiftConfigPanel">
+<button aria-label="關閉櫃檯人員資料" class="ui-hidden-control" id="shiftConfigClose" type="button">×</button>
+<div aria-label="櫃檯人員資料" class="settings-subtabs">
+<button aria-expanded="false" id="shiftSeniorityButton" type="button">年資資訊</button>
+<button aria-pressed="false" id="shiftPeopleButton" type="button">櫃檯人員</button>
+</div>
+<div class="seniority-info-list" hidden="" id="shiftSeniorityInfo"></div>
+<div class="shift-config-grid" hidden="" id="shiftConfigGrid"></div>
+</div><div aria-live="polite" class="shift-config-panel supervisor-config-panel" hidden="" id="supervisorConfigPanel">
+<button aria-label="關閉主管人員資料" class="ui-hidden-control" id="supervisorConfigClose" type="button">×</button>
+<div aria-label="主管人員資料" class="settings-subtabs">
+<button aria-expanded="false" id="supervisorSeniorityButton" type="button">年資資訊</button>
+<button aria-pressed="false" id="supervisorPeopleButton" type="button">主管人員</button>
+</div>
+<div class="seniority-info-list" hidden="" id="supervisorSeniorityInfo"></div>
+<div class="supervisor-config-body" hidden="" id="supervisorConfigBody"></div>
+</div></section><section aria-label="說明" class="rules-view" hidden="" id="rulesView">
+<div class="guide-top-tabs">
+<button id="operationGuideButton" type="button">操作說明</button>
+<button id="companyRulesButton" type="button">公司規定</button>
+</div>
+<div aria-hidden="true" class="settings-divider"></div>
+<section class="guide-simple-panel" hidden="" id="operationGuidePanel">
+<ul class="operation-guide-list">
+<li>月份：上個月／年份／月份／下個月。</li>
+<li>本月操作：班表設定、班表檢查、班表備註。</li>
+<li>管理：輸出班表、JSON 備份、特殊日期設定、清空班表。</li>
+<li>匯出 JSON 為完整資料備份；匯入 JSON 會覆蓋本機班表資料與設定。</li>
+<li>班表資料會自動保存在本機瀏覽器。</li>
+</ul>
+</section>
+<section class="company-rules-panel" hidden="" id="companyRulesPanel">
+<details class="company-rule-item">
+<summary>特休</summary>
+<div>特休依到職日與設定級距計算；特休不計入每月公休天數。</div>
+</details>
+<details class="company-rule-item">
+<summary>每月休假</summary>
+<div>每人每月公休 <span data-rule-public-leave="">8</span> 天；特休、請假不計入公休數量。</div>
+</details>
+<details class="company-rule-item">
+<summary>禁休日期</summary>
+<div>週六及國定假日為禁休日期。</div>
+</details>
+<details class="company-rule-item">
+<summary>補班日排休</summary>
+<div>補班日依工作日處理，不套用原假日的禁休顯示。</div>
+</details>
+<details class="company-rule-item">
+<summary>同日排休限制</summary>
+<div>早班與中班同組，大夜為另一組；同組同日最多 1 人休假。</div>
+</details>
+<details class="company-rule-item">
+<summary>特殊排休限制</summary>
+<div>中班休假隔日，早班禁休。</div>
+</details>
+<details class="company-rule-item">
+<summary>連續出勤</summary>
+<div>連續出勤上限 <span data-rule-consecutive="">6</span> 天。</div>
+</details>
+<details class="company-rule-item">
+<summary>轉班間隔</summary>
+<div>轉班最低間隔 <span data-rule-turnaround="">12 小時</span>。</div>
+</details>
+</section>
+</section>
+<script src="shift_roster_storage.js"></script>
+<script src="shift_roster_rules.js"></script>
+<script src="shift_roster_v1.js"></script>
+<script src="shift_roster_backup.js"></script>
+<script src="shift_roster_export.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="shift_roster_excel_export.js"></script>
 </body>
 </html>

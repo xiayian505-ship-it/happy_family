@@ -3618,3 +3618,509 @@ textarea,
 .seniority-info-empty {
   color: #777;
 }
+
+/* =========================================================
+   2026-09 新版面重構
+   只整理三頁架構、操作入口與收合層級；班表本體與功能邏輯不變。
+========================================================= */
+.ui-hidden-control {
+  display: none !important;
+}
+
+.settings-view[hidden],
+.guide-simple-panel[hidden],
+.company-rules-panel[hidden],
+.settings-panel[hidden],
+.supervisor-config-body[hidden],
+.shift-config-grid[hidden] {
+  display: none !important;
+}
+
+.roster-controls {
+  position: relative;
+  left: auto;
+  width: min(1120px, calc(100vw - 36px));
+  margin: 0 auto 14px;
+  display: grid;
+  gap: 0;
+}
+
+.roster-primary-row {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #c8c8c8;
+}
+
+.month-controls {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-controls > button,
+.toolbar-menu > summary,
+.secondary-main-button,
+.settings-top-tabs > button,
+.settings-subtabs > button,
+.guide-top-tabs > button {
+  min-height: 42px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.month-controls > button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.month-controls .date-control {
+  width: auto;
+  min-height: 42px;
+  grid-template-columns: minmax(72px, auto) auto;
+  gap: 5px;
+  padding: 0 8px 0 0;
+  border-radius: 8px;
+}
+
+.month-controls .date-control input,
+.month-controls .date-control select {
+  width: auto;
+  min-width: 78px;
+  min-height: 40px;
+  padding: 0 8px;
+  border-left: 0;
+  border-right: 1px solid #ddd;
+  border-radius: 7px 0 0 7px;
+}
+
+.month-controls .date-control-month {
+  grid-template-columns: minmax(78px, auto);
+  padding-right: 0;
+}
+
+.month-controls .date-control-month select {
+  border-right: 0;
+  border-radius: 7px;
+}
+
+.toolbar-menu {
+  position: relative;
+}
+
+.toolbar-menu > summary,
+.menu-branch > summary {
+  list-style: none;
+  user-select: none;
+}
+
+.toolbar-menu > summary::-webkit-details-marker,
+.menu-branch > summary::-webkit-details-marker,
+.company-rule-item > summary::-webkit-details-marker {
+  display: none;
+}
+
+.toolbar-menu > summary::after,
+.menu-branch > summary::after,
+.company-rule-item > summary::after {
+  content: "＋";
+  margin-left: 8px;
+  font-weight: 400;
+}
+
+.toolbar-menu[open] > summary::after,
+.menu-branch[open] > summary::after,
+.company-rule-item[open] > summary::after {
+  content: "－";
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 80;
+  width: min(330px, calc(100vw - 36px));
+  padding: 8px;
+  border: 1px solid #c8c8c8;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .14);
+}
+
+.menu-panel-right {
+  right: 0;
+  left: auto;
+}
+
+.menu-branch {
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.menu-branch:last-child {
+  border-bottom: 0;
+}
+
+.menu-branch > summary {
+  padding: 11px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.menu-branch-body,
+.menu-actions {
+  display: grid;
+  gap: 6px;
+  padding: 0 6px 8px;
+}
+
+.menu-actions button,
+.menu-branch-body > button,
+.menu-panel > button {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid #bbb;
+  border-radius: 7px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.roster-secondary-row {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.secondary-main-button.is-active,
+.toolbar-menu button.is-active,
+.toolbar-menu button[aria-pressed="true"],
+.settings-top-tabs > button.is-active,
+.settings-subtabs > button.is-active,
+.guide-top-tabs > button.is-active {
+  border-color: #222;
+  background: #222;
+  color: #fff;
+}
+
+.special-dates-reminder {
+  margin-top: 8px;
+}
+
+.settings-view,
+.rules-view {
+  width: min(1120px, calc(100vw - 36px));
+  margin: 0 auto 48px;
+  padding: 18px 0 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.settings-top-tabs,
+.guide-top-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-divider {
+  height: 1px;
+  margin: 12px 0 16px;
+  background: #c8c8c8;
+}
+
+.settings-panel,
+.shift-config-panel {
+  position: static;
+  left: auto;
+  z-index: auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.basic-settings-live {
+  display: grid;
+  border-top: 1px solid #d4d4d4;
+}
+
+.basic-setting-row {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(0, 1.6fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 2px;
+  border-bottom: 1px solid #dedede;
+}
+
+.basic-setting-row > span {
+  color: #555;
+}
+
+.basic-setting-row > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.setting-row-edit,
+.supervisor-apply-button {
+  min-height: 36px;
+  border: 1px solid #aaa;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rule-settings-editor {
+  margin-top: 14px;
+  padding: 14px 0 0;
+  border-top: 1px solid #c8c8c8;
+  background: transparent;
+}
+
+.rule-editor-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.rule-shift-time-head {
+  margin-bottom: 8px;
+}
+
+.shift-config-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.shift-config-row {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #d8d8d8;
+  border-radius: 0;
+}
+
+.shift-config-summary {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+}
+
+.shift-config-summary > strong {
+  font-size: 17px;
+}
+
+.shift-config-summary > button {
+  min-height: 36px;
+  border: 1px solid #aaa;
+  border-radius: 7px;
+  background: #fff;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shift-config-detail[hidden] {
+  display: none !important;
+}
+
+.shift-config-detail {
+  display: grid;
+  grid-template-columns: minmax(210px, .9fr) minmax(240px, 1fr) minmax(280px, 1.2fr);
+  gap: 10px;
+  padding: 4px 0 14px;
+}
+
+.shift-config-person {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.shift-config-exception {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid #bbb;
+  border-radius: 7px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.shift-config-meta {
+  gap: 8px;
+}
+
+.annual-carry-status,
+.annual-grant-choice,
+.supervisor-annual-status {
+  display: none !important;
+}
+
+.seniority-info-list {
+  margin: 0 0 14px;
+}
+
+.supervisor-config-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.supervisor-config-fields {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.supervisor-apply-button {
+  justify-self: end;
+  min-width: 90px;
+}
+
+.guide-simple-panel,
+.company-rules-panel {
+  width: 100%;
+}
+
+.operation-guide-list {
+  margin: 0;
+  padding-left: 1.4em;
+  line-height: 1.9;
+}
+
+.company-rule-item {
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.company-rule-item:first-child {
+  border-top: 1px solid #d8d8d8;
+}
+
+.company-rule-item > summary {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.company-rule-item > div {
+  padding: 0 2px 14px;
+  line-height: 1.75;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 12px;
+  }
+
+  .page-tabs,
+  .roster-controls,
+  .settings-view,
+  .rules-view {
+    width: calc(100vw - 24px);
+  }
+
+  .roster-primary-row {
+    align-items: flex-start;
+  }
+
+  .month-controls {
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .month-controls > button,
+  .month-controls .date-control {
+    min-height: 44px;
+  }
+
+  .management-menu {
+    flex: 0 0 auto;
+  }
+
+  .roster-secondary-row > .toolbar-menu,
+  .roster-secondary-row > .secondary-main-button {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .toolbar-menu > summary,
+  .secondary-main-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .menu-panel {
+    width: min(330px, calc(100vw - 24px));
+  }
+
+  .check-menu .menu-panel {
+    right: 0;
+    left: auto;
+  }
+
+  .basic-setting-row {
+    grid-template-columns: minmax(120px, .8fr) minmax(0, 1.2fr) auto;
+    gap: 8px;
+  }
+
+  .rule-editor-grid,
+  .shift-config-detail,
+  .supervisor-config-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .supervisor-leave-dates {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media print {
+  .page-tabs,
+  .settings-view,
+  .rules-view,
+  .controls {
+    display: none !important;
+  }
+}
