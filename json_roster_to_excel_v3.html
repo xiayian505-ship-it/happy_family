@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EliteHotel JSON → 同版 Excel</title>
+  <link rel="stylesheet" href="json_roster_to_excel_v3.css">
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <p class="eyebrow">ELITEHOTEL ROSTER EXPORT</p>
+      <h1>JSON → 同版 Excel</h1>
+      <p class="lead">讀取 EliteHotel 班表備份 JSON，依目前正式班表版型輸出可編輯的 Excel 儲存格。</p>
+
+      <label class="drop" id="dropZone">
+        <input id="jsonFile" type="file" accept="application/json,.json">
+        <strong>選擇班表 JSON</strong>
+        <span>也可以把檔案拖到這裡</span>
+      </label>
+
+      <div class="status" id="status">尚未載入檔案</div>
+
+      <div class="field" id="monthField" hidden>
+        <label for="monthSelect">匯出月份</label>
+        <select id="monthSelect"></select>
+      </div>
+
+      <div class="preview" id="preview" hidden>
+        <div><span>格式</span><strong id="formatText"></strong></div>
+        <div><span>月份</span><strong id="monthText"></strong></div>
+        <div><span>人員</span><strong id="peopleText"></strong></div>
+        <div><span>班表格數</span><strong id="rosterText"></strong></div>
+      </div>
+
+      <button id="exportBtn" type="button" disabled>匯出同版 Excel</button>
+      <p class="note">Excel 與瀏覽器字型渲染不同，因此字距可能有極小差異；版型、欄位、底色、框線、班表內容會照正式班表配置。</p>
+    </section>
+  </main>
+  <script src="json_roster_to_excel_v3.js"></script>
+</body>
+</html>

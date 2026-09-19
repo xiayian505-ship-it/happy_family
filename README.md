@@ -1,35 +1,34 @@
-# JSON 班表 → Excel v2
+# EliteHotel JSON → 同版 Excel v3
 
-這是獨立測試工具，不會修改班表主程式，也不會寫回原始 JSON。
+這一版不是通用 JSON 轉 Excel。
 
-## 用法
-1. 開啟 `json_roster_to_excel_v2.html`
-2. 選擇 EliteHotel 班表 JSON
-3. 畫面會先以「日期橫向、項目縱向」預覽
-4. 按「匯出表格 Excel」
+目標：讀取 `elitehotel-shift-roster-v3` / `schemaVersion: 3` 的班表備份 JSON，將資料重新排成目前正式 HTML 班表的 Excel 版型。
 
-## 這版和 v1 的差別
-v1 是通用 JSON flatten：適合檢查資料結構，但不會知道班表的視覺結構。
+## 使用
 
-v2 針對目前班表 JSON 的 `months -> rosterValues`，解析像：
+1. 開啟 `json_roster_to_excel_v3.html`
+2. 選擇 EliteHotel 匯出的 JSON
+3. 若 JSON 含多個月份，可選月份
+4. 按「匯出同版 Excel」
 
-- `2-vacation-0`
-- `3-shift-1`
+## 已對齊正式班表的項目
 
-這種 sparse key，重新組成二維表格。
+- 年月 +「櫃檯人員排班紀錄表」標題
+- 日期列兩白兩灰，跨月份延續
+- 星期六／星期日粉紅底
+- 5 個班別 + 早／中／中／夜／夜
+- 大夜週六灰底與 override
+- 特殊班粉紅底
+- 休假區、兩格休假內容、禁休斜線
+- A~F 姓名 + 本月特休數字
+- 下方長條備註（特殊時間、假別、開會、手動備註）
+- 下方日期列
+- 每人公休／特休統計
+- 右側直排「請每人先各排…」說明
+- A4 橫式、單頁寬度列印設定
 
-## 不會做的事
-- 不修改 JSON
-- 不修改正式班表 HTML / CSS / JS
-- 不猜 `shift-0` 一定是早班、`shift-1` 一定是中班，所以 Excel 先標示為「班次 1 / 班次 2」
-- 不把 A/B/C 直接改成姓名；人員姓名另列對照，避免改變原始班表值
+## 限制
 
-## 可能的軍火庫拆法
-如果測試方向正確，可再拆成：
+HTML 與 Excel 使用不同排版／字型渲染引擎，所以字距不可能像圖片那樣逐像素完全一致。這一版採真正 Excel 儲存格，不是把 HTML 截圖塞進 Excel，因此內容仍可編輯。
 
-1. `roster-grid-adapter.js`：sparse JSON key → 二維 grid
-2. `excel-export.js`：二維 grid → `.xlsx`
-3. 測試台 UI 留在專案，不進軍火庫
-
-## 相依
-ExcelJS 4.4.0（CDN），用於瀏覽器端產生 `.xlsx` 與基本 Excel 樣式。
+工具使用 ExcelJS 4.4.0 CDN；第一次開啟需要網路載入 ExcelJS。
