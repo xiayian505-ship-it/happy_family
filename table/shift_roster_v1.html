@@ -13,15 +13,16 @@
 <div aria-label="排班表操作" class="controls roster-controls">
 <div class="roster-primary-row">
 <div aria-label="月份控制" class="month-controls">
-<button id="prevMonth" type="button">上個月</button>
+<button aria-label="上個月" id="prevMonth" type="button">&lt;</button>
 <label class="date-control date-control-year">
-<input aria-label="年份" id="yearInput" inputmode="numeric" max="2100" min="2000" type="number" value="2026"/>
+<input aria-label="年份" id="yearInput" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" type="text" value="2026"/>
 <span>年</span>
 </label>
 <label class="date-control date-control-month">
-<select aria-label="月份" id="monthSelect"></select>
+<input aria-label="月份" id="monthInput" inputmode="numeric" maxlength="2" pattern="[0-9]{1,2}" type="text" value="10"/>
+<span>月</span>
 </label>
-<button id="nextMonth" type="button">下個月</button>
+<button aria-label="下個月" id="nextMonth" type="button">&gt;</button>
 </div>
 <details class="toolbar-menu management-menu">
 <summary>管理</summary>

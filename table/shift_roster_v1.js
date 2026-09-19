@@ -46,7 +46,7 @@ const ruleSettingsCancel = document.getElementById('ruleSettingsCancel');
 const ruleSettingsApply = document.getElementById('ruleSettingsApply');
 
 const yearInput = document.getElementById('yearInput');
-const monthSelect = document.getElementById('monthSelect');
+const monthInput = document.getElementById('monthInput');
 const prevMonthButton = document.getElementById('prevMonth');
 const nextMonthButton = document.getElementById('nextMonth');
 const printButton = document.getElementById('printButton');
@@ -304,12 +304,22 @@ let batchLeaveLetter = null;
 let batchLeaveSelectedDays = new Set();
 let batchLeaveFailedDays = [];
 
-for (let month = 1; month <= 12; month += 1) {
-  const option = document.createElement('option');
-  option.value = month;
-  option.textContent = `${month} 月`;
-  monthSelect.appendChild(option);
-}
+// 班表頁選單只保留一條展開路徑：開啟新項目時，收起其他分支；父層保留以維持目前子選單可見。
+rosterView?.addEventListener('toggle', (event) => {
+  const current = event.target;
+  if (!(current instanceof HTMLDetailsElement) || !current.open) return;
+
+  const keepOpen = new Set([current]);
+  let ancestor = current.parentElement?.closest('details');
+  while (ancestor && rosterView.contains(ancestor)) {
+    keepOpen.add(ancestor);
+    ancestor = ancestor.parentElement?.closest('details');
+  }
+
+  rosterView.querySelectorAll('details[open]').forEach((detail) => {
+    if (!keepOpen.has(detail)) detail.open = false;
+  });
+}, true);
 
 function setMainView(view) {
   const showRoster = view === 'roster';
@@ -1107,8 +1117,12 @@ function autofillAnnualBalances(year, month) {
 }
 
 
+function syncMonthInputWidth() {
+  monthInput.style.width = `${Math.max(1, Math.min(2, String(monthInput.value || '').length))}ch`;
+}
+
 function getCurrentYearMonth() {
-  return { year: Number(yearInput.value), month: Number(monthSelect.value) };
+  return { year: Number(yearInput.value), month: Number(monthInput.value) };
 }
 
 function getDefaultNextYearMonth(date = new Date()) {
@@ -3868,6 +3882,10 @@ function updateSpecialDatesReminder(year, month) {
     return;
   }
   const targetYear = Number(year) + 1;
+  if (targetYear < 2000) {
+    specialDatesReminder.hidden = true;
+    return;
+  }
   const configured = getSpecialDaysForYear(targetYear).configured;
   specialDatesReminder.hidden = configured;
   if (!configured) {
@@ -3880,16 +3898,17 @@ function updateSpecialDatesReminder(year, month) {
 
 function render() {
   let year = Number(yearInput.value);
-  let month = Number(monthSelect.value);
+  let month = Number(monthInput.value);
   const fallback = getDefaultNextYearMonth();
-  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) {
     year = fallback.year;
     yearInput.value = year;
   }
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     month = fallback.month;
-    monthSelect.value = month;
+    monthInput.value = String(month);
   }
+  syncMonthInputWidth();
   titleYear.textContent = year;
   titleMonth.textContent = month;
   renderSchedule(year, month);
@@ -3903,7 +3922,7 @@ function changeMonth(offset) {
   commitAllVisibleNames();
   persistCurrentMonth();
   let year = Number(yearInput.value);
-  let month = Number(monthSelect.value) + offset;
+  let month = Number(monthInput.value) + offset;
   if (month < 1) {
     month = 12;
     year -= 1;
@@ -3911,9 +3930,9 @@ function changeMonth(offset) {
     month = 1;
     year += 1;
   }
-  if (year < 2000 || year > 2100) return;
+  if (year < 1900 || year > 2100) return;
   yearInput.value = year;
-  monthSelect.value = month;
+  monthInput.value = String(month);
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
@@ -3946,21 +3965,29 @@ ruleSettingsApply.addEventListener('click', applyRuleSettings);
 
 yearInput.addEventListener('change', () => {
   const year = Number(yearInput.value);
-  const month = Number(monthSelect.value);
-  if (!Number.isInteger(year) || year < 2000 || year > 2100) return render();
+  const month = Number(monthInput.value);
+  if (!Number.isInteger(year) || year < 1900 || year > 2100) return render();
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
   loadMonth(year, month);
   render();
 });
-monthSelect.addEventListener('change', () => {
+monthInput.addEventListener('input', syncMonthInputWidth);
+monthInput.addEventListener('change', () => {
   const { year, month } = getCurrentYearMonth();
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
   loadMonth(year, month);
   render();
+});
+[yearInput, monthInput].forEach((input) => {
+  input.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    input.blur();
+  });
 });
 prevMonthButton.addEventListener('click', () => changeMonth(-1));
 nextMonthButton.addEventListener('click', () => changeMonth(1));
@@ -4140,7 +4167,8 @@ loadGlobalSettings();
 persistGlobalSettings();
 const initialMonth = getDefaultNextYearMonth();
 yearInput.value = initialMonth.year;
-monthSelect.value = String(initialMonth.month);
+monthInput.value = String(initialMonth.month);
+syncMonthInputWidth();
 publicLeaveInput.textContent = publicLeaveCount;
 loadMonth(initialMonth.year, initialMonth.month);
 buildRowFillQuickLetters();

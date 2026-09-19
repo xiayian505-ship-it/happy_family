@@ -1418,7 +1418,7 @@ table {
 }
 
 .guide-details > summary::after {
-  content: '＋';
+  content: '+';
   position: absolute;
   right: 4px;
   top: 50%;
@@ -3734,15 +3734,15 @@ textarea,
 .toolbar-menu > summary::after,
 .menu-branch > summary::after,
 .company-rule-item > summary::after {
-  content: "＋";
-  margin-left: 8px;
+  content: "+";
+  margin-left: 0;
   font-weight: 400;
 }
 
 .toolbar-menu[open] > summary::after,
 .menu-branch[open] > summary::after,
 .company-rule-item[open] > summary::after {
-  content: "－";
+  content: "-";
 }
 
 .menu-panel {
@@ -4123,4 +4123,675 @@ textarea,
   .controls {
     display: none !important;
   }
+}
+
+/* =========================================================
+   2026-09｜班表頁降噪重構
+   - 只調整 rosterView 的操作列視覺，不影響設定／說明頁。
+   - 班表資料表、功能 ID 與既有 JS 行為不變。
+========================================================= */
+#rosterView .roster-controls {
+  margin-bottom: 18px;
+}
+
+#rosterView .roster-primary-row {
+  min-height: 48px;
+  gap: 18px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid #bdbdbd;
+}
+
+#rosterView .month-controls {
+  gap: 4px;
+}
+
+/* 月份切換：從「按鈕」降成文字操作。 */
+#rosterView .month-controls > button,
+#rosterView .management-menu > summary,
+#rosterView .roster-secondary-row > .toolbar-menu > summary,
+#rosterView .secondary-main-button {
+  width: auto;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #333;
+  padding: 0 8px;
+  font: inherit;
+  font-weight: 600;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#rosterView .month-controls > button:hover,
+#rosterView .month-controls > button:focus-visible,
+#rosterView .management-menu > summary:hover,
+#rosterView .management-menu > summary:focus-visible,
+#rosterView .roster-secondary-row > .toolbar-menu > summary:hover,
+#rosterView .roster-secondary-row > .toolbar-menu > summary:focus-visible,
+#rosterView .secondary-main-button:hover,
+#rosterView .secondary-main-button:focus-visible {
+  background: #f3f3f3;
+  outline: none;
+}
+
+/* 年／月：拿掉外框，只保留可編輯欄位的最小提示。 */
+#rosterView .month-controls .date-control {
+  width: auto;
+  min-height: 40px;
+  grid-template-columns: auto auto;
+  gap: 4px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#rosterView .month-controls .date-control input {
+  min-width: 0;
+  min-height: 36px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 4px;
+  color: #111;
+  font-weight: 700;
+  text-align: right;
+}
+
+#rosterView .month-controls .date-control-year input {
+  width: 68px;
+}
+
+#rosterView .month-controls .date-control-month input {
+  width: 64px;
+}
+
+#rosterView .month-controls .date-control input:hover,
+#rosterView .month-controls .date-control input:focus {
+  border-bottom-color: #888;
+  outline: 0;
+}
+
+/* 管理入口只比一般文字略重，不再是一顆膠囊。 */
+#rosterView .management-menu > summary {
+  padding-inline: 10px 2px;
+  font-weight: 700;
+}
+
+/* 第二排直接做成文字導覽列。 */
+#rosterView .roster-secondary-row {
+  min-height: 44px;
+  gap: 0;
+  padding: 2px 0 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+#rosterView .roster-secondary-row > .toolbar-menu,
+#rosterView .roster-secondary-row > .secondary-main-button {
+  flex: 0 0 auto;
+}
+
+#rosterView .roster-secondary-row > .toolbar-menu > summary,
+#rosterView .secondary-main-button {
+  min-height: 41px;
+  padding: 0 14px;
+  color: #555;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+
+#rosterView .roster-secondary-row > .toolbar-menu:not(:first-child)::before,
+#rosterView .roster-secondary-row > .secondary-main-button::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 1px;
+  background: #d8d8d8;
+}
+
+#rosterView .roster-secondary-row > .toolbar-menu,
+#rosterView .roster-secondary-row > .secondary-main-button {
+  position: relative;
+}
+
+/* 展開選單：保留層級，但改成乾淨的文字清單。 */
+#rosterView .menu-panel {
+  top: calc(100% + 1px);
+  padding: 6px 0;
+  border: 1px solid #c8c8c8;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .10);
+}
+
+#rosterView .menu-branch {
+  border-bottom-color: #ededed;
+}
+
+#rosterView .menu-branch > summary {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+
+#rosterView .menu-branch > summary:hover,
+#rosterView .menu-branch > summary:focus-visible {
+  background: #f5f5f5;
+  outline: 0;
+}
+
+#rosterView .menu-branch-body,
+#rosterView .menu-actions {
+  gap: 0;
+  padding: 0 0 6px;
+}
+
+#rosterView .menu-actions button,
+#rosterView .menu-branch-body > button,
+#rosterView .menu-panel > button {
+  min-height: 39px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #333;
+  padding: 7px 18px;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+#rosterView .menu-actions button:hover,
+#rosterView .menu-actions button:focus-visible,
+#rosterView .menu-branch-body > button:hover,
+#rosterView .menu-branch-body > button:focus-visible,
+#rosterView .menu-panel > button:hover,
+#rosterView .menu-panel > button:focus-visible {
+  background: #f3f3f3;
+  outline: 0;
+}
+
+/* 使用中狀態改成「文字+側線」，不再黑底整顆。 */
+#rosterView .secondary-main-button.is-active,
+#rosterView .toolbar-menu button.is-active,
+#rosterView .toolbar-menu button[aria-pressed="true"] {
+  border-color: transparent;
+  background: #f1f1f1;
+  color: #111;
+  font-weight: 700;
+}
+
+#rosterView .menu-actions button.is-active,
+#rosterView .menu-actions button[aria-pressed="true"],
+#rosterView .menu-branch-body > button.is-active,
+#rosterView .menu-branch-body > button[aria-pressed="true"] {
+  box-shadow: inset 3px 0 0 #222;
+}
+
+#rosterView .secondary-main-button.is-active {
+  box-shadow: inset 0 -2px 0 #222;
+}
+
+/* 班表本體與操作區拉開一點，視覺焦點回到表格。 */
+#rosterView .sheet-viewport {
+  margin-top: 2px;
+}
+
+@media (max-width: 760px) {
+  #rosterView .roster-primary-row {
+    align-items: center;
+    gap: 8px;
+  }
+
+  #rosterView .month-controls {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  #rosterView .month-controls > button,
+  #rosterView .month-controls .date-control,
+  #rosterView .management-menu > summary {
+    min-height: 44px;
+  }
+
+  #rosterView .month-controls > button {
+    padding-inline: 6px;
+    font-size: 14px;
+  }
+
+  #rosterView .month-controls .date-control {
+    font-size: 15px;
+  }
+
+  #rosterView .month-controls .date-control-year input {
+    width: 58px;
+    padding-inline: 2px;
+  }
+
+  #rosterView .month-controls .date-control-month input {
+    width: 58px;
+    padding-inline: 2px;
+  }
+
+  #rosterView .management-menu > summary {
+    padding-inline: 8px 0;
+  }
+
+  #rosterView .roster-secondary-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  #rosterView .roster-secondary-row > .toolbar-menu,
+  #rosterView .roster-secondary-row > .secondary-main-button {
+    min-width: 0;
+  }
+
+  #rosterView .roster-secondary-row > .toolbar-menu > summary,
+  #rosterView .secondary-main-button {
+    width: 100%;
+    min-height: 48px;
+    padding: 5px 6px;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: normal;
+  }
+
+  #rosterView .menu-panel {
+    width: min(320px, calc(100vw - 24px));
+  }
+}
+
+
+/* =========================================================
+   班表頁｜橫向選單微調
+   - 展開後的選項改為單一橫排。
+   - 保留原本 details 層級與功能，不改 JS。
+========================================================= */
+#rosterView .menu-panel {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+}
+
+#rosterView .menu-branch {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  border-bottom: 0;
+  border-right: 1px solid #ededed;
+}
+
+#rosterView .menu-branch:last-child {
+  border-right: 0;
+}
+
+#rosterView .menu-branch > summary {
+  flex: 0 0 auto;
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+#rosterView .menu-branch-body,
+#rosterView .menu-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+#rosterView .menu-actions button,
+#rosterView .menu-branch-body > button,
+#rosterView .menu-panel > button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: max-content;
+  padding-inline: 14px;
+  white-space: nowrap;
+}
+
+/* 同一層中的項目只用細線分開，不重新變成按鈕牆。 */
+#rosterView .menu-actions > button + button,
+#rosterView .menu-branch-body > button + button {
+  border-left: 1px solid #ededed;
+}
+
+@media (max-width: 760px) {
+  #rosterView .menu-panel {
+    width: max-content;
+    max-width: calc(100vw - 16px);
+  }
+}
+
+
+/* 班表月份控制：<2026年10月>，年份／月份直接輸入。 */
+#rosterView .month-controls {
+  gap: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+
+#rosterView .month-controls > button {
+  min-width: 28px;
+  min-height: 40px;
+  padding: 0;
+  font-weight: 700;
+}
+
+#rosterView .month-controls .date-control {
+  min-height: 40px;
+  padding: 0;
+  gap: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+#rosterView .month-controls .date-control input {
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  text-align: right;
+  font: inherit;
+  font-weight: 700;
+  -moz-appearance: textfield;
+}
+
+#rosterView .month-controls .date-control-year input {
+  width: 42px;
+}
+
+#rosterView .month-controls .date-control-month input {
+  width: 18px;
+}
+
+#rosterView .month-controls .date-control input:hover,
+#rosterView .month-controls .date-control input:focus {
+  border-bottom-color: #888;
+  outline: 0;
+}
+
+@media (max-width: 760px) {
+  #rosterView .month-controls > button {
+    min-width: 26px;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  #rosterView .month-controls .date-control {
+    padding: 0;
+  }
+
+  #rosterView .month-controls .date-control-year input {
+    width: 39px;
+    padding: 0;
+  }
+
+  #rosterView .month-controls .date-control-month input {
+    width: 18px;
+    padding: 0;
+  }
+}
+
+/* =========================================================
+   班表頁｜選單每列最多 4 項
+   - 同層第 1–4 項第一列，第 5–8 項第二列，第 9–12 項第三列。
+   - 每格保留最低可讀寬度；畫面不夠時仍可左右滑，不硬擠文字。
+========================================================= */
+#rosterView .menu-panel,
+#rosterView .menu-branch-body,
+#rosterView .menu-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(128px, 1fr));
+  align-items: start;
+  width: min(640px, calc(100vw - 24px));
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* menu-panel 裡原本為了分組而包的 menu-actions 不另佔一格，
+   讓其中的按鈕和同層 details 一起計算 4 欄。 */
+#rosterView .menu-panel > .menu-actions {
+  display: contents;
+}
+
+#rosterView .menu-panel > button,
+#rosterView .menu-panel > .menu-branch,
+#rosterView .menu-branch-body > button,
+#rosterView .menu-branch-body > .menu-branch,
+#rosterView .menu-actions > button {
+  min-width: 128px;
+  width: 100%;
+}
+
+#rosterView .menu-panel > button,
+#rosterView .menu-branch > summary,
+#rosterView .menu-actions button,
+#rosterView .menu-branch-body > button {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* 展開某一層時，內容占滿下一列；子選單本身仍維持 4 欄與橫向滑動。 */
+#rosterView .menu-panel > .menu-branch[open],
+#rosterView .menu-branch-body > .menu-branch[open] {
+  grid-column: 1 / -1;
+}
+
+#rosterView .menu-branch[open] > .menu-branch-body,
+#rosterView .menu-branch[open] > .menu-actions {
+  margin-top: 0;
+}
+
+/* 同層改成格線後，不再使用橫排版的右側分隔線。 */
+#rosterView .menu-branch {
+  border-right: 0;
+}
+
+#rosterView .menu-actions > button + button,
+#rosterView .menu-branch-body > button + button {
+  border-left: 0;
+}
+
+@media (max-width: 760px) {
+  #rosterView .menu-panel,
+  #rosterView .menu-branch-body,
+  #rosterView .menu-actions {
+    width: min(100%, calc(100vw - 16px));
+    grid-template-columns: repeat(4, minmax(128px, 1fr));
+  }
+}
+
+/* =========================================================
+   班表頁｜4 項換行 v2
+   修正：4 欄只套在「同層實際選項」(.menu-actions)，
+   不再把整個 menu-panel / menu-branch-body 變成 4 欄 grid。
+   因此第 1–4 項同列、第 5–8 項第二列；螢幕不夠寬時
+   保留同一列的 4 欄寬度，於該選單內左右滑，不壓縮中文字。
+========================================================= */
+#rosterView .menu-panel,
+#rosterView .menu-branch-body {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+#rosterView .menu-panel > .menu-actions {
+  display: grid;
+}
+
+#rosterView .menu-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 128px);
+  grid-auto-flow: row;
+  gap: 0;
+  width: 100%;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  overflow-y: visible;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+#rosterView .menu-actions > button {
+  width: 128px;
+  min-width: 128px;
+  max-width: 128px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* details 分支本身維持一般橫排尺寸；展開時不再被 4 欄規則撐成整列。 */
+#rosterView .menu-panel > .menu-branch,
+#rosterView .menu-branch-body > .menu-branch {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 128px;
+}
+
+#rosterView .menu-panel > button,
+#rosterView .menu-branch-body > button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 128px;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  #rosterView .menu-panel,
+  #rosterView .menu-branch-body,
+  #rosterView .menu-actions {
+    max-width: calc(100vw - 16px);
+  }
+}
+
+/* =========================================================
+   班表頁｜選單寬度依「同層級」分組
+   - 不再把所有層級硬套 128px。
+   - 同一組兄弟項目可維持一致寬度；不同層級依文字長度各自設定。
+   - 每列仍最多 4 項，超出換列；整組過寬時由外層左右滑。
+========================================================= */
+#rosterView .menu-panel > .menu-branch,
+#rosterView .menu-branch-body > .menu-branch,
+#rosterView .menu-panel > button,
+#rosterView .menu-branch-body > button {
+  width: auto;
+  min-width: 0;
+}
+
+#rosterView .menu-branch > summary {
+  box-sizing: border-box;
+  width: auto;
+  min-width: max-content;
+}
+
+#rosterView .menu-actions {
+  --menu-item-width: 72px;
+  grid-template-columns: repeat(4, var(--menu-item-width));
+  width: max-content;
+  max-width: none;
+  overflow: visible;
+}
+
+#rosterView .menu-actions > button {
+  box-sizing: border-box;
+  width: var(--menu-item-width);
+  min-width: var(--menu-item-width);
+  max-width: var(--menu-item-width);
+}
+
+/* 本月班表設定：開會／禁休／假別／特殊，以及特殊底色，都是短字。 */
+#rosterView .menu-actions:has(#meetingModeButton),
+#rosterView .menu-actions:has(#nightModeButton) {
+  --menu-item-width: 64px;
+}
+
+#rosterView .menu-actions:has(#meetingModeButton) + .menu-branch > summary {
+  width: 64px;
+  min-width: 64px;
+}
+
+/* 一般管理第一層：一般管理／進階管理。 */
+#rosterView .management-menu > .menu-panel > .menu-branch > summary {
+  width: 96px;
+  min-width: 96px;
+}
+
+/* 一般管理第二層：輸出班表／備份班表。 */
+#rosterView .management-menu > .menu-panel > .menu-branch:first-child > .menu-branch-body > .menu-branch > summary {
+  width: 96px;
+  min-width: 96px;
+}
+
+/* 輸出班表：列印／PNG／EXCEL。 */
+#rosterView .menu-actions:has(#printButton) {
+  --menu-item-width: 72px;
+}
+
+/* JSON 備份文字較長，只放大這一層。 */
+#rosterView .menu-actions:has(#importJsonButton) {
+  --menu-item-width: 96px;
+}
+
+/* 進階管理第二層：特殊日期設定／清空班表，同層一起放大。 */
+#rosterView #specialDatesButton,
+#rosterView #specialDatesButton + .menu-branch > summary {
+  box-sizing: border-box;
+  width: 112px;
+  min-width: 112px;
+}
+
+/* 清空班表內兩顆文字更長，只放大這一層。 */
+#rosterView .menu-actions:has(#clearMonthButton) {
+  --menu-item-width: 120px;
+}
+
+/* 本月班表檢查第一層：完整／細項規則檢查。 */
+#rosterView #ruleCheckButton,
+#rosterView #ruleCheckButton + .menu-branch > summary {
+  box-sizing: border-box;
+  width: 120px;
+  min-width: 120px;
+}
+
+/* 細項規則第二層：休假規則／排班規則。 */
+#rosterView .check-menu .menu-branch-body > .menu-branch > summary {
+  width: 96px;
+  min-width: 96px;
+}
+
+/* 規則細項都是兩字，維持短寬；休假規則超過 4 項時自然換到第二列。 */
+#rosterView .menu-actions:has(#leaveCheckButton),
+#rosterView .menu-actions:has(#checkFixedShiftButton) {
+  --menu-item-width: 64px;
 }
