@@ -232,6 +232,7 @@ const specialShiftTimes = new Map();
 const nightShiftTimes = new Map();
 const meetingDays = new Set();
 const annualGrantDecisionValues = new Map();
+const annualBalanceCalibrationValues = new Map();
 const personnelShiftValues = new Map();
 
 let blockModeEnabled = false;
@@ -569,6 +570,16 @@ function makePersonnelShiftKey(year, month, letter) {
 function makeAnnualGrantDecisionKey(year, month, employeeId) {
   return `${year}-${month}-${employeeId}`;
 }
+function makeAnnualBalanceCalibrationKey(year, month, employeeId) {
+  return `${year}-${month}-${employeeId}`;
+}
+function getAnnualBalanceCalibration(employeeId, year, month) {
+  if (!employeeId) return null;
+  const raw = annualBalanceCalibrationValues.get(makeAnnualBalanceCalibrationKey(year, month, employeeId));
+  if (!raw || !Number.isInteger(Number(raw.value))) return null;
+  const value = Number(raw.value);
+  return value >= 0 && value <= 99 ? { value } : null;
+}
 
 function getEmployeeRecord(employeeId) {
   if (!storage || !employeeId) return null;
@@ -771,6 +782,7 @@ function clearMonthMemory(year, month) {
   clearMapKeysForMonth(specialShiftTimes, year, month);
   clearMapKeysForMonth(nightShiftTimes, year, month);
   clearMapKeysForMonth(annualGrantDecisionValues, year, month);
+  clearMapKeysForMonth(annualBalanceCalibrationValues, year, month);
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
@@ -803,6 +815,7 @@ function buildCurrentMonthSnapshot() {
     manualNotes: serializeMapForMonth(manualNoteValues, year, month),
     extraLeaves: serializeMapForMonth(extraLeaveValues, year, month),
     annualGrantDecisions: serializeMapForMonth(annualGrantDecisionValues, year, month),
+    annualBalanceCalibrations: serializeMapForMonth(annualBalanceCalibrationValues, year, month),
     specialShiftTimes: serializeMapForMonth(specialShiftTimes, year, month),
     nightShiftTimes: serializeMapForMonth(nightShiftTimes, year, month),
     meetingDays: serializeSetForMonth(meetingDays, year, month)
@@ -887,6 +900,11 @@ function loadMonthIntoMemory(year, month, data) {
   restoreMapForMonth(manualNoteValues, year, month, data?.manualNotes);
   restoreMapForMonth(extraLeaveValues, year, month, data?.extraLeaves);
   restoreMapForMonth(annualGrantDecisionValues, year, month, data?.annualGrantDecisions);
+  restoreMapForMonth(annualBalanceCalibrationValues, year, month, data?.annualBalanceCalibrations);
+  for (let index = 0; index < employeeIds.length; index += 1) {
+    const calibration = getAnnualBalanceCalibration(employeeIds[index] || '', year, month);
+    if (calibration) specialLeaveValues[index] = String(calibration.value);
+  }
   autofillAnnualBalances(year, month);
   restoreMapForMonth(specialShiftTimes, year, month, data?.specialShiftTimes);
   restoreMapForMonth(nightShiftTimes, year, month, data?.nightShiftTimes);
@@ -965,8 +983,9 @@ function commitNameAtIndex(index) {
       setPersonnelGroupsForIndex(index, findShiftGroupsForEmployee(nextEmployeeId, index));
       employeeIds[index] = nextEmployeeId;
       const current = getCurrentYearMonth();
+      const calibration = getAnnualBalanceCalibration(nextEmployeeId, current.year, current.month);
       const basis = getAnnualBalanceBasis(index, current.year, current.month);
-      specialLeaveValues[index] = basis.value == null ? '' : String(basis.value);
+      specialLeaveValues[index] = calibration ? String(calibration.value) : (basis.value == null ? '' : String(basis.value));
     } else {
       employeeIds[index] = nextEmployeeId;
     }
@@ -1575,11 +1594,13 @@ function getAnnualBalanceSnapshot(index, year, month) {
   const balanceText = String(specialLeaveValues[index] || '').trim();
   const available = /^\d+$/.test(balanceText) ? Number(balanceText) : null;
   const letter = String.fromCharCode(65 + index);
+  const employeeId = employeeIds[index] || '';
+  const calibration = getAnnualBalanceCalibration(employeeId, year, month);
   const used = getLeaveSummaryForLetter(year, month, letter).annualDates.length;
   const remaining = available == null ? null : Math.max(0, available - used);
   const overused = available == null ? 0 : Math.max(0, used - available);
   const basis = getAnnualBalanceBasis(index, year, month);
-  return { available, used, remaining, overused, expected: basis.value, expectedSource: basis.source };
+  return { available, used, remaining, overused, expected: basis.value, expectedSource: basis.source, calibration };
 }
 
 function syncNameInputsForIndex(index) {
@@ -1640,10 +1661,12 @@ function renderShiftConfigPanel() {
       names[index] = cleaned;
       nameInput.value = cleaned;
       commitNameAtIndex(index);
+      const calibration = getAnnualBalanceCalibration(employeeIds[index] || '', year, month);
       const basis = getAnnualBalanceBasis(index, year, month);
-      if (!String(specialLeaveValues[index] || '').trim() && basis.value != null) {
-        specialLeaveValues[index] = String(basis.value);
-        persistCurrentMonth();
+      if (!String(specialLeaveValues[index] || '').trim()) {
+        if (calibration) specialLeaveValues[index] = String(calibration.value);
+        else if (basis.value != null) specialLeaveValues[index] = String(basis.value);
+        if (String(specialLeaveValues[index] || '').trim()) persistCurrentMonth();
       }
       syncNameInputsForIndex(index);
       renderLower(year, month);
@@ -1676,7 +1699,7 @@ function renderShiftConfigPanel() {
       updateEmployeeRecord(employeeId, { hireDate: hireInput.value || '' });
 
       // 已有前月銜接時不動本月數字；第一次建立時，空白或原本就是自動值才跟著到職日重算。
-      // 若使用者已手動輸入首次起始值，就保留該數字作為本月起點。
+      // 若本月已有明確數字（例如已套用校正），變更到職日時不要擅自覆蓋。
       if (previousExpected == null) {
         const nextAutomatic = calculateAnnualBalanceFromHireDate(employeeId, year, month);
         if (!currentText || (oldAutomatic != null && currentNumber === oldAutomatic)) {
@@ -1732,36 +1755,65 @@ function renderShiftConfigPanel() {
     meta.className = 'shift-config-meta';
 
     const annual = getAnnualBalanceSnapshot(index, year, month);
-    const balanceLabel = document.createElement('label');
-    balanceLabel.className = 'shift-config-field annual-balance-field';
-    const balanceCaption = document.createElement('span');
-    balanceCaption.textContent = '本月可用特休（首次可改）';
-    const balanceInput = document.createElement('input');
-    balanceInput.type = 'number';
-    balanceInput.min = '0';
-    balanceInput.max = '99';
-    balanceInput.inputMode = 'numeric';
-    balanceInput.value = annual.available == null ? '' : String(annual.available);
-    balanceInput.placeholder = employeeId ? '首次輸入（選填）' : '先輸入姓名';
-    balanceInput.disabled = !employeeId;
-    balanceInput.setAttribute('aria-label', `${letter} 本月可用特休；首次導入可手動覆蓋自動計算值`);
-    balanceInput.title = employeeId ? '有到職日會自動計算；第一次導入若現有餘額不同，可直接改成實際數字作為本月起點' : '先輸入姓名';
-    balanceInput.addEventListener('change', () => {
-      if (balanceInput.value === '') {
-        // 清空手動值＝回到系統計算。
-        const basis = getAnnualBalanceBasis(index, year, month);
-        specialLeaveValues[index] = basis.value == null ? '' : String(basis.value);
-      } else {
-        const numeric = Math.max(0, Math.min(99, Number.parseInt(balanceInput.value, 10) || 0));
-        specialLeaveValues[index] = String(numeric);
+
+    const calibrationBox = document.createElement('div');
+    calibrationBox.className = 'annual-calibration-control';
+
+    const calibrationLabel = document.createElement('label');
+    calibrationLabel.className = 'shift-config-field annual-balance-field';
+    const calibrationCaption = document.createElement('span');
+    calibrationCaption.textContent = '本月特休校正（選填）';
+    const calibrationInput = document.createElement('input');
+    calibrationInput.type = 'number';
+    calibrationInput.min = '0';
+    calibrationInput.max = '99';
+    calibrationInput.inputMode = 'numeric';
+    calibrationInput.value = annual.calibration ? String(annual.calibration.value) : '';
+    calibrationInput.placeholder = employeeId ? '輸入校正值' : '先輸入姓名';
+    calibrationInput.disabled = !employeeId;
+    calibrationInput.setAttribute('aria-label', `${letter} 本月特休校正值`);
+    calibrationInput.title = employeeId ? '只有按下「套用校正」才會改成本月特休起點；可在任何月份重新校正' : '先輸入姓名';
+    calibrationLabel.append(calibrationCaption, calibrationInput);
+
+    const calibrationActions = document.createElement('div');
+    calibrationActions.className = 'annual-calibration-actions';
+    const applyCalibrationButton = document.createElement('button');
+    applyCalibrationButton.type = 'button';
+    applyCalibrationButton.textContent = '套用校正';
+    applyCalibrationButton.disabled = !employeeId;
+    applyCalibrationButton.addEventListener('click', () => {
+      const text = String(calibrationInput.value || '').trim();
+      if (!/^\d+$/.test(text)) {
+        window.alert('請先輸入 0～99 的特休校正天數。');
+        calibrationInput.focus();
+        return;
       }
-      balanceInput.value = specialLeaveValues[index];
+      const numeric = Math.max(0, Math.min(99, Number.parseInt(text, 10) || 0));
+      const calibrationKey = makeAnnualBalanceCalibrationKey(year, month, employeeId);
+      annualBalanceCalibrationValues.set(calibrationKey, { value: numeric });
+      specialLeaveValues[index] = String(numeric);
       persistCurrentMonth();
       renderLower(year, month);
       renderShiftConfigPanel();
     });
-    balanceLabel.append(balanceCaption, balanceInput);
-    meta.appendChild(balanceLabel);
+
+    const cancelCalibrationButton = document.createElement('button');
+    cancelCalibrationButton.type = 'button';
+    cancelCalibrationButton.textContent = '取消校正';
+    cancelCalibrationButton.disabled = !employeeId || !annual.calibration;
+    cancelCalibrationButton.addEventListener('click', () => {
+      const calibrationKey = makeAnnualBalanceCalibrationKey(year, month, employeeId);
+      annualBalanceCalibrationValues.delete(calibrationKey);
+      const basis = getAnnualBalanceBasis(index, year, month);
+      specialLeaveValues[index] = basis.value == null ? '' : String(basis.value);
+      persistCurrentMonth();
+      renderLower(year, month);
+      renderShiftConfigPanel();
+    });
+
+    calibrationActions.append(applyCalibrationButton, cancelCalibrationButton);
+    calibrationBox.append(calibrationLabel, calibrationActions);
+    meta.appendChild(calibrationBox);
 
     const annualStatus = document.createElement('div');
     annualStatus.className = 'annual-balance-status';
@@ -1780,22 +1832,20 @@ function renderShiftConfigPanel() {
     carry.className = 'annual-carry-status';
     if (!employeeId) {
       carry.textContent = '先輸入姓名，才能保存到職日並銜接跨月特休。';
+    } else if (annual.calibration) {
+      carry.textContent = `本月已套用校正 ${annual.calibration.value} 天；後續月份會從這個數字正常扣除／結轉，下一個取得日仍照原本累加或重置規則。`;
     } else if (annual.expectedSource === 'hire') {
-      if (annual.available === annual.expected) {
-        carry.textContent = `首次建立：依到職日自動計算本月起點 ${annual.expected} 天；若目前實際餘額不同，可直接改上面的數字。`;
-      } else {
-        carry.textContent = `首次建立：到職日自動值為 ${annual.expected} 天；目前以 ${availableText} 作為本月起點，之後照跨月與取得日規則計算。`;
-      }
+      carry.textContent = `依到職日自動計算本月起點 ${annual.expected} 天；若實際現況不同，可輸入校正值後按「套用校正」。`;
     } else if (annual.expectedSource === 'previous') {
       if (annual.available === annual.expected) {
         carry.textContent = `跨月計算：上月餘額－上月已用／取得日處理 → 本月 ${annual.expected} 天。`;
       } else {
-        carry.textContent = `跨月計算應為 ${annual.expected} 天；目前設定 ${availableText}，特休檢查會提醒確認。`;
+        carry.textContent = `跨月計算應為 ${annual.expected} 天；目前為 ${availableText}。若現況確實不同，請用「本月特休校正」套用。`;
       }
     } else if (annual.available != null) {
-      carry.textContent = `目前以 ${availableText} 作為首次起點；補上到職日後即可自動判斷取得日與後續年資。`;
+      carry.textContent = `目前本月可用為 ${availableText}；補上到職日後即可自動判斷取得日與年資。`;
     } else {
-      carry.textContent = '可輸入到職日讓系統自動計算；若第一次導入已有實際剩餘天數，也可直接輸入作為本月起點。';
+      carry.textContent = '輸入到職日後會自動計算；若實際現況不同，可在任何月份使用「本月特休校正」。';
     }
     meta.appendChild(carry);
 
@@ -2489,10 +2539,12 @@ function renderLower(year, month) {
     leaveInput.type = 'text';
     leaveInput.readOnly = true;
     const annual = getAnnualBalanceSnapshot(index, year, month);
-    leaveInput.value = annual.remaining == null ? '' : String(annual.remaining);
+    // 班表姓名旁顯示「本月月初可用特休」。
+    // 當月排入多少特休都不即時扣這個數字；已用天數於建立下個月時才從上月餘額扣除。
+    leaveInput.value = annual.available == null ? '' : String(annual.available);
     leaveInput.dataset.index = index;
-    leaveInput.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 目前剩餘特休`);
-    leaveInput.title = '目前剩餘特休＝本月可用－本月已排特休；請到「櫃檯人員資料」設定與查看';
+    leaveInput.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 本月可用特休`);
+    leaveInput.title = '本月月初可用特休；當月已排特休於下個月結轉時才扣除。請到「櫃檯人員資料」查看已排與目前剩餘';
 
     row.append(letter, input, leaveInput);
     namesPanel.appendChild(row);
@@ -2902,7 +2954,7 @@ function buildAnnualLeaveRuleIssues() {
     }
     const balanceText = String(specialLeaveValues[index] || '');
     if (!/^\d+$/.test(balanceText)) {
-      issues.push({ code: 'annual-balance-missing', title: '特休餘額未設定', message: `${letter} ${names[index]} 本月可用特休尚未設定。可輸入到職日讓系統自動計算；第一次導入也可手動輸入實際天數作為本月起點。` });
+      issues.push({ code: 'annual-balance-missing', title: '特休餘額未設定', message: `${letter} ${names[index]} 本月可用特休尚未設定。可輸入到職日讓系統自動計算；若實際現況不同，可使用「本月特休校正」。` });
       continue;
     }
     const balance = Number(balanceText);
@@ -2911,10 +2963,10 @@ function buildAnnualLeaveRuleIssues() {
       issues.push({ code: 'annual-overuse', title: '特休使用超過餘額', message: `${letter} ${names[index]} 本月可用特休 ${balance} 天，但已排 ${used} 天特休。` });
     }
     const basis = getAnnualBalanceBasis(index, year, month);
-    // 第一次建立且只有到職日自動值時，允許人工輸入實際現有餘額作為起點，不視為錯誤。
-    // 已有前月資料後才要求與跨月計算一致。
-    if (basis.source === 'previous' && basis.value != null && basis.value !== balance) {
-      issues.push({ code: 'annual-balance-different', title: '特休結轉數字需確認', message: `${letter} ${names[index]} 依前月餘額、前月已用與取得日設定計算，本月應為 ${basis.value} 天；目前填的是 ${balance} 天。若有折薪歸零等特殊處理，確認後可保留。` });
+    const calibration = getAnnualBalanceCalibration(employeeId, year, month);
+    // 有明確套用本月校正時，以校正值為準；沒有校正才檢查跨月結轉是否一致。
+    if (!calibration && basis.source === 'previous' && basis.value != null && basis.value !== balance) {
+      issues.push({ code: 'annual-balance-different', title: '特休結轉數字需確認', message: `${letter} ${names[index]} 依前月餘額、前月已用與取得日設定計算，本月應為 ${basis.value} 天；目前是 ${balance} 天。若現況確實不同，請到「櫃檯人員資料」使用「本月特休校正」。` });
     }
     const grant = getAnnualGrantEventForEmployee(employeeId, year, month);
     if (grant && grant.days > 0) {
