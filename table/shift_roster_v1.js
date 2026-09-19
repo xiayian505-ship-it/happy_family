@@ -18,13 +18,16 @@ const ruleMeetingText = document.getElementById('ruleMeetingText');
 const rulePublicLeaveSettingInput = document.getElementById('rulePublicLeaveInput');
 const ruleConsecutiveInput = document.getElementById('ruleConsecutiveInput');
 const ruleTurnaroundInput = document.getElementById('ruleTurnaroundInput');
+const ruleAnnualSixMonthInput = document.getElementById('ruleAnnualSixMonthInput');
+const ruleAnnualYear1Input = document.getElementById('ruleAnnualYear1Input');
+const ruleAnnualYear2Input = document.getElementById('ruleAnnualYear2Input');
+const ruleAnnualYears3to4Input = document.getElementById('ruleAnnualYears3to4Input');
+const ruleAnnualYears5to9Input = document.getElementById('ruleAnnualYears5to9Input');
+const ruleAnnualYear10BaseInput = document.getElementById('ruleAnnualYear10BaseInput');
+const ruleAnnualAfter10IncrementInput = document.getElementById('ruleAnnualAfter10IncrementInput');
+const ruleAnnualMaxInput = document.getElementById('ruleAnnualMaxInput');
 const ruleNightStartInput = document.getElementById('ruleNightStartInput');
 const ruleNightEndInput = document.getElementById('ruleNightEndInput');
-const ruleSameDayEnabled = document.getElementById('ruleSameDayEnabled');
-const ruleSameDayGrouping = document.getElementById('ruleSameDayGrouping');
-const ruleSameDayMax = document.getElementById('ruleSameDayMax');
-const ruleAdjacentEnabled = document.getElementById('ruleAdjacentEnabled');
-const ruleTurnaroundEnabled = document.getElementById('ruleTurnaroundEnabled');
 const ruleMeetingDefaultInput = document.getElementById('ruleMeetingDefaultInput');
 const ruleSettingsCancel = document.getElementById('ruleSettingsCancel');
 const ruleSettingsApply = document.getElementById('ruleSettingsApply');
@@ -43,6 +46,16 @@ const noteModeButton = document.getElementById('noteModeButton');
 const shiftConfigButton = document.getElementById('shiftConfigButton');
 const leaveCheckButton = document.getElementById('leaveCheckButton');
 const ruleCheckButton = document.getElementById('ruleCheckButton');
+const checkBlockedLeaveButton = document.getElementById('checkBlockedLeaveButton');
+const checkSameGroupLeaveButton = document.getElementById('checkSameGroupLeaveButton');
+const checkAdjacentLeaveButton = document.getElementById('checkAdjacentLeaveButton');
+const checkWorkLeaveConflictButton = document.getElementById('checkWorkLeaveConflictButton');
+const checkAnnualLeaveButton = document.getElementById('checkAnnualLeaveButton');
+const checkLeaveAllButton = document.getElementById('checkLeaveAllButton');
+const checkFixedShiftButton = document.getElementById('checkFixedShiftButton');
+const checkConsecutiveButton = document.getElementById('checkConsecutiveButton');
+const checkTurnaroundButton = document.getElementById('checkTurnaroundButton');
+const checkScheduleAllButton = document.getElementById('checkScheduleAllButton');
 const clearMonthButton = document.getElementById('clearMonthButton');
 
 const scheduleTable = document.getElementById('scheduleTable');
@@ -170,12 +183,15 @@ const LEAVE_TYPE_LABELS = Object.freeze({
   exceptionPublic: '例外排休'
 });
 const FORMAL_LEAVE_TYPES = new Set(['leave']);
-const SAME_DAY_GROUPING_LABELS = Object.freeze({
-  separate: '早｜中｜夜',
-  'early-middle': '早中｜夜',
-  'early-night': '早夜｜中',
-  'middle-night': '早｜中夜',
-  all: '早中夜'
+const DEFAULT_ANNUAL_LEAVE_RULES = Object.freeze({
+  sixMonths: 3,
+  year1: 7,
+  year2: 10,
+  years3to4: 14,
+  years5to9: 15,
+  year10Base: 16,
+  after10Increment: 1,
+  maxDays: 30
 });
 
 const storage = window.ShiftRosterStorage || null;
@@ -183,16 +199,12 @@ const DEFAULT_SETTINGS = Object.freeze({
   publicLeaveCount: 8,
   maxConsecutiveWorkDays: 6,
   minTurnaroundHours: 12,
-  turnaroundEnabled: true,
   normalNightRange: '22~06',
   shiftRanges: [...DEFAULT_SHIFT_RANGES],
   blockedWeekdays: [6],
   blockedLeaveTypes: ['public', 'annual'],
-  sameDayLeaveEnabled: true,
-  sameDayLeaveGrouping: 'early-middle',
-  sameDayLeaveMax: 1,
-  adjacentLeaveEnabled: true,
-  meetingDefaultText: '8點櫃檯開會'
+  meetingDefaultText: '8點櫃檯開會',
+  annualLeaveRules: { ...DEFAULT_ANNUAL_LEAVE_RULES }
 });
 
 // ===== 畫面工作狀態：月份切換時由本機資料層載入／保存。 =====
@@ -203,14 +215,10 @@ let publicLeaveCount = '8';
 let maxConsecutiveWorkDays = 6;
 let minTurnaroundHours = 12;
 let normalNightRange = '22~06';
-let turnaroundEnabled = true;
 let blockedWeekdays = new Set([6]);
 let blockedLeaveTypes = new Set(['public', 'annual']);
-let sameDayLeaveEnabled = true;
-let sameDayLeaveGrouping = 'early-middle';
-let sameDayLeaveMax = 1;
-let adjacentLeaveEnabled = true;
 let meetingDefaultText = '8點櫃檯開會';
+let annualLeaveRules = { ...DEFAULT_ANNUAL_LEAVE_RULES };
 const rosterValues = new Map();
 const blockedVacationOverrides = new Map();
 const specialShiftCells = new Set();
@@ -223,7 +231,7 @@ const meetingNoteValues = new Map();
 const specialShiftTimes = new Map();
 const nightShiftTimes = new Map();
 const meetingDays = new Set();
-const annualLeaveReminderSeen = new Set();
+const annualGrantDecisionValues = new Map();
 const personnelShiftValues = new Map();
 
 let blockModeEnabled = false;
@@ -247,6 +255,7 @@ let leaveCheckCompleteMode = false;
 let ruleCheckItems = [];
 let ruleCheckIndex = 0;
 let ruleCheckCompleteMode = false;
+let ruleCheckName = '規則';
 
 let batchLeaveLetter = null;
 let batchLeaveSelectedDays = new Set();
@@ -384,21 +393,17 @@ function renderRuleSettingsPage() {
   const publicLeave = publicLeaveCount || '8';
   rulePublicLeaveText.textContent = publicLeave;
   ruleConsecutiveText.textContent = String(maxConsecutiveWorkDays);
-  ruleTurnaroundText.textContent = turnaroundEnabled ? `${formatRuleNumber(minTurnaroundHours)} 小時` : '停用';
+  ruleTurnaroundText.textContent = `${formatRuleNumber(minTurnaroundHours)} 小時`;
   ruleNightText.textContent = normalNightRange;
   if (ruleBlockedText) ruleBlockedText.textContent = `${formatBlockedWeekdayText()}｜${formatBlockedLeaveTypeText()}`;
-  if (ruleSameDayText) {
-    ruleSameDayText.textContent = sameDayLeaveEnabled
-      ? `${SAME_DAY_GROUPING_LABELS[sameDayLeaveGrouping] || SAME_DAY_GROUPING_LABELS['early-middle']}；每組 ${sameDayLeaveMax} 人`
-      : '停用';
-  }
-  if (ruleAdjacentText) ruleAdjacentText.textContent = adjacentLeaveEnabled ? '啟用' : '停用';
+  if (ruleSameDayText) ruleSameDayText.textContent = '早中｜夜；各組同日最多 1 人（固定）';
+  if (ruleAdjacentText) ruleAdjacentText.textContent = '中班休 → 隔天早班休禁止（固定）';
   if (ruleMeetingText) ruleMeetingText.textContent = meetingDefaultText || '8點櫃檯開會';
   renderShiftSettingText();
 
   document.querySelectorAll('[data-rule-public-leave]').forEach((node) => { node.textContent = publicLeave; });
   document.querySelectorAll('[data-rule-consecutive]').forEach((node) => { node.textContent = String(maxConsecutiveWorkDays); });
-  document.querySelectorAll('[data-rule-turnaround]').forEach((node) => { node.textContent = turnaroundEnabled ? `${formatRuleNumber(minTurnaroundHours)} 小時` : '停用'; });
+  document.querySelectorAll('[data-rule-turnaround]').forEach((node) => { node.textContent = `${formatRuleNumber(minTurnaroundHours)} 小時`; });
   document.querySelectorAll('[data-rule-night]').forEach((node) => { node.textContent = normalNightRange; });
 }
 
@@ -406,15 +411,18 @@ function openRuleSettingsEditor() {
   rulePublicLeaveSettingInput.value = publicLeaveCount || '8';
   ruleConsecutiveInput.value = String(maxConsecutiveWorkDays);
   ruleTurnaroundInput.value = formatRuleNumber(minTurnaroundHours);
-  ruleTurnaroundEnabled.checked = turnaroundEnabled;
+  ruleAnnualSixMonthInput.value = String(annualLeaveRules.sixMonths);
+  ruleAnnualYear1Input.value = String(annualLeaveRules.year1);
+  ruleAnnualYear2Input.value = String(annualLeaveRules.year2);
+  ruleAnnualYears3to4Input.value = String(annualLeaveRules.years3to4);
+  ruleAnnualYears5to9Input.value = String(annualLeaveRules.years5to9);
+  ruleAnnualYear10BaseInput.value = String(annualLeaveRules.year10Base);
+  ruleAnnualAfter10IncrementInput.value = String(annualLeaveRules.after10Increment);
+  ruleAnnualMaxInput.value = String(annualLeaveRules.maxDays);
   fillHourPair(ruleNightStartInput, ruleNightEndInput, normalNightRange);
   fillShiftTimeEditor();
   setCheckedValues('ruleBlockedWeekdays', [...blockedWeekdays]);
   setCheckedValues('ruleBlockedLeaveTypes', [...blockedLeaveTypes]);
-  ruleSameDayEnabled.checked = sameDayLeaveEnabled;
-  ruleSameDayGrouping.value = sameDayLeaveGrouping;
-  ruleSameDayMax.value = String(sameDayLeaveMax);
-  ruleAdjacentEnabled.checked = adjacentLeaveEnabled;
   ruleMeetingDefaultInput.value = meetingDefaultText;
   ruleSettingsEditor.hidden = false;
   editRuleSettingsButton.hidden = true;
@@ -431,6 +439,16 @@ function applyRuleSettings() {
   const nextConsecutive = Number.parseInt(ruleConsecutiveInput.value, 10);
   const nextTurnaround = Number(ruleTurnaroundInput.value);
   const nextNight = buildHourRange(ruleNightStartInput, ruleNightEndInput);
+  const nextAnnualRules = {
+    sixMonths: Number.parseInt(ruleAnnualSixMonthInput.value, 10),
+    year1: Number.parseInt(ruleAnnualYear1Input.value, 10),
+    year2: Number.parseInt(ruleAnnualYear2Input.value, 10),
+    years3to4: Number.parseInt(ruleAnnualYears3to4Input.value, 10),
+    years5to9: Number.parseInt(ruleAnnualYears5to9Input.value, 10),
+    year10Base: Number.parseInt(ruleAnnualYear10BaseInput.value, 10),
+    after10Increment: Number.parseInt(ruleAnnualAfter10IncrementInput.value, 10),
+    maxDays: Number.parseInt(ruleAnnualMaxInput.value, 10)
+  };
   const nextShiftRanges = DEFAULT_SHIFT_RANGES.map((_range, index) => {
     const startInput = document.querySelector(`[data-shift-time-start="${index}"]`);
     const endInput = document.querySelector(`[data-shift-time-end="${index}"]`);
@@ -438,8 +456,6 @@ function applyRuleSettings() {
   });
   const nextBlockedWeekdays = getCheckedValues('ruleBlockedWeekdays').map(Number).filter((value) => Number.isInteger(value) && value >= 0 && value <= 6);
   const nextBlockedLeaveTypes = getCheckedValues('ruleBlockedLeaveTypes').filter((value) => ['public', 'annual'].includes(value));
-  const nextSameDayMax = Number.parseInt(ruleSameDayMax.value, 10);
-  const nextGrouping = String(ruleSameDayGrouping.value || 'early-middle');
   const nextMeetingText = Array.from(String(ruleMeetingDefaultInput.value || '').trim()).slice(0, 10).join('');
 
   if (!Number.isInteger(nextPublicLeave) || nextPublicLeave < 1 || nextPublicLeave > 31) {
@@ -454,6 +470,14 @@ function applyRuleSettings() {
     window.alert('轉班最低間隔請輸入 0～24 小時。');
     return;
   }
+  if (Object.values(nextAnnualRules).some((value) => !Number.isInteger(value) || value < 0 || value > 99)) {
+    window.alert('特休取得級距請輸入 0～99 的整數。');
+    return;
+  }
+  if (nextAnnualRules.maxDays < nextAnnualRules.year10Base) {
+    window.alert('特休最高天數不可低於滿 10 年基準天數。');
+    return;
+  }
   if (!window.ShiftRosterRules?.parseTimeRange(nextNight)) {
     window.alert('灰底預設時間請分別輸入開始與結束小時，例如 22、06。');
     return;
@@ -461,14 +485,6 @@ function applyRuleSettings() {
   const invalidShiftIndex = nextShiftRanges.findIndex((range) => !range);
   if (invalidShiftIndex !== -1) {
     window.alert(`第 ${invalidShiftIndex + 1} 個班別時間格式不正確。可輸入 07、07:30、24 等格式。`);
-    return;
-  }
-  if (!Number.isInteger(nextSameDayMax) || nextSameDayMax < 1 || nextSameDayMax > 6) {
-    window.alert('同組同日最多排休請輸入 1～6 人。');
-    return;
-  }
-  if (!Object.prototype.hasOwnProperty.call(SAME_DAY_GROUPING_LABELS, nextGrouping)) {
-    window.alert('同日排休分組設定不正確。');
     return;
   }
   if (!nextMeetingText) {
@@ -479,15 +495,11 @@ function applyRuleSettings() {
   publicLeaveCount = String(nextPublicLeave);
   maxConsecutiveWorkDays = nextConsecutive;
   minTurnaroundHours = nextTurnaround;
-  turnaroundEnabled = Boolean(ruleTurnaroundEnabled.checked);
   normalNightRange = nextNight;
+  annualLeaveRules = { ...nextAnnualRules };
   shiftRanges = [...nextShiftRanges];
   blockedWeekdays = new Set(nextBlockedWeekdays);
   blockedLeaveTypes = new Set(nextBlockedLeaveTypes);
-  sameDayLeaveEnabled = Boolean(ruleSameDayEnabled.checked);
-  sameDayLeaveGrouping = nextGrouping;
-  sameDayLeaveMax = nextSameDayMax;
-  adjacentLeaveEnabled = Boolean(ruleAdjacentEnabled.checked);
   meetingDefaultText = nextMeetingText;
   syncShiftLabels();
   publicLeaveInput.textContent = publicLeaveCount;
@@ -550,11 +562,156 @@ function makeMeetingDayKey(year, month, day) {
 function makeDayValueKey(year, month, day) {
   return `${year}-${month}-${day}`;
 }
-function makeAnnualReminderKey(year, month, employeeId) {
-  return `${year}-${month}-${employeeId}`;
-}
 function makePersonnelShiftKey(year, month, letter) {
   return `${year}-${month}-${letter}-personnel-shifts`;
+}
+
+function makeAnnualGrantDecisionKey(year, month, employeeId) {
+  return `${year}-${month}-${employeeId}`;
+}
+
+function getEmployeeRecord(employeeId) {
+  if (!storage || !employeeId) return null;
+  return storage.getEmployees()?.[employeeId] || null;
+}
+
+function updateEmployeeRecord(employeeId, patch) {
+  if (!storage || !employeeId) return;
+  const employees = storage.getEmployees();
+  const current = employees[employeeId] || {};
+  employees[employeeId] = { ...current, ...patch, updatedAt: new Date().toISOString() };
+  storage.saveEmployees(employees);
+}
+
+function addMonthsClamped(date, months) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + months;
+  const day = date.getDate();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, lastDay));
+}
+
+function addYearsClamped(date, years) {
+  const year = date.getFullYear() + years;
+  const month = date.getMonth();
+  const day = date.getDate();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, lastDay));
+}
+
+function getAnnualGrantDaysForYears(years) {
+  if (years === 1) return annualLeaveRules.year1;
+  if (years === 2) return annualLeaveRules.year2;
+  if (years >= 3 && years < 5) return annualLeaveRules.years3to4;
+  if (years >= 5 && years < 10) return annualLeaveRules.years5to9;
+  if (years >= 10) return Math.min(annualLeaveRules.maxDays, annualLeaveRules.year10Base + (years - 10) * annualLeaveRules.after10Increment);
+  return 0;
+}
+
+function getAnnualGrantEventForEmployee(employeeId, year, month) {
+  const record = getEmployeeRecord(employeeId);
+  const match = String(record?.hireDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const hireDate = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (Number.isNaN(hireDate.getTime())) return null;
+  const sixMonth = addMonthsClamped(hireDate, 6);
+  if (sixMonth.getFullYear() === year && sixMonth.getMonth() + 1 === month) {
+    return { day: sixMonth.getDate(), days: annualLeaveRules.sixMonths, label: '滿 6 個月' };
+  }
+  for (let years = 1; years <= 80; years += 1) {
+    const anniversary = addYearsClamped(hireDate, years);
+    if (anniversary.getFullYear() > year) break;
+    if (anniversary.getFullYear() === year && anniversary.getMonth() + 1 === month) {
+      return { day: anniversary.getDate(), days: getAnnualGrantDaysForYears(years), label: `滿 ${years} 年` };
+    }
+  }
+  return null;
+}
+
+function countAnnualLeaveInMonthData(monthData, letter) {
+  if (!monthData || !letter) return 0;
+  let count = 0;
+  const parsed = storage?.parseMonthId(monthData.month || '');
+  const days = parsed ? getDaysInMonth(parsed.year, parsed.month) : 31;
+  for (let day = 1; day <= days; day += 1) {
+    for (let slot = 0; slot < 2; slot += 1) {
+      const key = `${day}-vacation-${slot}`;
+      if (monthData.rosterValues?.[key] === letter && String(monthData.leaveTypeValues?.[key] || 'public') === 'annual') count += 1;
+    }
+    const extra = monthData.extraLeaves?.[String(day)];
+    if (extra?.letter === letter && extra?.type === 'annual') count += 1;
+  }
+  return count;
+}
+
+function calculateExpectedAnnualBalanceFromPrevious(index, year, month) {
+  if (!storage) return null;
+  const employeeId = employeeIds[index] || '';
+  if (!employeeId) return null;
+  const previous = storage.getPreviousYearMonth(year, month);
+  const data = storage.getMonth(previous.year, previous.month);
+  if (!data) return null;
+  let previousLetter = '';
+  let previousIndex = -1;
+  for (const [letter, person] of Object.entries(data.people || {})) {
+    if (person?.employeeId === employeeId) {
+      previousLetter = letter;
+      previousIndex = letter.charCodeAt(0) - 65;
+      break;
+    }
+  }
+  if (!previousLetter || previousIndex < 0) return null;
+  const previousBalanceText = String(data.specialLeaveValues?.[previousIndex] ?? '');
+  if (!/^\d+$/.test(previousBalanceText)) return null;
+  let balance = Math.max(0, Number(previousBalanceText) - countAnnualLeaveInMonthData(data, previousLetter));
+  const decision = data.annualGrantDecisions?.[employeeId];
+  if (decision && Number.isFinite(Number(decision.days))) {
+    balance = decision.mode === 'reset' ? Number(decision.days) : balance + Number(decision.days);
+  }
+  return Math.max(0, balance);
+}
+
+function calculateAnnualBalanceFromHireDate(employeeId, year, month) {
+  const record = getEmployeeRecord(employeeId);
+  const match = String(record?.hireDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const hireDate = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (Number.isNaN(hireDate.getTime())) return null;
+
+  // 本月第一次建立資料時，以「上月底已經取得的法定特休」當月初起點。
+  // 若取得日剛好落在本月，仍沿用既有的取得日累加／重置流程，避免重複計入。
+  const referenceDate = new Date(Number(year), Number(month) - 1, 0, 23, 59, 59, 999);
+  if (referenceDate < hireDate) return 0;
+
+  let balance = 0;
+  const sixMonth = addMonthsClamped(hireDate, 6);
+  if (sixMonth <= referenceDate) balance = annualLeaveRules.sixMonths;
+
+  for (let years = 1; years <= 80; years += 1) {
+    const anniversary = addYearsClamped(hireDate, years);
+    if (anniversary > referenceDate) break;
+    balance = getAnnualGrantDaysForYears(years);
+  }
+  return Math.max(0, Number(balance) || 0);
+}
+
+function getAnnualBalanceBasis(index, year, month) {
+  const fromPrevious = calculateExpectedAnnualBalanceFromPrevious(index, year, month);
+  if (fromPrevious != null) return { value: fromPrevious, source: 'previous' };
+
+  const employeeId = employeeIds[index] || '';
+  if (!employeeId) return { value: null, source: 'none' };
+  const fromHireDate = calculateAnnualBalanceFromHireDate(employeeId, year, month);
+  if (fromHireDate != null) return { value: fromHireDate, source: 'hire' };
+  return { value: null, source: 'none' };
+}
+
+function autofillAnnualBalances(year, month) {
+  for (let index = 0; index < 6; index += 1) {
+    if (String(specialLeaveValues[index] || '').trim()) continue;
+    const basis = getAnnualBalanceBasis(index, year, month);
+    if (basis.value != null) specialLeaveValues[index] = String(basis.value);
+  }
 }
 
 
@@ -613,10 +770,10 @@ function clearMonthMemory(year, month) {
   clearMapKeysForMonth(meetingNoteValues, year, month);
   clearMapKeysForMonth(specialShiftTimes, year, month);
   clearMapKeysForMonth(nightShiftTimes, year, month);
+  clearMapKeysForMonth(annualGrantDecisionValues, year, month);
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
-  clearSetKeysForMonth(annualLeaveReminderSeen, year, month);
 }
 
 function buildCurrentMonthSnapshot() {
@@ -628,7 +785,7 @@ function buildCurrentMonthSnapshot() {
     const letter = String.fromCharCode(65 + index);
     const displayName = names[index] || '';
     const employeeId = employeeIds[index] || '';
-    const shiftGroups = [...getPersonnelShifts(year, month, letter)];
+    const shiftGroups = (letter === 'A' && !displayName && !employeeId) ? [] : [...getPersonnelShifts(year, month, letter)];
     if (!displayName && !employeeId && !shiftGroups.length) continue;
     people[letter] = { employeeId, displayName, shiftGroups };
   }
@@ -645,7 +802,7 @@ function buildCurrentMonthSnapshot() {
     leaveNoteValues: serializeMapForMonth(leaveNoteValues, year, month),
     manualNotes: serializeMapForMonth(manualNoteValues, year, month),
     extraLeaves: serializeMapForMonth(extraLeaveValues, year, month),
-    annualLeaveReminderSeen: serializeSetForMonth(annualLeaveReminderSeen, year, month),
+    annualGrantDecisions: serializeMapForMonth(annualGrantDecisionValues, year, month),
     specialShiftTimes: serializeMapForMonth(specialShiftTimes, year, month),
     nightShiftTimes: serializeMapForMonth(nightShiftTimes, year, month),
     meetingDays: serializeSetForMonth(meetingDays, year, month)
@@ -668,16 +825,12 @@ function persistGlobalSettings() {
     publicLeaveCount: Number.parseInt(publicLeaveCount || '8', 10) || 8,
     maxConsecutiveWorkDays,
     minTurnaroundHours,
-    turnaroundEnabled,
-    normalNightRange,
+      normalNightRange,
     shiftRanges: [...shiftRanges],
     blockedWeekdays: [...blockedWeekdays].sort((a, b) => a - b),
     blockedLeaveTypes: [...blockedLeaveTypes],
-    sameDayLeaveEnabled,
-    sameDayLeaveGrouping,
-    sameDayLeaveMax,
-    adjacentLeaveEnabled,
-    meetingDefaultText
+            meetingDefaultText,
+    annualLeaveRules: { ...annualLeaveRules }
   });
 }
 
@@ -687,15 +840,12 @@ function loadGlobalSettings() {
   publicLeaveCount = String(Number.parseInt(saved.publicLeaveCount, 10) || DEFAULT_SETTINGS.publicLeaveCount);
   maxConsecutiveWorkDays = Number.parseInt(saved.maxConsecutiveWorkDays, 10) || DEFAULT_SETTINGS.maxConsecutiveWorkDays;
   minTurnaroundHours = Number.isFinite(Number(saved.minTurnaroundHours)) ? Number(saved.minTurnaroundHours) : DEFAULT_SETTINGS.minTurnaroundHours;
-  turnaroundEnabled = typeof saved.turnaroundEnabled === 'boolean' ? saved.turnaroundEnabled : DEFAULT_SETTINGS.turnaroundEnabled;
   normalNightRange = String(saved.normalNightRange || DEFAULT_SETTINGS.normalNightRange);
   blockedWeekdays = new Set((Array.isArray(saved.blockedWeekdays) ? saved.blockedWeekdays : DEFAULT_SETTINGS.blockedWeekdays).map(Number).filter((value) => Number.isInteger(value) && value >= 0 && value <= 6));
   blockedLeaveTypes = new Set((Array.isArray(saved.blockedLeaveTypes) ? saved.blockedLeaveTypes : DEFAULT_SETTINGS.blockedLeaveTypes).filter((value) => ['public', 'annual'].includes(value)));
-  sameDayLeaveEnabled = typeof saved.sameDayLeaveEnabled === 'boolean' ? saved.sameDayLeaveEnabled : DEFAULT_SETTINGS.sameDayLeaveEnabled;
-  sameDayLeaveGrouping = Object.prototype.hasOwnProperty.call(SAME_DAY_GROUPING_LABELS, saved.sameDayLeaveGrouping) ? saved.sameDayLeaveGrouping : DEFAULT_SETTINGS.sameDayLeaveGrouping;
-  sameDayLeaveMax = Math.min(6, Math.max(1, Number.parseInt(saved.sameDayLeaveMax, 10) || DEFAULT_SETTINGS.sameDayLeaveMax));
-  adjacentLeaveEnabled = typeof saved.adjacentLeaveEnabled === 'boolean' ? saved.adjacentLeaveEnabled : DEFAULT_SETTINGS.adjacentLeaveEnabled;
   meetingDefaultText = Array.from(String(saved.meetingDefaultText || DEFAULT_SETTINGS.meetingDefaultText)).slice(0, 10).join('');
+  const savedAnnualRules = saved.annualLeaveRules && typeof saved.annualLeaveRules === 'object' ? saved.annualLeaveRules : {};
+  annualLeaveRules = { ...DEFAULT_ANNUAL_LEAVE_RULES, ...savedAnnualRules };
   const savedShiftRanges = Array.isArray(saved.shiftRanges) ? saved.shiftRanges : [];
   shiftRanges = DEFAULT_SHIFT_RANGES.map((fallback, index) => {
     const value = String(savedShiftRanges[index] || fallback).replace(/\s+/g, '');
@@ -717,7 +867,11 @@ function loadMonthIntoMemory(year, month, data) {
     names[index] = typeof person.displayName === 'string' ? person.displayName : '';
     employeeIds[index] = typeof person.employeeId === 'string' ? person.employeeId : '';
     const groups = Array.isArray(person.shiftGroups) ? person.shiftGroups.filter((item) => ['early', 'middle', 'night'].includes(item)) : [];
-    if (groups.length) personnelShiftValues.set(makePersonnelShiftKey(year, month, letter), [...new Set(groups)]);
+    if (letter === 'A') {
+      personnelShiftValues.set(makePersonnelShiftKey(year, month, letter), [...A_ALL_SHIFT_GROUPS]);
+    } else if (groups.length) {
+      personnelShiftValues.set(makePersonnelShiftKey(year, month, letter), [groups[0]]);
+    }
   }
 
   const leaveValues = Array.isArray(data?.specialLeaveValues) ? data.specialLeaveValues : [];
@@ -727,30 +881,15 @@ function loadMonthIntoMemory(year, month, data) {
   restoreMapForMonth(blockedVacationOverrides, year, month, data?.blockedVacationOverrides);
   restoreSetForMonth(specialShiftCells, year, month, data?.specialShiftCells);
 
-  const nightOverrides = { ...(data?.nightShiftOverrides || {}) };
-  const nightTimes = { ...(data?.nightShiftTimes || {}) };
-  for (const [suffix, value] of Object.entries({ ...nightOverrides })) {
-    const match = String(suffix).match(/^(\d{1,2})-night$/);
-    if (!match) continue;
-    const migrated = `${match[1]}-night-3`;
-    if (!Object.prototype.hasOwnProperty.call(nightOverrides, migrated)) nightOverrides[migrated] = value;
-    delete nightOverrides[suffix];
-  }
-  for (const [suffix, value] of Object.entries({ ...nightTimes })) {
-    const match = String(suffix).match(/^(\d{1,2})-night$/);
-    if (!match) continue;
-    const migrated = `${match[1]}-night-3`;
-    if (!Object.prototype.hasOwnProperty.call(nightTimes, migrated)) nightTimes[migrated] = value;
-    delete nightTimes[suffix];
-  }
-  restoreMapForMonth(nightShiftOverrides, year, month, nightOverrides);
+  restoreMapForMonth(nightShiftOverrides, year, month, data?.nightShiftOverrides);
   restoreMapForMonth(leaveTypeValues, year, month, data?.leaveTypeValues);
   restoreMapForMonth(leaveNoteValues, year, month, data?.leaveNoteValues);
   restoreMapForMonth(manualNoteValues, year, month, data?.manualNotes);
   restoreMapForMonth(extraLeaveValues, year, month, data?.extraLeaves);
-  restoreSetForMonth(annualLeaveReminderSeen, year, month, data?.annualLeaveReminderSeen);
+  restoreMapForMonth(annualGrantDecisionValues, year, month, data?.annualGrantDecisions);
+  autofillAnnualBalances(year, month);
   restoreMapForMonth(specialShiftTimes, year, month, data?.specialShiftTimes);
-  restoreMapForMonth(nightShiftTimes, year, month, nightTimes);
+  restoreMapForMonth(nightShiftTimes, year, month, data?.nightShiftTimes);
 
   restoreMapForMonth(meetingNoteValues, year, month, data?.meetingNoteValues);
 
@@ -797,8 +936,12 @@ function setPersonnelGroupsForIndex(index, groups) {
   const { year, month } = getCurrentYearMonth();
   const letter = String.fromCharCode(65 + index);
   const key = makePersonnelShiftKey(year, month, letter);
+  if (letter === 'A') {
+    personnelShiftValues.set(key, [...A_ALL_SHIFT_GROUPS]);
+    return;
+  }
   const cleaned = [...new Set((groups || []).filter((item) => ['early', 'middle', 'night'].includes(item)))];
-  if (cleaned.length) personnelShiftValues.set(key, cleaned);
+  if (cleaned.length) personnelShiftValues.set(key, [cleaned[0]]);
   else personnelShiftValues.delete(key);
 }
 
@@ -810,6 +953,7 @@ function commitNameAtIndex(index) {
   if (!displayName.trim()) {
     names[index] = '';
     employeeIds[index] = '';
+    specialLeaveValues[index] = '';
     setPersonnelGroupsForIndex(index, []);
     persistCurrentMonth();
     return;
@@ -819,20 +963,23 @@ function commitNameAtIndex(index) {
     const nextEmployeeId = storage.resolveEmployee(displayName, previousEmployeeId);
     if (nextEmployeeId !== previousEmployeeId) {
       setPersonnelGroupsForIndex(index, findShiftGroupsForEmployee(nextEmployeeId, index));
+      employeeIds[index] = nextEmployeeId;
+      const current = getCurrentYearMonth();
+      const basis = getAnnualBalanceBasis(index, current.year, current.month);
+      specialLeaveValues[index] = basis.value == null ? '' : String(basis.value);
+    } else {
+      employeeIds[index] = nextEmployeeId;
     }
-    employeeIds[index] = nextEmployeeId;
   }
   persistCurrentMonth();
 }
 
 function commitAllVisibleNames() {
-  document.querySelectorAll('.name-input').forEach((input) => {
-    const index = Number(input.dataset.index);
-    if (!Number.isInteger(index)) return;
-    names[index] = trimDisplayName(input.value);
-    input.value = names[index];
+  for (let index = 0; index < names.length; index += 1) {
+    names[index] = trimDisplayName(names[index]);
+    syncNameInputsForIndex(index);
     commitNameAtIndex(index);
-  });
+  }
 }
 
 function cleanEnglishLetter(value) {
@@ -1015,20 +1162,39 @@ function removeShiftLetterForDay(year, month, day, letter) {
 const PERSONNEL_SHIFT_GROUPS = Object.freeze([
   { key: 'early', label: '早班' },
   { key: 'middle', label: '中班' },
-  { key: 'night', label: '夜班' }
+  { key: 'night', label: '大夜' }
 ]);
+const A_ALL_SHIFT_GROUPS = Object.freeze(['early', 'middle', 'night']);
+const SHIFT_INDEX_GROUP_KEYS = Object.freeze(['early', 'middle', 'middle', 'night', 'night']);
 
 function getPersonnelShifts(year, month, letter) {
+  if (letter === 'A') return new Set(A_ALL_SHIFT_GROUPS);
   const value = personnelShiftValues.get(makePersonnelShiftKey(year, month, letter));
-  return new Set(Array.isArray(value) ? value : value instanceof Set ? [...value] : []);
+  const list = Array.isArray(value) ? value : value instanceof Set ? [...value] : [];
+  const valid = list.filter((item) => ['early', 'middle', 'night'].includes(item));
+  return new Set(valid.slice(0, 1));
 }
-function setPersonnelShift(year, month, letter, groupKey, enabled) {
+function setPersonnelFixedShift(year, month, letter, groupKey) {
+  if (letter === 'A') return;
   const key = makePersonnelShiftKey(year, month, letter);
-  const current = getPersonnelShifts(year, month, letter);
-  if (enabled) current.add(groupKey);
-  else current.delete(groupKey);
-  if (current.size) personnelShiftValues.set(key, [...current]);
-  else personnelShiftValues.delete(key);
+  if (!['early', 'middle', 'night'].includes(groupKey)) {
+    personnelShiftValues.delete(key);
+    return;
+  }
+  personnelShiftValues.set(key, [groupKey]);
+}
+function getShiftGroupKeyForIndex(shiftIndex) {
+  return SHIFT_INDEX_GROUP_KEYS[shiftIndex] || '';
+}
+function getEligibleLettersForShift(shiftIndex) {
+  const { year, month } = getCurrentYearMonth();
+  const targetGroup = getShiftGroupKeyForIndex(shiftIndex);
+  return ['A', 'B', 'C', 'D', 'E', 'F'].filter((letter) => {
+    const index = letter.charCodeAt(0) - 65;
+    if (!names[index]) return false;
+    if (letter === 'A') return true;
+    return getPersonnelShifts(year, month, letter).has(targetGroup);
+  });
 }
 
 function deactivateOtherModes(except) {
@@ -1303,7 +1469,6 @@ function clearCurrentMonth() {
   clearMapKeysForMonth(personnelShiftValues, year, month);
   clearSetKeysForMonth(specialShiftCells, year, month);
   clearSetKeysForMonth(meetingDays, year, month);
-  clearSetKeysForMonth(annualLeaveReminderSeen, year, month);
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeClearMonthDialog();
@@ -1355,6 +1520,7 @@ async function applyLetterToShiftRow(shiftIndex, letter) {
 function openRowFillPanel(shiftIndex) {
   selectedRowFillShiftIndex = shiftIndex;
   rowFillTitle.textContent = `${shifts[shiftIndex].label} 整列填入`;
+  buildRowFillQuickLetters(shiftIndex);
   rowFillBar.hidden = false;
   closeShiftConfigPanel();
   rowFillBar.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -1363,12 +1529,25 @@ function closeRowFillPanel() {
   rowFillBar.hidden = true;
   selectedRowFillShiftIndex = null;
 }
-function buildRowFillQuickLetters() {
+function buildRowFillQuickLetters(shiftIndex = selectedRowFillShiftIndex) {
   rowFillQuickLetters.innerHTML = '';
-  for (const letter of ['A', 'B', 'C', 'D', 'E', 'F']) {
+  const letters = shiftIndex == null
+    ? ['A', 'B', 'C', 'D', 'E', 'F'].filter((letter) => names[letter.charCodeAt(0) - 65])
+    : getEligibleLettersForShift(shiftIndex);
+
+  if (!letters.length) {
+    const empty = document.createElement('span');
+    empty.className = 'row-fill-empty';
+    empty.textContent = '目前沒有符合這個班別的人員。';
+    rowFillQuickLetters.appendChild(empty);
+    return;
+  }
+
+  for (const letter of letters) {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = letter;
+    button.title = letter === 'A' ? 'A：三班例外' : '只顯示固定為此班別的人員';
     button.addEventListener('click', () => {
       if (selectedRowFillShiftIndex != null) applyLetterToShiftRow(selectedRowFillShiftIndex, letter);
     });
@@ -1377,6 +1556,7 @@ function buildRowFillQuickLetters() {
 }
 
 function openShiftConfigPanel() {
+  commitAllVisibleNames();
   closeRowFillPanel();
   renderShiftConfigPanel();
   shiftConfigPanel.hidden = false;
@@ -1391,6 +1571,25 @@ function toggleShiftConfigPanel() {
   if (shiftConfigPanel.hidden) openShiftConfigPanel();
   else closeShiftConfigPanel();
 }
+function getAnnualBalanceSnapshot(index, year, month) {
+  const balanceText = String(specialLeaveValues[index] || '').trim();
+  const available = /^\d+$/.test(balanceText) ? Number(balanceText) : null;
+  const letter = String.fromCharCode(65 + index);
+  const used = getLeaveSummaryForLetter(year, month, letter).annualDates.length;
+  const remaining = available == null ? null : Math.max(0, available - used);
+  const overused = available == null ? 0 : Math.max(0, used - available);
+  const basis = getAnnualBalanceBasis(index, year, month);
+  return { available, used, remaining, overused, expected: basis.value, expectedSource: basis.source };
+}
+
+function syncNameInputsForIndex(index) {
+  document.querySelectorAll(`[data-person-name-index="${index}"]`).forEach((input) => {
+    if (input instanceof HTMLInputElement && input.value !== names[index]) input.value = names[index];
+  });
+  const lowerInput = document.querySelector(`.name-input[data-index="${index}"]`);
+  if (lowerInput && lowerInput.value !== names[index]) lowerInput.value = names[index];
+}
+
 function renderShiftConfigPanel() {
   const { year, month } = getCurrentYearMonth();
   shiftConfigGrid.innerHTML = '';
@@ -1399,91 +1598,244 @@ function renderShiftConfigPanel() {
     const row = document.createElement('div');
     row.className = 'shift-config-row';
 
-    const person = document.createElement('span');
+    const person = document.createElement('div');
     person.className = 'shift-config-person';
-    person.textContent = names[index] ? `${letter}. ${names[index]}` : `${letter}.`;
+
+    const letterLabel = document.createElement('strong');
+    letterLabel.className = 'shift-config-letter';
+    letterLabel.textContent = `${letter}.`;
+
+    const nameLabel = document.createElement('label');
+    nameLabel.className = 'shift-config-field';
+    const nameCaption = document.createElement('span');
+    nameCaption.textContent = '姓名';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'shift-config-name-input';
+    nameInput.value = names[index] || '';
+    nameInput.dataset.personNameIndex = String(index);
+    nameInput.autocomplete = 'off';
+    nameInput.setAttribute('aria-label', `${letter} 姓名`);
+    nameInput.addEventListener('compositionstart', () => { nameInput.dataset.composing = 'true'; });
+    nameInput.addEventListener('compositionend', () => {
+      nameInput.dataset.composing = 'false';
+      const cleaned = trimDisplayName(nameInput.value);
+      names[index] = cleaned;
+      nameInput.value = cleaned;
+      syncNameInputsForIndex(index);
+      persistCurrentMonth();
+      renderSummary();
+    });
+    nameInput.addEventListener('input', () => {
+      const cleaned = trimDisplayName(nameInput.value);
+      names[index] = cleaned;
+      if (nameInput.dataset.composing !== 'true' && nameInput.value !== cleaned) nameInput.value = cleaned;
+      syncNameInputsForIndex(index);
+      persistCurrentMonth();
+      renderSummary();
+    });
+    nameInput.addEventListener('blur', () => {
+      if (nameInput.dataset.composing === 'true') return;
+      const cleaned = trimDisplayName(nameInput.value);
+      names[index] = cleaned;
+      nameInput.value = cleaned;
+      commitNameAtIndex(index);
+      const basis = getAnnualBalanceBasis(index, year, month);
+      if (!String(specialLeaveValues[index] || '').trim() && basis.value != null) {
+        specialLeaveValues[index] = String(basis.value);
+        persistCurrentMonth();
+      }
+      syncNameInputsForIndex(index);
+      renderLower(year, month);
+      renderSummary();
+      renderShiftConfigPanel();
+      if (selectedRowFillShiftIndex != null) buildRowFillQuickLetters(selectedRowFillShiftIndex);
+    });
+    nameLabel.append(nameCaption, nameInput);
+    person.append(letterLabel, nameLabel);
+
+    const employeeId = employeeIds[index] || '';
+    const record = employeeId ? (getEmployeeRecord(employeeId) || {}) : {};
+
+    const hireLabel = document.createElement('label');
+    hireLabel.className = 'shift-config-field';
+    const hireCaption = document.createElement('span');
+    hireCaption.textContent = '到職日';
+    const hireInput = document.createElement('input');
+    hireInput.type = 'date';
+    hireInput.className = 'shift-config-hire-input';
+    hireInput.value = String(record.hireDate || '');
+    hireInput.disabled = !employeeId;
+    hireInput.title = employeeId ? '用到職日判斷滿 6 個月與每年特休取得日' : '先輸入姓名建立人員資料';
+    hireInput.addEventListener('change', () => {
+      const previousExpected = calculateExpectedAnnualBalanceFromPrevious(index, year, month);
+      const oldAutomatic = calculateAnnualBalanceFromHireDate(employeeId, year, month);
+      const currentText = String(specialLeaveValues[index] || '').trim();
+      const currentNumber = /^\d+$/.test(currentText) ? Number(currentText) : null;
+
+      updateEmployeeRecord(employeeId, { hireDate: hireInput.value || '' });
+
+      // 已有前月銜接時不動本月數字；第一次建立時，空白或原本就是自動值才跟著到職日重算。
+      // 若使用者已手動輸入首次起始值，就保留該數字作為本月起點。
+      if (previousExpected == null) {
+        const nextAutomatic = calculateAnnualBalanceFromHireDate(employeeId, year, month);
+        if (!currentText || (oldAutomatic != null && currentNumber === oldAutomatic)) {
+          specialLeaveValues[index] = nextAutomatic == null ? '' : String(nextAutomatic);
+        }
+      }
+
+      persistCurrentMonth();
+      renderLower(year, month);
+      renderShiftConfigPanel();
+    });
+    hireLabel.append(hireCaption, hireInput);
+    person.appendChild(hireLabel);
 
     const options = document.createElement('div');
     options.className = 'shift-config-options';
-    options.setAttribute('aria-label', `${letter} 人員班別，可複選`);
 
-    const current = getPersonnelShifts(year, month, letter);
-    PERSONNEL_SHIFT_GROUPS.forEach((group) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'shift-config-option';
-      button.setAttribute('aria-pressed', current.has(group.key) ? 'true' : 'false');
-      const groupDetail = getShiftGroupDetail(group.key, '／');
-      button.setAttribute('aria-label', `${letter} ${group.label} ${groupDetail}`);
+    if (letter === 'A') {
+      const exception = document.createElement('div');
+      exception.className = 'shift-config-exception';
+      exception.textContent = '例外：早班／中班／大夜皆可；排班規則不檢查 A';
+      options.appendChild(exception);
+    } else {
+      options.setAttribute('aria-label', `${letter} 固定班別，只能單選`);
+      const current = getPersonnelShifts(year, month, letter);
+      PERSONNEL_SHIFT_GROUPS.forEach((group) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'shift-config-option';
+        const active = current.has(group.key);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        const groupDetail = getShiftGroupDetail(group.key, '／');
+        button.setAttribute('aria-label', `${letter} 固定${group.label} ${groupDetail}`);
 
-      const label = document.createElement('strong');
-      label.textContent = group.label;
-      const detail = document.createElement('small');
-      detail.textContent = groupDetail;
-      button.append(label, detail);
+        const label = document.createElement('strong');
+        label.textContent = group.label;
+        const detail = document.createElement('small');
+        detail.textContent = groupDetail;
+        button.append(label, detail);
 
-      button.addEventListener('click', () => {
-        const next = button.getAttribute('aria-pressed') !== 'true';
-        setPersonnelShift(year, month, letter, group.key, next);
-        persistCurrentMonth();
-        button.setAttribute('aria-pressed', next ? 'true' : 'false');
+        button.addEventListener('click', () => {
+          const wasActive = button.getAttribute('aria-pressed') === 'true';
+          setPersonnelFixedShift(year, month, letter, wasActive ? '' : group.key);
+          persistCurrentMonth();
+          renderShiftConfigPanel();
+          if (selectedRowFillShiftIndex != null) buildRowFillQuickLetters(selectedRowFillShiftIndex);
+        });
+        options.appendChild(button);
       });
-      options.appendChild(button);
-    });
+    }
 
-    row.append(person, options);
+    const meta = document.createElement('div');
+    meta.className = 'shift-config-meta';
+
+    const annual = getAnnualBalanceSnapshot(index, year, month);
+    const balanceLabel = document.createElement('label');
+    balanceLabel.className = 'shift-config-field annual-balance-field';
+    const balanceCaption = document.createElement('span');
+    balanceCaption.textContent = '本月可用特休（首次可改）';
+    const balanceInput = document.createElement('input');
+    balanceInput.type = 'number';
+    balanceInput.min = '0';
+    balanceInput.max = '99';
+    balanceInput.inputMode = 'numeric';
+    balanceInput.value = annual.available == null ? '' : String(annual.available);
+    balanceInput.placeholder = employeeId ? '首次輸入（選填）' : '先輸入姓名';
+    balanceInput.disabled = !employeeId;
+    balanceInput.setAttribute('aria-label', `${letter} 本月可用特休；首次導入可手動覆蓋自動計算值`);
+    balanceInput.title = employeeId ? '有到職日會自動計算；第一次導入若現有餘額不同，可直接改成實際數字作為本月起點' : '先輸入姓名';
+    balanceInput.addEventListener('change', () => {
+      if (balanceInput.value === '') {
+        // 清空手動值＝回到系統計算。
+        const basis = getAnnualBalanceBasis(index, year, month);
+        specialLeaveValues[index] = basis.value == null ? '' : String(basis.value);
+      } else {
+        const numeric = Math.max(0, Math.min(99, Number.parseInt(balanceInput.value, 10) || 0));
+        specialLeaveValues[index] = String(numeric);
+      }
+      balanceInput.value = specialLeaveValues[index];
+      persistCurrentMonth();
+      renderLower(year, month);
+      renderShiftConfigPanel();
+    });
+    balanceLabel.append(balanceCaption, balanceInput);
+    meta.appendChild(balanceLabel);
+
+    const annualStatus = document.createElement('div');
+    annualStatus.className = 'annual-balance-status';
+    const availableText = annual.available == null ? '未設定' : `${annual.available} 天`;
+    const remainingText = annual.remaining == null ? '—' : `${annual.remaining} 天`;
+    annualStatus.innerHTML = `<span>本月可用 <strong>${availableText}</strong></span><span>已排特休 <strong>${annual.used} 天</strong></span><span>目前剩餘 <strong>${remainingText}</strong></span>`;
+    if (annual.overused > 0) {
+      const warning = document.createElement('strong');
+      warning.className = 'annual-balance-warning';
+      warning.textContent = `已超用 ${annual.overused} 天`;
+      annualStatus.appendChild(warning);
+    }
+    meta.appendChild(annualStatus);
+
+    const carry = document.createElement('div');
+    carry.className = 'annual-carry-status';
+    if (!employeeId) {
+      carry.textContent = '先輸入姓名，才能保存到職日並銜接跨月特休。';
+    } else if (annual.expectedSource === 'hire') {
+      if (annual.available === annual.expected) {
+        carry.textContent = `首次建立：依到職日自動計算本月起點 ${annual.expected} 天；若目前實際餘額不同，可直接改上面的數字。`;
+      } else {
+        carry.textContent = `首次建立：到職日自動值為 ${annual.expected} 天；目前以 ${availableText} 作為本月起點，之後照跨月與取得日規則計算。`;
+      }
+    } else if (annual.expectedSource === 'previous') {
+      if (annual.available === annual.expected) {
+        carry.textContent = `跨月計算：上月餘額－上月已用／取得日處理 → 本月 ${annual.expected} 天。`;
+      } else {
+        carry.textContent = `跨月計算應為 ${annual.expected} 天；目前設定 ${availableText}，特休檢查會提醒確認。`;
+      }
+    } else if (annual.available != null) {
+      carry.textContent = `目前以 ${availableText} 作為首次起點；補上到職日後即可自動判斷取得日與後續年資。`;
+    } else {
+      carry.textContent = '可輸入到職日讓系統自動計算；若第一次導入已有實際剩餘天數，也可直接輸入作為本月起點。';
+    }
+    meta.appendChild(carry);
+
+    if (employeeId) {
+      const grant = getAnnualGrantEventForEmployee(employeeId, year, month);
+      if (grant && grant.days > 0) {
+        const decisionKey = makeAnnualGrantDecisionKey(year, month, employeeId);
+        const decision = annualGrantDecisionValues.get(decisionKey) || null;
+        const grantBox = document.createElement('div');
+        grantBox.className = 'annual-grant-choice';
+        const grantText = document.createElement('span');
+        grantText.textContent = `${month}/${grant.day} ${grant.label}取得 ${grant.days} 天；依目前月結邏輯於次月套入`;
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.textContent = decision?.mode === 'accumulate' ? '✓ 累加特休' : '累加特休';
+        const resetButton = document.createElement('button');
+        resetButton.type = 'button';
+        resetButton.textContent = decision?.mode === 'reset' ? '✓ 舊額歸零，換成本次天數' : '舊額歸零，換成本次天數';
+        addButton.addEventListener('click', () => {
+          annualGrantDecisionValues.set(decisionKey, { mode: 'accumulate', days: grant.days, day: grant.day });
+          persistCurrentMonth();
+          renderShiftConfigPanel();
+          renderLower(year, month);
+        });
+        resetButton.addEventListener('click', () => {
+          annualGrantDecisionValues.set(decisionKey, { mode: 'reset', days: grant.days, day: grant.day });
+          persistCurrentMonth();
+          renderShiftConfigPanel();
+          renderLower(year, month);
+        });
+        grantBox.append(grantText, addButton, resetButton);
+        meta.appendChild(grantBox);
+      }
+    }
+
+    row.append(person, options, meta);
     shiftConfigGrid.appendChild(row);
   }
 }
 
-function getEmployeeIdForLetter(letter) {
-  const index = String(letter || '').charCodeAt(0) - 65;
-  return index >= 0 && index < employeeIds.length ? employeeIds[index] || '' : '';
-}
-
-function getPreviousMonthAnnualCount(letter) {
-  if (!storage) return 0;
-  const employeeId = getEmployeeIdForLetter(letter);
-  if (!employeeId) return 0;
-  const { year, month } = getCurrentYearMonth();
-  const previous = storage.getPreviousYearMonth(year, month);
-  const data = storage.getMonth(previous.year, previous.month);
-  if (!data) return 0;
-  let previousLetter = '';
-  for (const [candidate, person] of Object.entries(data.people || {})) {
-    if (person?.employeeId === employeeId) {
-      previousLetter = candidate;
-      break;
-    }
-  }
-  if (!previousLetter) return 0;
-  const days = getDaysInMonth(previous.year, previous.month);
-  let count = 0;
-  for (let day = 1; day <= days; day += 1) {
-    for (let slot = 0; slot < 2; slot += 1) {
-      const rosterKey = `${day}-vacation-${slot}`;
-      if (String(data.rosterValues?.[rosterKey] || '') === previousLetter && String(data.leaveTypeValues?.[rosterKey] || 'public') === 'annual') count += 1;
-    }
-    const extra = data.extraLeaves?.[String(day)];
-    if (extra?.letter === previousLetter && extra?.type === 'annual') count += 1;
-  }
-  return count;
-}
-
-function maybeRemindPreviousAnnual(letter) {
-  const employeeId = getEmployeeIdForLetter(letter);
-  if (!employeeId) return;
-  const { year, month } = getCurrentYearMonth();
-  const reminderKey = makeAnnualReminderKey(year, month, employeeId);
-  if (annualLeaveReminderSeen.has(reminderKey)) return;
-  const previousCount = getPreviousMonthAnnualCount(letter);
-  if (!previousCount) return;
-  annualLeaveReminderSeen.add(reminderKey);
-  const index = letter.charCodeAt(0) - 65;
-  const person = names[index] ? `${letter} ${names[index]}` : letter;
-  window.alert(`${person} 上個月有排 ${previousCount} 天特休，記得確認本月特休天數是否已更新。`);
-  persistCurrentMonth();
-}
 
 function createLetterInput({ value = '', ariaLabel, onChange, className }) {
   const input = document.createElement('input');
@@ -1766,6 +2118,15 @@ function buildDayNotes(year, month, day) {
     if (lines.length) notes.push({ kind: 'leave', lines });
   }
 
+  for (let index = 0; index < employeeIds.length; index += 1) {
+    const employeeId = employeeIds[index] || '';
+    if (!employeeId) continue;
+    const grant = getAnnualGrantEventForEmployee(employeeId, year, month);
+    if (!grant || grant.day !== day || grant.days <= 0) continue;
+    const letter = String.fromCharCode(65 + index);
+    notes.push({ kind: 'annual-grant', lines: [letter, String(grant.days)] });
+  }
+
   if (meetingDays.has(makeMeetingDayKey(year, month, day))) {
     const text = meetingNoteValues.get(makeDayValueKey(year, month, day)) || meetingDefaultText || '8點櫃檯開會';
     notes.push({ kind: 'meeting', lines: Array.from(text) });
@@ -1846,7 +2207,6 @@ function applyDayNote() {
 
   if (nextExtra) {
     extraLeaveValues.set(dayKey, nextExtra);
-    if (nextExtra.type === 'annual') maybeRemindPreviousAnnual(nextExtra.letter);
   } else {
     extraLeaveValues.delete(dayKey);
   }
@@ -2050,7 +2410,6 @@ function renderSchedule(year, month) {
           note = selectedNote;
         }
         setLeaveType(key, type, note);
-        if (type === 'annual') maybeRemindPreviousAnnual(letter);
         render();
       });
       inputs.appendChild(input);
@@ -2128,13 +2487,12 @@ function renderLower(year, month) {
     const leaveInput = document.createElement('input');
     leaveInput.className = 'special-leave-input';
     leaveInput.type = 'text';
-    leaveInput.inputMode = 'numeric';
-    leaveInput.maxLength = 2;
-    leaveInput.value = specialLeaveValues[index];
+    leaveInput.readOnly = true;
+    const annual = getAnnualBalanceSnapshot(index, year, month);
+    leaveInput.value = annual.remaining == null ? '' : String(annual.remaining);
     leaveInput.dataset.index = index;
-    leaveInput.autocomplete = 'off';
-    leaveInput.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 特休天數`);
-    leaveInput.addEventListener('input', handleSpecialLeaveInput);
+    leaveInput.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 目前剩餘特休`);
+    leaveInput.title = '目前剩餘特休＝本月可用－本月已排特休；請到「櫃檯人員資料」設定與查看';
 
     row.append(letter, input, leaveInput);
     namesPanel.appendChild(row);
@@ -2215,18 +2573,21 @@ function renderLower(year, month) {
 
 function renderSummary() {
   summaryGrid.innerHTML = '';
+  const { year, month } = getCurrentYearMonth();
   names.forEach((name, index) => {
+    const letter = String.fromCharCode(65 + index);
+    const summary = getLeaveSummaryForLetter(year, month, letter);
     const item = document.createElement('div');
     item.className = 'summary-item';
     const nameSpan = document.createElement('span');
     nameSpan.className = 'summary-name';
-    nameSpan.textContent = name || `${String.fromCharCode(65 + index)}.`;
+    nameSpan.textContent = name || `${letter}.`;
     const publicLeave = document.createElement('span');
     publicLeave.className = 'summary-count';
-    publicLeave.textContent = `公休：${publicLeaveCount}`;
+    publicLeave.textContent = `公休：${summary.publicDates.length}`;
     const specialLeave = document.createElement('span');
     specialLeave.className = 'summary-count';
-    specialLeave.textContent = `特休：${specialLeaveValues[index]}`;
+    specialLeave.textContent = `特休：${summary.annualDates.length}`;
     item.append(nameSpan, publicLeave, specialLeave);
     summaryGrid.appendChild(item);
   });
@@ -2250,14 +2611,6 @@ function handleNameCommit(event) {
   if (event.target.dataset.composing === 'true') return;
   handleNameInput(event);
   commitNameAtIndex(Number(event.target.dataset.index));
-}
-function handleSpecialLeaveInput(event) {
-  const index = Number(event.target.dataset.index);
-  const cleaned = cleanTwoDigits(event.target.value);
-  specialLeaveValues[index] = cleaned;
-  if (event.target.value !== cleaned) event.target.value = cleaned;
-  persistCurrentMonth();
-  renderSummary();
 }
 function handlePublicLeaveInput() {
   const cleaned = cleanTwoDigits(publicLeaveInput.textContent);
@@ -2382,18 +2735,14 @@ function getStoredActualRange(monthData, year, month, day, shiftIndex) {
   }
 
   const nightKey = `${day}-night-${shiftIndex}`;
-  const legacyNightKey = shiftIndex === 3 ? `${day}-night` : '';
   const defaultGray = shiftIndex === 3 && getDayInfo(year, month, day).weekdayIndex === 6;
   const overrides = monthData?.nightShiftOverrides || {};
   const times = monthData?.nightShiftTimes || {};
   const hasNewOverride = Object.prototype.hasOwnProperty.call(overrides, nightKey);
-  const hasLegacyOverride = Boolean(legacyNightKey) && Object.prototype.hasOwnProperty.call(overrides, legacyNightKey);
-  const gray = hasNewOverride
-    ? Boolean(overrides[nightKey])
-    : (hasLegacyOverride ? Boolean(overrides[legacyNightKey]) : defaultGray);
+  const gray = hasNewOverride ? Boolean(overrides[nightKey]) : defaultGray;
 
   if (gray) {
-    const grayTime = times[nightKey] || (legacyNightKey ? times[legacyNightKey] : '');
+    const grayTime = times[nightKey] || '';
     if (grayTime) return grayTime;
     if (shiftIndex === 3) return normalNightRange || '22~06';
   }
@@ -2496,13 +2845,8 @@ function buildRuleModel() {
     settings: {
       maxConsecutiveDays: maxConsecutiveWorkDays,
       minTurnaroundHours,
-      turnaroundEnabled,
-      normalNightRange,
-      blockedLeaveTypes: [...blockedLeaveTypes],
-      sameDayLeaveEnabled,
-      sameDayLeaveGrouping,
-      sameDayLeaveMax,
-      adjacentLeaveEnabled
+          normalNightRange,
+      blockedLeaveTypes: [...blockedLeaveTypes]
     },
     employees: names.map((name, index) => {
       const letter = String.fromCharCode(65 + index);
@@ -2536,7 +2880,54 @@ function buildRuleModel() {
     }
   };
 }
-function startRuleCheck() {
+function makePublicLeaveRuleIssues() {
+  return buildLeaveCheckItems().map((item) => ({
+    code: 'public-leave-count',
+    title: '公休天數',
+    message: formatLeaveCheckMessage(item)
+  }));
+}
+
+function buildAnnualLeaveRuleIssues() {
+  const { year, month } = getCurrentYearMonth();
+  const issues = [];
+  for (let index = 0; index < names.length; index += 1) {
+    if (!names[index]) continue;
+    const letter = String.fromCharCode(65 + index);
+    const employeeId = employeeIds[index] || '';
+    if (!employeeId) continue;
+    const record = getEmployeeRecord(employeeId) || {};
+    if (!record.hireDate) {
+      issues.push({ code: 'annual-hire-date-missing', title: '特休到職日未設定', message: `${letter} ${names[index]} 尚未設定到職日，無法判斷取得日。` });
+    }
+    const balanceText = String(specialLeaveValues[index] || '');
+    if (!/^\d+$/.test(balanceText)) {
+      issues.push({ code: 'annual-balance-missing', title: '特休餘額未設定', message: `${letter} ${names[index]} 本月可用特休尚未設定。可輸入到職日讓系統自動計算；第一次導入也可手動輸入實際天數作為本月起點。` });
+      continue;
+    }
+    const balance = Number(balanceText);
+    const used = getLeaveSummaryForLetter(year, month, letter).annualDates.length;
+    if (used > balance) {
+      issues.push({ code: 'annual-overuse', title: '特休使用超過餘額', message: `${letter} ${names[index]} 本月可用特休 ${balance} 天，但已排 ${used} 天特休。` });
+    }
+    const basis = getAnnualBalanceBasis(index, year, month);
+    // 第一次建立且只有到職日自動值時，允許人工輸入實際現有餘額作為起點，不視為錯誤。
+    // 已有前月資料後才要求與跨月計算一致。
+    if (basis.source === 'previous' && basis.value != null && basis.value !== balance) {
+      issues.push({ code: 'annual-balance-different', title: '特休結轉數字需確認', message: `${letter} ${names[index]} 依前月餘額、前月已用與取得日設定計算，本月應為 ${basis.value} 天；目前填的是 ${balance} 天。若有折薪歸零等特殊處理，確認後可保留。` });
+    }
+    const grant = getAnnualGrantEventForEmployee(employeeId, year, month);
+    if (grant && grant.days > 0) {
+      const decision = annualGrantDecisionValues.get(makeAnnualGrantDecisionKey(year, month, employeeId));
+      if (!decision) {
+        issues.push({ code: 'annual-grant-choice-missing', title: '特休取得日尚未選擇處理方式', message: `${letter} ${names[index]} 在 ${month}/${grant.day} ${grant.label}取得 ${grant.days} 天特休。請到「櫃檯人員資料」選擇「累加特休」或「舊額歸零，換成本次天數」；依目前月結邏輯於次月套入。` });
+      }
+    }
+  }
+  return issues;
+}
+
+function startRuleCheckByKind(kind = 'all', label = '規則') {
   commitAllVisibleNames();
   persistCurrentMonth();
   closeRowFillPanel();
@@ -2545,15 +2936,25 @@ function startRuleCheck() {
     window.alert('規則模組未載入。');
     return;
   }
-  ruleCheckItems = window.ShiftRosterRules.collectIssues(buildRuleModel());
+  ruleCheckName = label;
+  ruleCheckItems = window.ShiftRosterRules.collectIssuesByKind(buildRuleModel(), kind);
+  if (kind === 'annual-leave') {
+    ruleCheckItems = buildAnnualLeaveRuleIssues();
+  } else if (kind === 'leave-all' || kind === 'all') {
+    ruleCheckItems = [...makePublicLeaveRuleIssues(), ...buildAnnualLeaveRuleIssues(), ...ruleCheckItems];
+  }
   ruleCheckIndex = 0;
   showRuleCheckItem();
+}
+
+function startRuleCheck() {
+  startRuleCheckByKind('all', '完整規則');
 }
 function showRuleCheckItem() {
   const item = ruleCheckItems[ruleCheckIndex];
   if (!item) {
     ruleCheckCompleteMode = true;
-    ruleCheckMessage.textContent = ruleCheckItems.length ? '規則檢查完成。' : '規則檢查完成：目前沒有發現需要確認的項目。';
+    ruleCheckMessage.textContent = ruleCheckItems.length ? `${ruleCheckName}檢查完成。` : `${ruleCheckName}檢查完成：目前沒有發現需要確認的項目。`;
     ruleCheckException.textContent = '完成';
     ruleCheckBack.hidden = true;
     ruleCheckDialog.hidden = false;
@@ -2699,6 +3100,16 @@ shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
 leaveCheckButton.addEventListener('click', startLeaveCheck);
 ruleCheckButton.addEventListener('click', startRuleCheck);
+checkBlockedLeaveButton?.addEventListener('click', () => startRuleCheckByKind('blocked-leave', '禁休日'));
+checkSameGroupLeaveButton?.addEventListener('click', () => startRuleCheckByKind('same-group-leave', '同組撞休'));
+checkAdjacentLeaveButton?.addEventListener('click', () => startRuleCheckByKind('adjacent-leave', '早中排休順序'));
+checkWorkLeaveConflictButton?.addEventListener('click', () => startRuleCheckByKind('work-leave-conflict', '班休衝突'));
+checkAnnualLeaveButton?.addEventListener('click', () => startRuleCheckByKind('annual-leave', '特休'));
+checkLeaveAllButton?.addEventListener('click', () => startRuleCheckByKind('leave-all', '休假規則全部'));
+checkFixedShiftButton?.addEventListener('click', () => startRuleCheckByKind('fixed-shift', '固定班別'));
+checkConsecutiveButton?.addEventListener('click', () => startRuleCheckByKind('consecutive', '連勤'));
+checkTurnaroundButton?.addEventListener('click', () => startRuleCheckByKind('turnaround', '轉班 12 小時'));
+checkScheduleAllButton?.addEventListener('click', () => startRuleCheckByKind('schedule-all', '排班規則全部'));
 batchLeaveApply.addEventListener('click', applyBatchLeave);
 batchLeaveCancel.addEventListener('click', closeBatchLeaveDialog);
 batchLeaveResultClose.addEventListener('click', closeBatchLeaveResult);

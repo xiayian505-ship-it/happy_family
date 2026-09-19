@@ -2,7 +2,10 @@
   'use strict';
 
   const PUBLIC_LEAVE_TYPES = new Set(['public', 'exceptionPublic']);
-  const FORMAL_LEAVE_TYPES = new Set(['leave', 'personal', 'bereavement', 'other']);
+  const FIXED_LEAVE_GROUPS = Object.freeze([
+    { name: '早／中班組', keys: new Set(['early', 'middle']) },
+    { name: '大夜班組', keys: new Set(['night']) }
+  ]);
 
   function pad2(value) {
     return String(value).padStart(2, '0');
@@ -33,32 +36,23 @@
     if (parts.length !== 2) return null;
     const start = parseClockPart(parts[0]);
     const end = parseClockPart(parts[1]);
-    if (!start || !end) return null;
-    if (start.hour === 24) return null;
+    if (!start || !end || start.hour === 24) return null;
     return { start, end, text: `${pad2(start.hour)}:${pad2(start.minute)}~${pad2(end.hour)}:${pad2(end.minute)}` };
   }
 
   function buildInterval(year, month, day, rangeText) {
     const parsed = parseTimeRange(rangeText);
     if (!parsed) return null;
-
     const start = new Date(year, month - 1, day, parsed.start.hour, parsed.start.minute, 0, 0);
-    let endYear = year;
-    let endMonth = month - 1;
     let endDay = day;
     let endHour = parsed.end.hour;
     const endMinute = parsed.end.minute;
-
     if (endHour === 24) {
       endHour = 0;
       endDay += 1;
     }
-
-    let end = new Date(endYear, endMonth, endDay, endHour, endMinute, 0, 0);
-    if (end <= start) {
-      end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
-    }
-
+    let end = new Date(year, month - 1, endDay, endHour, endMinute, 0, 0);
+    if (end <= start) end = new Date(end.getTime() + 24 * 60 * 60 * 1000);
     return { start, end, rangeText };
   }
 
@@ -67,8 +61,7 @@
   }
 
   function formatDateRef(ref) {
-    if (!ref) return '';
-    return `${ref.month}/${ref.day}`;
+    return ref ? `${ref.month}/${ref.day}` : '';
   }
 
   function formatDurationHours(ms) {
@@ -81,21 +74,18 @@
     return PUBLIC_LEAVE_TYPES.has(type || 'public');
   }
 
-  function isFormalLeaveType(type) {
-    return FORMAL_LEAVE_TYPES.has(type || '');
+
+  function isSchedulingException(letter) {
+    return String(letter || '') === 'A';
   }
 
   function getActiveLetters(model) {
-    // 只有有姓名的人員才進入規則檢查。
-    // A～F 都保留為可用代號；F 可作預留欄，未填姓名時完全忽略。
     const active = new Set(
       (model.employees || [])
         .filter((employee) => String(employee.name || '').trim())
         .map((employee) => employee.letter)
     );
-
     const namedLetters = new Set(active);
-
     for (let day = 1; day <= model.days; day += 1) {
       for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
         const letter = model.getShiftLetter(day, shiftIndex);
@@ -105,9 +95,31 @@
         if (leave.letter && namedLetters.has(leave.letter)) active.add(leave.letter);
       }
     }
-
     return [...active].sort();
   }
+
+  function getSchedulingLetters(model) {
+    return getActiveLetters(model).filter((letter) => !isSchedulingException(letter));
+  }
+
+  function getShiftGroups(employee) {
+    return new Set(Array.isArray(employee?.shiftGroups) ? employee.shiftGroups : []);
+  }
+
+  function getFixedShiftGroup(employee) {
+    const groups = [...getShiftGroups(employee)].filter((key) => ['early', 'middle', 'night'].includes(key));
+    return groups.length === 1 ? groups[0] : '';
+  }
+
+  function getShiftGroupKey(model, shiftIndex) {
+    const label = String(model.shifts?.[shiftIndex]?.groupLabel || '');
+    if (label === '早') return 'early';
+    if (label === '中') return 'middle';
+    if (label === '夜') return 'night';
+    return '';
+  }
+
+  // ---------- 休假規則 ----------
 
   function collectBlockedLeaveIssues(model, issues) {
     const blockedTypes = new Set(Array.isArray(model.settings?.blockedLeaveTypes) ? model.settings.blockedLeaveTypes : ['public', 'annual']);
@@ -122,77 +134,26 @@
         issues.push({
           code: 'blocked-leave',
           title: '禁假日排休',
-          message: `${formatDate(model.month, day)} 為禁假日，${leave.letter} 排了${label}。\n若為特殊安排，可選「例外安排」繼續。`
+          message: `${formatDate(model.month, day)} 為禁假日，${leave.letter} 排了${label}。\n請確認是例外安排還是排錯。`
         });
       }
     }
-  }
-
-  function getShiftGroups(employee) {
-    return new Set(Array.isArray(employee?.shiftGroups) ? employee.shiftGroups : []);
-  }
-
-  function collectMissingAssignmentIssues(model, issues, activeLetters) {
-    const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
-    for (const letter of activeLetters) {
-      const employee = employeeMap.get(letter);
-      if (!employee || getShiftGroups(employee).size === 0) {
-        issues.push({
-          code: 'missing-personnel-shift',
-          title: '尚未設定人員班別',
-          message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 尚未設定人員班別。\n同組排休與相鄰排休順序將無法完整檢查。`
-        });
-      }
-    }
-  }
-
-  function getConfiguredLeaveGroups(mode) {
-    const configs = {
-      separate: [
-        { name: '早班組', keys: ['early'] },
-        { name: '中班組', keys: ['middle'] },
-        { name: '夜班組', keys: ['night'] }
-      ],
-      'early-middle': [
-        { name: '早／中班組', keys: ['early', 'middle'] },
-        { name: '夜班組', keys: ['night'] }
-      ],
-      'early-night': [
-        { name: '早／夜班組', keys: ['early', 'night'] },
-        { name: '中班組', keys: ['middle'] }
-      ],
-      'middle-night': [
-        { name: '早班組', keys: ['early'] },
-        { name: '中／夜班組', keys: ['middle', 'night'] }
-      ],
-      all: [{ name: '全體人員', keys: ['early', 'middle', 'night'], all: true }]
-    };
-    return configs[mode] || configs['early-middle'];
   }
 
   function collectSameGroupLeaveIssues(model, issues) {
-    if (model.settings?.sameDayLeaveEnabled === false) return;
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
-    const maxPeople = Math.max(1, Number(model.settings?.sameDayLeaveMax) || 1);
-    const groups = getConfiguredLeaveGroups(model.settings?.sameDayLeaveGrouping);
-
     for (let day = 1; day <= model.days; day += 1) {
-      const leaves = model.getLeaveEntries(day).filter((entry) => entry.letter);
-      for (const group of groups) {
-        const groupKeys = new Set(group.keys);
-        const members = [];
-        for (const leave of leaves) {
-          const employee = employeeMap.get(leave.letter);
-          if (!employee) continue;
-          const employeeGroups = getShiftGroups(employee);
-          if (group.all || [...groupKeys].some((key) => employeeGroups.has(key))) members.push(leave.letter);
-        }
+      const leaves = model.getLeaveEntries(day).filter((entry) => entry.letter && !isSchedulingException(entry.letter));
+      for (const group of FIXED_LEAVE_GROUPS) {
+        const members = leaves
+          .filter((leave) => group.keys.has(getFixedShiftGroup(employeeMap.get(leave.letter))))
+          .map((leave) => leave.letter);
         const unique = [...new Set(members)];
-        if (unique.length > maxPeople) {
+        if (unique.length > 1) {
           issues.push({
             code: 'same-group-leave',
             title: '同組同日排休',
-            message: `${formatDate(model.month, day)} ${group.name}同日排休：${unique.join('、')}。\n目前設定每組同一天最多休 ${maxPeople} 人。`
+            message: `${formatDate(model.month, day)} ${group.name}同日排休：${unique.join('、')}。\n早／中同組、大夜同組，同一天原則上各只能休 1 人。`
           });
         }
       }
@@ -200,72 +161,114 @@
   }
 
   function collectAdjacentLeaveOrderIssues(model, issues) {
-    if (model.settings?.adjacentLeaveEnabled === false) return;
     const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
-
     for (let day = 1; day < model.days; day += 1) {
-      const todayLeaves = model.getLeaveEntries(day).filter((entry) => entry.letter);
-      const nextLeaves = model.getLeaveEntries(day + 1).filter((entry) => entry.letter);
-
-      const todayMiddle = todayLeaves.filter((entry) => getShiftGroups(employeeMap.get(entry.letter)).has('middle'));
-      const nextEarly = nextLeaves.filter((entry) => getShiftGroups(employeeMap.get(entry.letter)).has('early'));
+      const todayMiddle = model.getLeaveEntries(day)
+        .filter((entry) => entry.letter && !isSchedulingException(entry.letter))
+        .filter((entry) => getFixedShiftGroup(employeeMap.get(entry.letter)) === 'middle');
+      const nextEarly = model.getLeaveEntries(day + 1)
+        .filter((entry) => entry.letter && !isSchedulingException(entry.letter))
+        .filter((entry) => getFixedShiftGroup(employeeMap.get(entry.letter)) === 'early');
 
       for (const first of todayMiddle) {
         for (const second of nextEarly) {
           issues.push({
             code: 'adjacent-leave-order',
-            title: '相鄰排休順序',
-            message: `${formatDate(model.month, day)} ${first.letter}（中班）休假，${formatDate(model.month, day + 1)} ${second.letter}（早班）休假。\n目前順序為「中班 → 早班」，原則上應避免。`
+            title: '早班排休接在中班後',
+            message: `${formatDate(model.month, day)} ${first.letter}（中班）休假，${formatDate(model.month, day + 1)} ${second.letter}（早班）休假。\n早班不能休在中班後面。`
           });
         }
       }
     }
   }
 
+  function collectWorkLeaveConflictIssues(model, issues) {
+    for (let day = 1; day <= model.days; day += 1) {
+      const leaveLetters = new Set(model.getLeaveEntries(day).map((entry) => entry.letter).filter(Boolean));
+      if (!leaveLetters.size) continue;
+      const workLetters = new Set();
+      for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
+        const letter = model.getShiftLetter(day, shiftIndex);
+        if (letter) workLetters.add(letter);
+      }
+      for (const letter of leaveLetters) {
+        if (!workLetters.has(letter)) continue;
+        issues.push({
+          code: 'work-leave-conflict',
+          title: '排班／休假衝突',
+          message: `${formatDate(model.month, day)} ${letter} 同一天同時有排班與休假。`
+        });
+      }
+    }
+  }
+
+  // ---------- 人員固定班別 ----------
+
+  function collectPersonnelShiftIssues(model, issues) {
+    const employeeMap = new Map((model.employees || []).map((employee) => [employee.letter, employee]));
+    for (const letter of getSchedulingLetters(model)) {
+      const employee = employeeMap.get(letter);
+      const group = getFixedShiftGroup(employee);
+      if (!group) {
+        issues.push({
+          code: 'missing-personnel-shift',
+          title: '固定班別未設定',
+          message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 必須設定且只能設定 1 個固定班別。`
+        });
+      }
+    }
+
+    for (let day = 1; day <= model.days; day += 1) {
+      for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
+        const letter = model.getShiftLetter(day, shiftIndex);
+        if (!letter || isSchedulingException(letter)) continue;
+        const employee = employeeMap.get(letter);
+        const fixedGroup = getFixedShiftGroup(employee);
+        const actualGroup = getShiftGroupKey(model, shiftIndex);
+        if (!fixedGroup || !actualGroup || fixedGroup === actualGroup) continue;
+        const groupLabel = { early: '早班', middle: '中班', night: '大夜' };
+        issues.push({
+          code: 'wrong-fixed-shift',
+          title: '排到非固定班別',
+          message: `${formatDate(model.month, day)} ${letter} 固定為${groupLabel[fixedGroup] || fixedGroup}，但被排到${groupLabel[actualGroup] || actualGroup}。`
+        });
+      }
+    }
+  }
+
+  // ---------- 時間與跨月資料 ----------
+
   function getActualRange(model, day, shiftIndex) {
     const shift = model.shifts[shiftIndex];
     if (!shift) return null;
-
     if (model.isSpecial(day, shiftIndex)) {
       const specialTime = model.getSpecialTime(day, shiftIndex);
       if (specialTime) return specialTime;
     }
-
     if (model.isNightGray(day, shiftIndex)) {
       const grayTime = model.getNightTime(day, shiftIndex);
       if (grayTime) return grayTime;
       if (shiftIndex === 3) return model.settings?.normalNightRange || '22~06';
     }
-
     return shift.label.replace(/\s+/g, '');
   }
 
   function buildWorkIntervals(model) {
     const byLetter = new Map();
-
     for (let day = 1; day <= model.days; day += 1) {
       for (let shiftIndex = 0; shiftIndex < model.shifts.length; shiftIndex += 1) {
         const letter = model.getShiftLetter(day, shiftIndex);
-        if (!letter) continue;
+        if (!letter || isSchedulingException(letter)) continue;
         const rangeText = getActualRange(model, day, shiftIndex);
         if (!rangeText) continue;
         const interval = buildInterval(model.year, model.month, day, rangeText);
         if (!interval) continue;
-        interval.year = model.year;
-        interval.month = model.month;
-        interval.day = day;
-        interval.shiftIndex = shiftIndex;
-        interval.letter = letter;
-        interval.rangeText = rangeText;
+        Object.assign(interval, { year: model.year, month: model.month, day, shiftIndex, letter, rangeText });
         if (!byLetter.has(letter)) byLetter.set(letter, []);
         byLetter.get(letter).push(interval);
       }
     }
-
-    for (const intervals of byLetter.values()) {
-      intervals.sort((a, b) => a.start - b.start || a.end - b.end);
-    }
-
+    for (const intervals of byLetter.values()) intervals.sort((a, b) => a.start - b.start || a.end - b.end);
     return byLetter;
   }
 
@@ -277,63 +280,49 @@
         if (model.isSpecial(day, shiftIndex)) {
           const time = model.getSpecialTime(day, shiftIndex);
           if (time && !parseTimeRange(time)) {
-            issues.push({
-              code: 'special-time-invalid',
-              title: '粉底時間格式',
-              message: `${formatDate(model.month, day)} ${letter} 的粉底實際時間「${time}」無法判讀。`
-            });
+            issues.push({ code: 'special-time-invalid', title: '粉底時間格式', message: `${formatDate(model.month, day)} ${letter} 的粉底實際時間「${time}」無法判讀。` });
           }
         }
-        if (model.getNightTime(day, shiftIndex)) {
-          const time = model.getNightTime(day, shiftIndex);
-          if (!parseTimeRange(time)) {
-            issues.push({
-              code: 'night-time-invalid',
-              title: '灰底時間格式',
-              message: `${formatDate(model.month, day)} ${letter || ''} 的灰底實際時間「${time}」無法判讀。`
-            });
-          }
+        const grayTime = model.getNightTime(day, shiftIndex);
+        if (grayTime && !parseTimeRange(grayTime)) {
+          issues.push({ code: 'night-time-invalid', title: '灰底時間格式', message: `${formatDate(model.month, day)} ${letter} 的灰底實際時間「${grayTime}」無法判讀。` });
         }
       }
     }
   }
 
-  function collectPreviousMonthDataIssues(model, issues, activeLetters) {
+  function collectPreviousMonthDataIssues(model, issues) {
+    const activeLetters = getSchedulingLetters(model);
     if (!activeLetters.length || typeof model.getPreviousMonthHistory !== 'function') return;
-
     if (model.previousMonthExists === false) {
       const previous = model.previousMonth;
       const label = previous ? `${previous.year} 年 ${previous.month} 月` : '前一個月';
-      const purpose = model.settings?.turnaroundEnabled === false ? '跨月連勤' : '跨月連勤與轉班間隔';
       issues.push({
         code: 'previous-month-missing',
         title: '前月銜接資料不存在',
-        message: `找不到${label}的班表資料。\n本月月初的${purpose}無法完整檢查；第一次使用時可切回前月，只補月底需要的幾天。`
+        message: `找不到${label}的班表資料。\n本月月初的跨月連勤與轉班 12 小時無法完整檢查。`
       });
       return;
     }
-
     for (const letter of activeLetters) {
       const history = model.getPreviousMonthHistory(letter);
       if (!history?.employeeFound || !history.incomplete) continue;
       const employee = (model.employees || []).find((item) => item.letter === letter);
-      const purpose = model.settings?.turnaroundEnabled === false ? '跨月連勤' : '跨月連勤／轉班間隔';
       issues.push({
         code: 'previous-month-incomplete',
         title: '前月月底資料不完整',
-        message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 的前月月底銜接資料有空白。\n${purpose}可能無法完整判斷；請回前月補上最近的排班或休假。`
+        message: `${letter}${employee?.name ? ` ${employee.name}` : ''} 的前月月底銜接資料有空白。\n跨月連勤／轉班可能無法完整判斷。`
       });
     }
   }
 
-  function collectConsecutiveWorkIssues(model, issues) {
-    const activeLetters = getActiveLetters(model);
-    const maxDays = Math.max(1, Number(model.settings?.maxConsecutiveDays) || 6);
+  // ---------- 排班規則：A 全部排除 ----------
 
-    for (const letter of activeLetters) {
+  function collectConsecutiveWorkIssues(model, issues) {
+    const maxDays = Math.max(1, Number(model.settings?.maxConsecutiveDays) || 6);
+    for (const letter of getSchedulingLetters(model)) {
       const history = typeof model.getPreviousMonthHistory === 'function' ? model.getPreviousMonthHistory(letter) : null;
       const carryDays = history && history.employeeFound ? history.carryWorkDays : 0;
-
       let runLength = 0;
       let runStart = null;
       let runEnd = null;
@@ -343,7 +332,7 @@
           issues.push({
             code: 'consecutive-work',
             title: `連續上班超過 ${maxDays} 天`,
-            message: `${letter} 於 ${formatDateRef(runStart)}～${formatDateRef(runEnd)} 連續上班 ${runLength} 天。\n原則上第 ${maxDays + 1} 天應休假。`
+            message: `${letter} 於 ${formatDateRef(runStart)}～${formatDateRef(runEnd)} 連續上班 ${runLength} 天。\n第 ${maxDays + 1} 天應休假。`
           });
         }
         runLength = 0;
@@ -359,12 +348,10 @@
             break;
           }
         }
-
         if (!works) {
           flushRun();
           continue;
         }
-
         if (runLength === 0) {
           if (day === 1 && carryDays > 0) {
             runLength = carryDays + 1;
@@ -383,7 +370,6 @@
   }
 
   function collectRestGapIssues(model, issues) {
-    if (model.settings?.turnaroundEnabled === false) return;
     const byLetter = buildWorkIntervals(model);
     const configuredRestHours = Number(model.settings?.minTurnaroundHours);
     const minRestHours = Number.isFinite(configuredRestHours) ? Math.max(0, configuredRestHours) : 12;
@@ -398,51 +384,94 @@
       });
     }
 
-    const activeLetters = getActiveLetters(model);
-    for (const letter of activeLetters) {
+    for (const letter of getSchedulingLetters(model)) {
       const intervals = byLetter.get(letter) || [];
       const history = typeof model.getPreviousMonthHistory === 'function' ? model.getPreviousMonthHistory(letter) : null;
-
       if (intervals.length && history?.employeeFound && history.restGapKnown !== false && Array.isArray(history.previousWorkIntervals)) {
         const previousIntervals = history.previousWorkIntervals
           .map((entry) => {
             const interval = buildInterval(entry.year, entry.month, entry.day, entry.rangeText);
-            if (!interval) return null;
-            return { ...interval, ...entry };
+            return interval ? { ...interval, ...entry } : null;
           })
           .filter(Boolean)
           .sort((a, b) => a.end - b.end);
         const previousLast = previousIntervals.at(-1);
         if (previousLast) pushGapIssue(letter, previousLast, intervals[0]);
       }
-
       for (let index = 0; index < intervals.length - 1; index += 1) {
         pushGapIssue(letter, intervals[index], intervals[index + 1]);
       }
     }
   }
 
-  function collectIssues(model) {
+  function collectIssuesByKind(model, kind) {
     const issues = [];
-    const activeLetters = getActiveLetters(model);
-
-    collectBlockedLeaveIssues(model, issues);
-    collectMissingAssignmentIssues(model, issues, activeLetters);
-    collectSameGroupLeaveIssues(model, issues);
-    collectAdjacentLeaveOrderIssues(model, issues);
-    collectSpecialTimeIssues(model, issues);
-    collectPreviousMonthDataIssues(model, issues, activeLetters);
-    collectConsecutiveWorkIssues(model, issues);
-    collectRestGapIssues(model, issues);
-
+    switch (kind) {
+      case 'blocked-leave':
+        collectBlockedLeaveIssues(model, issues);
+        break;
+      case 'same-group-leave':
+        collectPersonnelShiftIssues(model, issues);
+        collectSameGroupLeaveIssues(model, issues);
+        break;
+      case 'adjacent-leave':
+        collectPersonnelShiftIssues(model, issues);
+        collectAdjacentLeaveOrderIssues(model, issues);
+        break;
+      case 'work-leave-conflict':
+        collectWorkLeaveConflictIssues(model, issues);
+        break;
+      case 'fixed-shift':
+        collectPersonnelShiftIssues(model, issues);
+        break;
+      case 'consecutive':
+        collectPreviousMonthDataIssues(model, issues);
+        collectConsecutiveWorkIssues(model, issues);
+        break;
+      case 'turnaround':
+        collectSpecialTimeIssues(model, issues);
+        collectPreviousMonthDataIssues(model, issues);
+        collectRestGapIssues(model, issues);
+        break;
+      case 'data':
+        collectPersonnelShiftIssues(model, issues);
+        collectSpecialTimeIssues(model, issues);
+        collectPreviousMonthDataIssues(model, issues);
+        break;
+      case 'leave-all':
+        collectBlockedLeaveIssues(model, issues);
+        collectPersonnelShiftIssues(model, issues);
+        collectSameGroupLeaveIssues(model, issues);
+        collectAdjacentLeaveOrderIssues(model, issues);
+        collectWorkLeaveConflictIssues(model, issues);
+        break;
+      case 'schedule-all':
+        collectPersonnelShiftIssues(model, issues);
+        collectSpecialTimeIssues(model, issues);
+        collectPreviousMonthDataIssues(model, issues);
+        collectConsecutiveWorkIssues(model, issues);
+        collectRestGapIssues(model, issues);
+        break;
+      default:
+        collectBlockedLeaveIssues(model, issues);
+        collectPersonnelShiftIssues(model, issues);
+        collectSameGroupLeaveIssues(model, issues);
+        collectAdjacentLeaveOrderIssues(model, issues);
+        collectWorkLeaveConflictIssues(model, issues);
+        collectSpecialTimeIssues(model, issues);
+        collectPreviousMonthDataIssues(model, issues);
+        collectConsecutiveWorkIssues(model, issues);
+        collectRestGapIssues(model, issues);
+        break;
+    }
     return issues;
   }
+
 
   window.ShiftRosterRules = Object.freeze({
     parseTimeRange,
     isPublicLeaveType,
-    isFormalLeaveType,
     getActiveLetters,
-    collectIssues
+    collectIssuesByKind
   });
 })();
