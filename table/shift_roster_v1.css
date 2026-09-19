@@ -3571,3 +3571,50 @@ textarea,
     grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
+
+
+/* ===== 年資資訊：預設隱藏，按鈕展開 ===== */
+.seniority-info-control {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.seniority-info-button {
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.seniority-info-list[hidden] {
+  display: none !important;
+}
+
+.seniority-info-list {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px dashed #aaa;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #444;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.seniority-info-line,
+.seniority-info-empty {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.seniority-info-empty {
+  color: #777;
+}

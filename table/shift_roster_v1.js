@@ -100,9 +100,13 @@ const batchLeaveResultClose = document.getElementById('batchLeaveResultClose');
 const shiftConfigPanel = document.getElementById('shiftConfigPanel');
 const shiftConfigGrid = document.getElementById('shiftConfigGrid');
 const shiftConfigClose = document.getElementById('shiftConfigClose');
+const shiftSeniorityButton = document.getElementById('shiftSeniorityButton');
+const shiftSeniorityInfo = document.getElementById('shiftSeniorityInfo');
 const supervisorConfigPanel = document.getElementById('supervisorConfigPanel');
 const supervisorConfigBody = document.getElementById('supervisorConfigBody');
 const supervisorConfigClose = document.getElementById('supervisorConfigClose');
+const supervisorSeniorityButton = document.getElementById('supervisorSeniorityButton');
+const supervisorSeniorityInfo = document.getElementById('supervisorSeniorityInfo');
 
 const conflictDialog = document.getElementById('conflictDialog');
 const conflictDialogMessage = document.getElementById('conflictDialogMessage');
@@ -733,6 +737,155 @@ function getAnnualGrantDaysForYears(years) {
   if (years >= 5 && years < 10) return annualLeaveRules.years5to9;
   if (years >= 10) return Math.min(annualLeaveRules.maxDays, annualLeaveRules.year10Base + (years - 10) * annualLeaveRules.after10Increment);
   return 0;
+}
+
+function parseHireDateValue(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime()) || date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) return null;
+  return { year, month, day, date };
+}
+
+function getCurrentCalendarDate() {
+  const now = new Date();
+  return {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    day: now.getDate(),
+    date: new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  };
+}
+
+function getAnnualLeaveEntitlementForDate(record, referenceDate, supervisor = false) {
+  const parsed = parseHireDateValue(record?.hireDate);
+  if (!parsed || !(referenceDate instanceof Date) || Number.isNaN(referenceDate.getTime()) || referenceDate < parsed.date) return 0;
+
+  let days = 0;
+  const sixMonth = addMonthsClamped(parsed.date, 6);
+  if (referenceDate >= sixMonth) days = annualLeaveRules.sixMonths;
+
+  for (let years = 1; years <= 80; years += 1) {
+    const anniversary = addYearsClamped(parsed.date, years);
+    if (anniversary > referenceDate) break;
+    days = getAnnualGrantDaysForYears(years);
+  }
+
+  return supervisor ? Math.ceil(Number(days || 0) / 2) : Number(days || 0);
+}
+
+function getCalendarSeniority(startDate, endDate) {
+  if (!(startDate instanceof Date) || !(endDate instanceof Date) || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+    return null;
+  }
+
+  let years = endDate.getFullYear() - startDate.getFullYear();
+  let yearAnchor = addYearsClamped(startDate, years);
+  if (yearAnchor > endDate) {
+    years -= 1;
+    yearAnchor = addYearsClamped(startDate, years);
+  }
+
+  let months = 0;
+  while (months < 11 && addMonthsClamped(yearAnchor, months + 1) <= endDate) {
+    months += 1;
+  }
+  const monthAnchor = addMonthsClamped(yearAnchor, months);
+  const dayMs = 24 * 60 * 60 * 1000;
+  const anchorUtc = Date.UTC(monthAnchor.getFullYear(), monthAnchor.getMonth(), monthAnchor.getDate());
+  const endUtc = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  const days = Math.floor((endUtc - anchorUtc) / dayMs);
+
+  return { years, months, days };
+}
+
+function getSeniorityInfo(record, supervisor = false) {
+  const parsed = parseHireDateValue(record?.hireDate);
+  if (!parsed) return null;
+  const today = getCurrentCalendarDate();
+  if (parsed.date > today.date) return null;
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const hireUtc = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+  const todayUtc = Date.UTC(today.year, today.month - 1, today.day);
+  const days = Math.floor((todayUtc - hireUtc) / dayMs);
+  const calendarSeniority = getCalendarSeniority(parsed.date, today.date);
+  const annualDays = getAnnualLeaveEntitlementForDate(record, today.date, supervisor);
+  const gregorian = `${parsed.year}.${String(parsed.month).padStart(2, '0')}.${String(parsed.day).padStart(2, '0')}`;
+  const roc = `${parsed.year - 1911}.${String(parsed.month).padStart(2, '0')}.${String(parsed.day).padStart(2, '0')}`;
+
+  return {
+    days,
+    annualDays,
+    calendarSeniority,
+    gregorian,
+    roc
+  };
+}
+
+function formatSeniorityLine(name, record, supervisor = false) {
+  const displayName = String(name || '').trim();
+  const info = getSeniorityInfo(record, supervisor);
+  if (!displayName || !info || !info.calendarSeniority) return '';
+  const seniority = info.calendarSeniority;
+  return `${displayName} ${info.days} 天｜${info.annualDays} 天｜${seniority.years} 年 ${seniority.months} 個月 ${seniority.days} 天｜${info.gregorian}｜${info.roc}`;
+}
+
+function renderShiftSeniorityInfo() {
+  if (!shiftSeniorityInfo || shiftSeniorityInfo.hidden) return;
+  shiftSeniorityInfo.innerHTML = '';
+  let count = 0;
+  for (let index = 0; index < names.length; index += 1) {
+    const employeeId = employeeIds[index] || '';
+    const line = formatSeniorityLine(names[index], employeeId ? getEmployeeRecord(employeeId) : null, false);
+    if (!line) continue;
+    const item = document.createElement('div');
+    item.className = 'seniority-info-line';
+    item.textContent = line;
+    shiftSeniorityInfo.appendChild(item);
+    count += 1;
+  }
+  if (!count) {
+    const empty = document.createElement('div');
+    empty.className = 'seniority-info-empty';
+    empty.textContent = '尚無可顯示的年資資訊。';
+    shiftSeniorityInfo.appendChild(empty);
+  }
+}
+
+function renderSupervisorSeniorityInfo() {
+  if (!supervisorSeniorityInfo || supervisorSeniorityInfo.hidden) return;
+  supervisorSeniorityInfo.innerHTML = '';
+  const record = getSupervisorRecord() || {};
+  const line = formatSeniorityLine(record.name, record, true);
+  const item = document.createElement('div');
+  item.className = line ? 'seniority-info-line' : 'seniority-info-empty';
+  item.textContent = line || '尚無可顯示的年資資訊。';
+  supervisorSeniorityInfo.appendChild(item);
+}
+
+function toggleShiftSeniorityInfo() {
+  if (!shiftSeniorityButton || !shiftSeniorityInfo) return;
+  const expanded = shiftSeniorityInfo.hidden;
+  shiftSeniorityInfo.hidden = !expanded;
+  shiftSeniorityButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  if (expanded) renderShiftSeniorityInfo();
+}
+
+function toggleSupervisorSeniorityInfo() {
+  if (!supervisorSeniorityButton || !supervisorSeniorityInfo) return;
+  const expanded = supervisorSeniorityInfo.hidden;
+  supervisorSeniorityInfo.hidden = !expanded;
+  supervisorSeniorityButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  if (expanded) renderSupervisorSeniorityInfo();
+}
+
+function collapseSeniorityInfo(button, info) {
+  if (info) info.hidden = true;
+  if (button) button.setAttribute('aria-expanded', 'false');
 }
 
 function getAnnualGrantEventForRecord(record, year, month) {
@@ -1780,6 +1933,7 @@ function openShiftConfigPanel() {
 function closeShiftConfigPanel() {
   shiftConfigPanel.hidden = true;
   shiftConfigButton.setAttribute('aria-expanded', 'false');
+  collapseSeniorityInfo(shiftSeniorityButton, shiftSeniorityInfo);
 }
 function toggleShiftConfigPanel() {
   if (shiftConfigPanel.hidden) openShiftConfigPanel();
@@ -1798,6 +1952,7 @@ function openSupervisorConfigPanel() {
 function closeSupervisorConfigPanel() {
   supervisorConfigPanel.hidden = true;
   supervisorConfigButton.setAttribute('aria-expanded', 'false');
+  collapseSeniorityInfo(supervisorSeniorityButton, supervisorSeniorityInfo);
 }
 function toggleSupervisorConfigPanel() {
   if (supervisorConfigPanel.hidden) openSupervisorConfigPanel();
@@ -2097,6 +2252,7 @@ function renderShiftConfigPanel() {
     row.append(person, options, meta);
     shiftConfigGrid.appendChild(row);
   }
+  renderShiftSeniorityInfo();
 }
 
 function renderSupervisorConfigPanel(year, month) {
@@ -2237,6 +2393,7 @@ function renderSupervisorConfigPanel(year, month) {
   card.appendChild(leaveBox);
 
   supervisorConfigBody.appendChild(card);
+  renderSupervisorSeniorityInfo();
 }
 
 
@@ -3673,6 +3830,8 @@ shiftConfigButton.addEventListener('click', toggleShiftConfigPanel);
 supervisorConfigButton.addEventListener('click', toggleSupervisorConfigPanel);
 shiftConfigClose.addEventListener('click', closeShiftConfigPanel);
 supervisorConfigClose.addEventListener('click', closeSupervisorConfigPanel);
+shiftSeniorityButton?.addEventListener('click', toggleShiftSeniorityInfo);
+supervisorSeniorityButton?.addEventListener('click', toggleSupervisorSeniorityInfo);
 leaveCheckButton.addEventListener('click', startLeaveCheck);
 ruleCheckButton.addEventListener('click', startRuleCheck);
 checkBlockedLeaveButton?.addEventListener('click', () => startRuleCheckByKind('blocked-leave', '禁休日'));
