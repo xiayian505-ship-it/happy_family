@@ -68,9 +68,23 @@ h2 { margin-bottom: 8px; }
 
 
 .export-button {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  min-height: 42px;
   margin-top: 14px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+.export-button.is-disabled {
+  opacity: .45;
+  cursor: default;
+  pointer-events: none;
 }
 
 .result-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

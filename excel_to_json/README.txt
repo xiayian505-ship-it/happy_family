@@ -48,3 +48,7 @@
 
 依賴
 - ExcelJS 4.4.0 CDN（和目前班表 Excel 匯出相同）。
+
+修正紀錄
+- 匯出 JSON 改為解析成功後直接產生 Blob URL 並綁在實際下載連結上。
+- 不再用 JavaScript 建立隱藏連結再程式觸發 click，避免手機瀏覽器／預覽 WebView 阻擋下載。

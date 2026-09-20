@@ -61,6 +61,7 @@
 
   let currentPayload = null;
   let currentMonthId = '';
+  let currentDownloadUrl = '';
 
   excelInput.addEventListener('change', async () => {
     const file = excelInput.files?.[0];
@@ -88,18 +89,10 @@
     }
   });
 
-  downloadJsonButton.addEventListener('click', () => {
-    if (!currentPayload || !currentMonthId) return;
-    const text = `${JSON.stringify(currentPayload, null, 2)}\n`;
-    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `EliteHotel_${currentMonthId}_from_excel_test.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadJsonButton.addEventListener('click', (event) => {
+    if (!currentPayload || !currentMonthId || !currentDownloadUrl) {
+      event.preventDefault();
+    }
   });
 
   function parseWorkbook(workbook) {
@@ -485,8 +478,9 @@
     shiftCount.textContent = String(parsed.stats.shift);
     vacationCount.textContent = String(parsed.stats.vacation);
     warningCount.textContent = String(parsed.warnings.length);
-    jsonPreview.textContent = JSON.stringify(parsed.payload, null, 2);
-    downloadJsonButton.disabled = false;
+    const jsonText = `${JSON.stringify(parsed.payload, null, 2)}\n`;
+    jsonPreview.textContent = jsonText;
+    prepareDownload(jsonText, parsed.monthId);
 
     warningList.replaceChildren();
     warningBox.hidden = parsed.warnings.length === 0;
@@ -501,9 +495,31 @@
     currentPayload = null;
     currentMonthId = '';
     resultCard.hidden = true;
-    downloadJsonButton.disabled = true;
+    clearDownload();
     jsonPreview.textContent = '';
     warningList.replaceChildren();
+  }
+
+
+  function prepareDownload(text, monthId) {
+    clearDownload();
+    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    currentDownloadUrl = URL.createObjectURL(blob);
+    downloadJsonButton.href = currentDownloadUrl;
+    downloadJsonButton.download = `EliteHotel_${monthId}_from_excel_test.json`;
+    downloadJsonButton.classList.remove('is-disabled');
+    downloadJsonButton.setAttribute('aria-disabled', 'false');
+  }
+
+  function clearDownload() {
+    if (currentDownloadUrl) {
+      URL.revokeObjectURL(currentDownloadUrl);
+      currentDownloadUrl = '';
+    }
+    downloadJsonButton.removeAttribute('download');
+    downloadJsonButton.href = '#';
+    downloadJsonButton.classList.add('is-disabled');
+    downloadJsonButton.setAttribute('aria-disabled', 'true');
   }
 
   function cellText(cell) {
