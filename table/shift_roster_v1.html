@@ -30,6 +30,8 @@
 <details class="menu-branch">
 <summary>一般管理</summary>
 <div class="menu-branch-body">
+<button id="importExcelButton" type="button">匯入班表：Excel</button>
+<input accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden="" id="importExcelInput" type="file"/>
 <details class="menu-branch nested-menu">
 <summary>輸出班表</summary>
 <div class="menu-actions">
@@ -570,6 +572,7 @@
 <script src="shift_roster_v1.js"></script>
 <script src="shift_roster_backup.js"></script>
 <script src="shift_roster_export.js"></script>
+<script src="shift_roster_excel_import.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="shift_roster_excel_export.js"></script>
 </body>
