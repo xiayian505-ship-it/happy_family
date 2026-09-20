@@ -4155,6 +4155,7 @@ window.ShiftRosterApp = Object.freeze({
     render();
     renderRuleSettingsPage();
   },
+  getSupervisorLeaveDays: () => [...supervisorLeaveDays].sort((a, b) => a - b),
   getCurrentYearMonth
 });
 

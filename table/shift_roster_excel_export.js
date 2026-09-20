@@ -62,6 +62,12 @@
       const monthData = payload?.months?.[monthId];
       if (!monthData) throw new Error(`找不到 ${monthId} 的班表資料。`);
 
+      // 主管當月休假以目前畫面正在使用的狀態為準，避免匯出時讀到舊的月份快照。
+      const liveSupervisorLeaveDays = window.ShiftRosterApp?.getSupervisorLeaveDays?.();
+      if (Array.isArray(liveSupervisorLeaveDays)) {
+        monthData.supervisorLeaveDays = [...liveSupervisorLeaveDays];
+      }
+
       const workbook = new ExcelJS.Workbook();
       workbook.creator = 'Stillness by Slowly';
       workbook.created = new Date();
@@ -223,7 +229,7 @@
           diagonal:{
             up:true,
             down:false,
-            style:supervisorLeave ? 'medium' : 'thin',
+            style:'thin',
             color:{argb:supervisorLeave ? RED : BLACK}
           }
         };
@@ -531,7 +537,8 @@
   }
 
   function isSupervisorLeave(data,day) {
-    return Array.isArray(data.supervisorLeaveDays) && data.supervisorLeaveDays.includes(Number(day));
+    return Array.isArray(data.supervisorLeaveDays)
+      && data.supervisorLeaveDays.some((value) => Number(value) === Number(day));
   }
 
   function isBlocked(data,blockedWeekdays,year,month,day) {
