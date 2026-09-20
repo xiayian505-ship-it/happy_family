@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班表 Excel → JSON 測試轉換器</title>
+  <link rel="stylesheet" href="excel_to_roster_json.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="page-head">
+      <p class="eyebrow">EliteHotel roster utility</p>
+      <h1>班表 Excel → JSON</h1>
+      <p class="lead">只讀取「班表系統自己匯出的 Excel」。這支是獨立測試工具，不會碰目前班表的 localStorage。</p>
+    </header>
+
+    <section class="card upload-card">
+      <label class="file-drop" for="excelInput">
+        <span class="file-drop-title">選擇 Excel</span>
+        <span class="file-drop-sub">.xlsx｜使用目前班表匯出的格式</span>
+        <input id="excelInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      </label>
+      <p id="fileName" class="file-name">尚未選擇檔案</p>
+    </section>
+
+    <section id="resultCard" class="card result-card" hidden>
+      <div class="result-head">
+        <div>
+          <p class="eyebrow">解析結果</p>
+          <h2 id="monthLabel">—</h2>
+        </div>
+        <button id="downloadJsonButton" type="button" disabled>下載 JSON</button>
+      </div>
+
+      <div class="stats" aria-label="解析統計">
+        <div><strong id="peopleCount">0</strong><span>人員</span></div>
+        <div><strong id="shiftCount">0</strong><span>排班格</span></div>
+        <div><strong id="vacationCount">0</strong><span>排休格</span></div>
+        <div><strong id="warningCount">0</strong><span>提醒</span></div>
+      </div>
+
+      <div id="warningBox" class="warning-box" hidden>
+        <h3>這些資料 Excel 無法唯一反推</h3>
+        <ul id="warningList"></ul>
+      </div>
+
+      <details class="preview-box">
+        <summary>查看 JSON 預覽</summary>
+        <pre id="jsonPreview"></pre>
+      </details>
+    </section>
+
+    <section class="card note-card">
+      <h2>這版的用途</h2>
+      <p>目前輸出的是「可餵給現行 v3 JSON 匯入器做測試」的完整備份格式。因為現行 JSON 匯入會整包覆蓋，所以這支測試 JSON 會補齊必要的 settings。</p>
+      <p><strong>正式接回班表時不應這樣做。</strong>正式 Excel 匯入應只取 monthData，呼叫 saveMonth() 更新該月；settings、其他月份、年度特殊日期與既有人員資料都保留。</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="excel_to_roster_json.js"></script>
+</body>
+</html>
