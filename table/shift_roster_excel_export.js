@@ -217,7 +217,16 @@
       body.alignment = {horizontal:'center',vertical:'middle',wrapText:true};
       body.border = baseBorder;
       if (isBlocked(data,blockedWeekdays,year,month,day)) {
-        body.border = {...baseBorder, diagonal:{up:true,down:false,style:'thin',color:{argb:RED}}};
+        const supervisorLeave = isSupervisorLeave(data,day);
+        body.border = {
+          ...baseBorder,
+          diagonal:{
+            up:true,
+            down:false,
+            style:supervisorLeave ? 'medium' : 'thin',
+            color:{argb:supervisorLeave ? RED : BLACK}
+          }
+        };
       }
       // 請假紅字：若兩格其中一格是請假，Excel 單一 cell 無法分行套兩種字色，因此整格改紅。
       const t0 = data.leaveTypeValues?.[`${day}-vacation-0`] || 'public';
@@ -521,8 +530,12 @@
     return '';
   }
 
+  function isSupervisorLeave(data,day) {
+    return Array.isArray(data.supervisorLeaveDays) && data.supervisorLeaveDays.includes(Number(day));
+  }
+
   function isBlocked(data,blockedWeekdays,year,month,day) {
-    if (Array.isArray(data.supervisorLeaveDays) && data.supervisorLeaveDays.includes(Number(day))) return true;
+    if (isSupervisorLeave(data,day)) return true;
     const override = data.blockedVacationOverrides?.[String(day)];
     if (typeof override === 'boolean') return override;
     const specialType = getAnnualSpecialDayType(year,month,day);
