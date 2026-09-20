@@ -3174,6 +3174,9 @@ function renderLower(year, month) {
     input.value = name;
     input.dataset.index = index;
     input.autocomplete = 'off';
+    input.readOnly = true;
+    input.tabIndex = -1;
+    input.style.pointerEvents = 'none';
     input.setAttribute('aria-label', `${String.fromCharCode(65 + index)} 姓名`);
     input.addEventListener('compositionstart', () => { input.dataset.composing = 'true'; });
     input.addEventListener('compositionend', (event) => {
