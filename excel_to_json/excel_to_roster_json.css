@@ -66,6 +66,13 @@ h2 { margin-bottom: 8px; }
 .file-drop input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
 .file-name { margin: 12px 0 0; color: var(--muted); font-size: 13px; text-align: center; overflow-wrap: anywhere; }
 
+
+.export-button {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+}
+
 .result-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .result-head h2 { margin: 0; font-size: 24px; }
 
