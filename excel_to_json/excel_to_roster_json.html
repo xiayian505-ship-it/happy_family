@@ -1,915 +1,173 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>班表 Excel → JSON 測試轉換器</title>
-  <style>
-:root {
-  --bg: #f5f4f1;
-  --surface: #ffffff;
-  --ink: #262a2c;
-  --muted: #73797c;
-  --line: #deddd8;
-  --accent: #526b72;
-  --warn-bg: #fff8e8;
-  --warn-line: #ead8a7;
-  --radius: 18px;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-}
-
-button, input { font: inherit; }
-
-.app-shell {
-  width: min(760px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 48px 0 72px;
-}
-
-.page-head { margin-bottom: 22px; }
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-h1, h2, h3, p { margin-top: 0; }
-h1 { margin-bottom: 10px; font-size: clamp(30px, 7vw, 46px); letter-spacing: -.04em; }
-h2 { margin-bottom: 8px; }
-.lead { margin-bottom: 0; color: var(--muted); line-height: 1.75; }
-
-.card {
-  margin-top: 16px;
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.file-drop {
-  display: grid;
-  gap: 6px;
-  padding: 26px 20px;
-  border: 1px dashed #aeb4b6;
-  border-radius: 14px;
-  cursor: pointer;
-  text-align: center;
-}
-.file-drop:hover { border-color: var(--accent); }
-.file-drop-title { font-size: 20px; font-weight: 700; }
-.file-drop-sub { color: var(--muted); font-size: 13px; }
-.file-drop input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; }
-.file-name { margin: 12px 0 0; color: var(--muted); font-size: 13px; text-align: center; overflow-wrap: anywhere; }
-
-
-.export-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.export-button,
-.secondary-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 42px;
-  margin: 0;
-  padding: 0 16px;
-  border-radius: 999px;
-}
-
-.secondary-button {
-  background: #eef1f1;
-  color: var(--accent);
-  border: 1px solid var(--line);
-}
-
-.export-status {
-  min-height: 1.4em;
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-}
-
-.result-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.result-head h2 { margin: 0; font-size: 24px; }
-
-button {
-  min-height: 42px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-}
-button:disabled { opacity: .45; cursor: default; }
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 18px;
-}
-.stats div {
-  display: grid;
-  gap: 3px;
-  padding: 12px;
-  background: #f7f7f5;
-  border-radius: 12px;
-  text-align: center;
-}
-.stats strong { font-size: 22px; }
-.stats span { color: var(--muted); font-size: 12px; }
-
-.warning-box {
-  margin-top: 16px;
-  padding: 15px 16px;
-  background: var(--warn-bg);
-  border: 1px solid var(--warn-line);
-  border-radius: 12px;
-}
-.warning-box h3 { margin-bottom: 8px; font-size: 15px; }
-.warning-box ul { margin: 0; padding-left: 1.25em; color: #6f5a26; line-height: 1.65; }
-
-.preview-box { margin-top: 16px; }
-.preview-box summary { cursor: pointer; color: var(--accent); }
-pre {
-  max-height: 420px;
-  overflow: auto;
-  margin: 12px 0 0;
-  padding: 14px;
-  background: #1f2528;
-  color: #e9efef;
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.note-card p { margin-bottom: 10px; color: var(--muted); line-height: 1.75; }
-.note-card p:last-child { margin-bottom: 0; }
-.note-card strong { color: var(--ink); }
-
-@media (max-width: 620px) {
-  .app-shell { width: min(100% - 20px, 760px); padding-top: 28px; }
-  .result-head { align-items: flex-start; flex-direction: column; }
-  .result-head button { width: 100%; }
-  .export-actions { grid-template-columns: 1fr; }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-
-.export-button.is-disabled { opacity: .45; pointer-events: none; cursor: default; }
-
-.build-mark { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>班表 Excel → JSON 測試轉換器</title>
+<style>
+:root{--bg:#f5f4f1;--surface:#fff;--ink:#262a2c;--muted:#72797c;--line:#deddd8;--accent:#526b72;--ok:#486b55;--bad:#9b3f3f;--warn:#7d6425;--radius:18px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif}.app{width:min(780px,calc(100% - 28px));margin:auto;padding:42px 0 72px}h1{font-size:clamp(28px,6vw,44px);letter-spacing:-.04em;margin:0 0 10px}.lead{margin:0;color:var(--muted);line-height:1.7}.build{display:inline-block;margin-top:10px;color:var(--muted);font-size:12px}.card{margin-top:18px;padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}.file-label{display:block;padding:26px 20px;border:1px dashed #aeb4b6;border-radius:14px;text-align:center;cursor:pointer}.file-label strong{display:block;font-size:19px;margin-bottom:6px}.file-label span{font-size:13px;color:var(--muted)}#excelInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.filename{margin:12px 0 0;text-align:center;color:var(--muted);font-size:13px;overflow-wrap:anywhere}.progress{margin-top:16px;padding:13px 14px;border-radius:12px;background:#f3f5f5;font-size:14px;line-height:1.5}.progress[data-state="ok"]{background:#eef5f0;color:var(--ok)}.progress[data-state="error"]{background:#fff0f0;color:var(--bad)}.steps{display:grid;gap:7px;margin:12px 0 0;padding:0;list-style:none;font-size:13px;color:var(--muted)}.steps li::before{content:'○';display:inline-block;width:1.5em}.steps li.done{color:var(--ok)}.steps li.done::before{content:'✓'}.steps li.active{color:var(--ink);font-weight:600}.steps li.active::before{content:'→'}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}button{min-height:44px;border:0;border-radius:999px;padding:0 18px;font:inherit;cursor:pointer}.primary{background:var(--accent);color:#fff}.secondary{background:#eef1f1;color:var(--accent);border:1px solid var(--line)}button:disabled{opacity:.42;cursor:default}.result[hidden]{display:none}.result-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.result-head h2{margin:0;font-size:24px}.muted{color:var(--muted)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.stat{padding:12px;background:#f7f7f5;border-radius:12px;text-align:center}.stat strong{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}.warning{margin-top:16px;padding:14px 16px;background:#fff8e8;border:1px solid #ead8a7;border-radius:12px;color:var(--warn);line-height:1.65}.warning ul{margin:8px 0 0;padding-left:1.25em}.warning[hidden]{display:none}details{margin-top:16px}summary{cursor:pointer;color:var(--accent)}pre{max-height:420px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0 0;padding:14px;border-radius:12px;background:#1f2528;color:#edf2f2;font-size:12px;line-height:1.5}.note{font-size:13px;color:var(--muted);line-height:1.7}.error-detail{margin-top:10px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:var(--bad)}
+@media(max-width:620px){.app{width:min(100% - 18px,780px);padding-top:28px}.actions{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-  <main class="app-shell">
-    <header class="page-head">
-      <p class="eyebrow">EliteHotel roster utility</p>
-      <h1>班表 Excel → JSON</h1>
-      <p class="lead">只讀取「班表系統自己匯出的 Excel」。這支是獨立測試工具，不會碰目前班表的 localStorage。</p>
-      <p class="build-mark">fixed4 · inline build</p>
-    </header>
+<main class="app">
+  <header>
+    <h1>班表 Excel → JSON</h1>
+    <p class="lead">只支援這套班表自己匯出的 .xlsx。這是獨立測試工具，不會碰班表本體，也不會把 Excel 直接寫回設定。</p>
+    <span class="build">native-xlsx v2 · 無 ExcelJS / 無外部 JS</span>
+  </header>
 
-    <section class="card upload-card">
-      <label class="file-drop" for="excelInput">
-        <span class="file-drop-title">選擇 Excel</span>
-        <span class="file-drop-sub">.xlsx｜使用目前班表匯出的格式</span>
-        <input id="excelInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-      </label>
-      <p id="fileName" class="file-name">尚未選擇檔案</p>
-      <div class="export-actions">
-        <a id="downloadJsonLink" class="export-button is-disabled" aria-disabled="true">匯出 JSON</a>
-        <button id="copyJsonButton" class="secondary-button" type="button" disabled>複製 JSON</button>
-      </div>
-      <p id="exportStatus" class="export-status" aria-live="polite"></p>
-    </section>
+  <section class="card">
+    <label class="file-label" for="excelInput"><strong>選擇班表 Excel</strong><span>只讀取固定位置的月份、人員、排班、休假與可還原備註</span></label>
+    <input id="excelInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+    <p id="fileName" class="filename">尚未選擇檔案</p>
+    <div id="progress" class="progress">等待 Excel。</div>
+    <ul id="steps" class="steps">
+      <li data-step="read">讀取 XLSX</li><li data-step="layout">確認月份與版型</li><li data-step="roster">讀取人員與班表</li><li data-step="json">建立並自檢 JSON</li>
+    </ul>
+    <div id="errorDetail" class="error-detail"></div>
+    <div class="actions">
+      <button id="downloadButton" class="primary" type="button" disabled>匯出 JSON</button>
+      <button id="copyButton" class="secondary" type="button" disabled>複製 JSON</button>
+    </div>
+  </section>
 
-    <section id="resultCard" class="card result-card" hidden>
-      <div class="result-head">
-        <div>
-          <p class="eyebrow">解析結果</p>
-          <h2 id="monthLabel">—</h2>
-        </div>
-      </div>
+  <section id="resultCard" class="card result" hidden>
+    <div class="result-head"><div><div class="muted" style="font-size:12px;margin-bottom:4px">解析完成</div><h2 id="monthLabel"></h2></div></div>
+    <div class="stats"><div class="stat"><strong id="peopleCount">0</strong><span>人員</span></div><div class="stat"><strong id="shiftCount">0</strong><span>排班格</span></div><div class="stat"><strong id="vacationCount">0</strong><span>休假格</span></div><div class="stat"><strong id="warningCount">0</strong><span>提醒</span></div></div>
+    <div id="warningBox" class="warning" hidden><strong>這些資料無法從 Excel 唯一反推：</strong><ul id="warningList"></ul></div>
+    <details><summary>查看輸出的 JSON</summary><pre id="jsonPreview"></pre></details>
+  </section>
 
-      <div class="stats" aria-label="解析統計">
-        <div><strong id="peopleCount">0</strong><span>人員</span></div>
-        <div><strong id="shiftCount">0</strong><span>排班格</span></div>
-        <div><strong id="vacationCount">0</strong><span>排休格</span></div>
-        <div><strong id="warningCount">0</strong><span>提醒</span></div>
-      </div>
-
-      <div id="warningBox" class="warning-box" hidden>
-        <h3>這些資料 Excel 無法唯一反推</h3>
-        <ul id="warningList"></ul>
-      </div>
-
-      <details class="preview-box">
-        <summary>查看 JSON 預覽</summary>
-        <pre id="jsonPreview"></pre>
-      </details>
-    </section>
-
-    <section class="card note-card">
-      <h2>這版的用途</h2>
-      <p>目前輸出的是「可餵給現行 v3 JSON 匯入器做測試」的完整備份格式。因為現行 JSON 匯入會整包覆蓋，所以這支測試 JSON 會補齊必要的 settings。</p>
-      <p><strong>正式接回班表時不應這樣做。</strong>正式 Excel 匯入應只取 monthData，呼叫 saveMonth() 更新該月；settings、其他月份、年度特殊日期與既有人員資料都保留。</p>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script>
+  <section class="card note"><strong>這版刻意不把 Excel 當設定備份。</strong><br>正式加回班表時，Excel 匯入應只更新該月 monthData；settings、年度特殊日期等仍留在原程式，不跟著 Excel 被覆蓋。</section>
+</main>
+<script>
 (() => {
-  'use strict';
+'use strict';
+const FORMAT='elitehotel-shift-roster-v3', SCHEMA_VERSION=3;
+const DEFAULT_SHIFT_RANGES=['07~15','15~23','16~24','23~07','00~08'];
+const DEFAULT_SETTINGS={publicLeaveCount:8,maxConsecutiveWorkDays:6,minTurnaroundHours:12,normalNightRange:'22~06',shiftRanges:[...DEFAULT_SHIFT_RANGES],blockedWeekdays:[6],blockedLeaveTypes:['public','annual'],meetingDefaultText:'8點櫃檯開會',annualLeaveRules:{sixMonths:3,year1:7,year2:10,years3to4:14,years5to9:15,year10Base:16,after10Increment:1,maxDays:30}};
+const COLOR={pink:'F586C0',gray:'B7B7B7',red:'B3261E'};
+const L={dateRow:2,shiftStartRow:4,shiftCount:5,vacationBodyRow:10,peopleStartRow:11,peopleCount:6,seniorityStartRow:21,dayStartCol:5};
+const $=id=>document.getElementById(id);
+const input=$('excelInput'),fileName=$('fileName'),progress=$('progress'),steps=$('steps'),errorDetail=$('errorDetail'),downloadButton=$('downloadButton'),copyButton=$('copyButton'),resultCard=$('resultCard'),jsonPreview=$('jsonPreview'),warningBox=$('warningBox'),warningList=$('warningList');
+let jsonText='',downloadName='';
 
-  const FORMAT = 'elitehotel-shift-roster-v3';
-  const SCHEMA_VERSION = 3;
-  const DEFAULT_SHIFT_RANGES = ['07~15', '15~23', '16~24', '23~07', '00~08'];
-  const DEFAULT_ANNUAL_LEAVE_RULES = {
-    sixMonths: 3,
-    year1: 7,
-    year2: 10,
-    years3to4: 14,
-    years5to9: 15,
-    year10Base: 16,
-    after10Increment: 1,
-    maxDays: 30
-  };
-  const DEFAULT_SETTINGS = {
-    publicLeaveCount: 8,
-    maxConsecutiveWorkDays: 6,
-    minTurnaroundHours: 12,
-    normalNightRange: '22~06',
-    shiftRanges: [...DEFAULT_SHIFT_RANGES],
-    blockedWeekdays: [6],
-    blockedLeaveTypes: ['public', 'annual'],
-    meetingDefaultText: '8點櫃檯開會',
-    annualLeaveRules: { ...DEFAULT_ANNUAL_LEAVE_RULES }
-  };
+window.addEventListener('error',e=>showFatal(e.error||new Error(e.message||'頁面錯誤')));
+window.addEventListener('unhandledrejection',e=>showFatal(e.reason instanceof Error?e.reason:new Error(String(e.reason||'未處理錯誤'))));
 
-  const COLOR = {
-    pink: 'F586C0',
-    gray: 'B7B7B7',
-    red: 'B3261E'
-  };
-
-  const LAYOUT = Object.freeze({
-    dateRow: 2,
-    weekdayRow: 3,
-    shiftStartRow: 4,
-    shiftCount: 5,
-    vacationWeekRow: 9,
-    vacationBodyRow: 10,
-    peopleStartRow: 11,
-    peopleCount: 6,
-    lowerDateRow: 17,
-    seniorityStartRow: 21,
-    dayStartCol: 5
-  });
-
-  const excelInput = document.getElementById('excelInput');
-  const fileName = document.getElementById('fileName');
-  const resultCard = document.getElementById('resultCard');
-  const monthLabel = document.getElementById('monthLabel');
-  const peopleCount = document.getElementById('peopleCount');
-  const shiftCount = document.getElementById('shiftCount');
-  const vacationCount = document.getElementById('vacationCount');
-  const warningCount = document.getElementById('warningCount');
-  const warningBox = document.getElementById('warningBox');
-  const warningList = document.getElementById('warningList');
-  const jsonPreview = document.getElementById('jsonPreview');
-  const downloadJsonLink = document.getElementById('downloadJsonLink');
-  const copyJsonButton = document.getElementById('copyJsonButton');
-  const exportStatus = document.getElementById('exportStatus');
-
-  let currentPayload = null;
-  let currentMonthId = '';
-  let currentJsonText = '';
-  let currentFileName = '';
-
-  excelInput.addEventListener('change', async () => {
-    const file = excelInput.files?.[0];
-    resetResult();
-    if (!file) return;
-
-    fileName.textContent = file.name;
-    if (!window.ExcelJS) {
-      window.alert('ExcelJS 尚未載入。請確認網路連線後重新整理。');
-      return;
-    }
-
-    try {
-      const workbook = new ExcelJS.Workbook();
-      const buffer = await file.arrayBuffer();
-      await workbook.xlsx.load(buffer);
-
-      const parsed = parseWorkbook(workbook);
-      currentPayload = parsed.payload;
-      currentMonthId = parsed.monthId;
-      renderResult(parsed);
-    } catch (error) {
-      console.error(error);
-      window.alert(`Excel 解析失敗。\n${error?.message || '未知錯誤'}`);
-    }
-  });
-
-
-  copyJsonButton.addEventListener('click', async () => {
-    if (!currentJsonText) return;
-    const copied = await copyText(currentJsonText);
-    exportStatus.textContent = copied ? 'JSON 已複製。' : '無法自動複製，請展開下方 JSON 預覽後手動複製。';
-  });
-
-  function parseWorkbook(workbook) {
-    const target = findRosterWorksheet(workbook);
-    if (!target) throw new Error('找不到本系統的班表工作表。工作表名稱或 A1 月份格式不符。');
-
-    const { worksheet, year, month } = target;
-    const monthId = `${year}-${pad2(month)}`;
-    const days = new Date(year, month, 0).getDate();
-    validateLayout(worksheet, days);
-
-    const warnings = [];
-    const shiftRanges = readShiftRanges(worksheet);
-    const publicLeaveCount = readPublicLeaveTarget(worksheet, days) || DEFAULT_SETTINGS.publicLeaveCount;
-    const peopleInfo = readPeople(worksheet);
-    const rosterValues = readRosterValues(worksheet, days, warnings);
-    const specialLeaveValues = readSpecialLeaveValues(worksheet);
-    const styleState = readShiftStyleState(worksheet, year, month, days, rosterValues, warnings);
-    const noteState = readRecoverableNotes(worksheet, days, rosterValues, styleState, warnings);
-    const employees = buildEmployees(worksheet, peopleInfo, rosterValues, warnings);
-    const people = buildMonthPeople(peopleInfo, rosterValues, employees, warnings);
-
-    detectUnrecoverableVisualConditions(worksheet, year, month, days, warnings);
-
-    const monthData = {
-      month: monthId,
-      people,
-      specialLeaveValues,
-      rosterValues,
-      blockedVacationOverrides: {},
-      specialShiftCells: styleState.specialShiftCells,
-      nightShiftOverrides: styleState.nightShiftOverrides,
-      leaveTypeValues: noteState.leaveTypeValues,
-      leaveNoteValues: noteState.leaveNoteValues,
-      manualNotes: {},
-      extraLeaves: {},
-      annualGrantDecisions: {},
-      annualBalanceCalibrations: {},
-      specialShiftTimes: noteState.specialShiftTimes,
-      nightShiftTimes: noteState.nightShiftTimes,
-      meetingDays: [],
-      meetingNoteValues: {},
-      supervisorLeaveDays: []
-    };
-
-    const now = new Date().toISOString();
-    const payload = {
-      format: FORMAT,
-      schemaVersion: SCHEMA_VERSION,
-      exportedAt: now,
-      meta: {
-        schemaVersion: SCHEMA_VERSION,
-        createdAt: now,
-        source: 'excel-to-json-prototype-v1'
-      },
-      settings: {
-        ...DEFAULT_SETTINGS,
-        publicLeaveCount,
-        shiftRanges
-      },
-      employees,
-      months: { [monthId]: monthData },
-      specialDays: {}
-    };
-
-    const stats = countStats(monthData);
-    return { payload, monthId, warnings: unique(warnings), stats };
+input.addEventListener('change', async () => {
+  reset();
+  const file=input.files && input.files[0]; if(!file) return;
+  fileName.textContent=file.name;
+  try{
+    setStep('read','active'); setStatus('正在讀取 XLSX…'); await frame();
+    const book=await loadXlsx(await file.arrayBuffer());
+    setStep('read','done'); setStep('layout','active'); setStatus('正在確認月份與班表版型…'); await frame();
+    const parsed=parseBook(book);
+    setStep('layout','done'); setStep('roster','active'); setStatus('正在讀取人員、排班與休假…'); await frame();
+    const built=buildPayload(parsed);
+    setStep('roster','done'); setStep('json','active'); setStatus('正在建立 JSON 並做結構自檢…'); await frame();
+    validatePayload(built.payload);
+    render(built);
+    setStep('json','done'); setStatus('解析完成。可以匯出 JSON。','ok');
+  }catch(err){
+    console.error(err); setStatus('解析失敗：'+(err?.message||'未知錯誤'),'error'); errorDetail.textContent=err?.stack||String(err); markCurrentError();
   }
-
-  function findRosterWorksheet(workbook) {
-    for (const worksheet of workbook.worksheets) {
-      const sheetMatch = String(worksheet.name || '').match(/(\d{4})-(0[1-9]|1[0-2])\s*班表/);
-      if (sheetMatch) {
-        return { worksheet, year: Number(sheetMatch[1]), month: Number(sheetMatch[2]) };
-      }
-
-      const title = cellText(worksheet.getCell(1, 1));
-      const titleMatch = title.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/);
-      if (titleMatch) {
-        const year = Number(titleMatch[1]);
-        const month = Number(titleMatch[2]);
-        if (month >= 1 && month <= 12) return { worksheet, year, month };
-      }
-    }
-    return null;
-  }
-
-  function validateLayout(worksheet, days) {
-    const firstDay = Number(cellText(worksheet.getCell(LAYOUT.dateRow, LAYOUT.dayStartCol)));
-    const lastDay = Number(cellText(worksheet.getCell(LAYOUT.dateRow, LAYOUT.dayStartCol + days - 1)));
-    if (firstDay !== 1 || lastDay !== days) {
-      throw new Error('日期列位置與目前班表匯出格式不一致。這支工具只支援本系統匯出的 Excel。');
-    }
-
-    const shiftGroups = Array.from({ length: LAYOUT.shiftCount }, (_, index) =>
-      cellText(worksheet.getCell(LAYOUT.shiftStartRow + index, 4))
-    );
-    const expected = ['早', '中', '中', '夜', '夜'];
-    if (shiftGroups.some((value, index) => value !== expected[index])) {
-      throw new Error('五個班別列位置與目前班表格式不一致。');
-    }
-  }
-
-  function readShiftRanges(worksheet) {
-    return Array.from({ length: LAYOUT.shiftCount }, (_, index) => {
-      const text = cellText(worksheet.getCell(LAYOUT.shiftStartRow + index, 1));
-      const normalized = normalizeTimeRange(text);
-      return normalized || DEFAULT_SHIFT_RANGES[index];
-    });
-  }
-
-  function readPublicLeaveTarget(worksheet, days) {
-    const noteCol = LAYOUT.dayStartCol + days;
-    const text = cellText(worksheet.getCell(LAYOUT.dateRow, noteCol));
-    const match = text.match(/各排\s*(\d{1,2})\s*天/);
-    if (!match) return null;
-    const value = Number(match[1]);
-    return Number.isInteger(value) && value >= 1 && value <= 31 ? value : null;
-  }
-
-  function readPeople(worksheet) {
-    const result = {};
-    for (let index = 0; index < LAYOUT.peopleCount; index += 1) {
-      const letter = String.fromCharCode(65 + index);
-      const row = LAYOUT.peopleStartRow + index;
-      const displayName = cellText(worksheet.getCell(row, 2)).trim();
-      if (!displayName) continue;
-      result[letter] = { displayName, row };
-    }
-    return result;
-  }
-
-  function readSpecialLeaveValues(worksheet) {
-    return Array.from({ length: LAYOUT.peopleCount }, (_, index) => {
-      const value = cellText(worksheet.getCell(LAYOUT.peopleStartRow + index, 3)).trim();
-      if (!value) return '';
-      const digits = value.match(/^\d{1,2}$/)?.[0];
-      return digits || '';
-    });
-  }
-
-  function readRosterValues(worksheet, days, warnings) {
-    const result = {};
-
-    for (let shift = 0; shift < LAYOUT.shiftCount; shift += 1) {
-      const row = LAYOUT.shiftStartRow + shift;
-      for (let day = 1; day <= days; day += 1) {
-        const letter = normalizeLetter(cellText(worksheet.getCell(row, dayColumn(day))));
-        if (letter) result[`${day}-shift-${shift}`] = letter;
-      }
-    }
-
-    for (let day = 1; day <= days; day += 1) {
-      const body = cellText(worksheet.getCell(LAYOUT.vacationBodyRow, dayColumn(day)));
-      const letters = extractLetters(body).slice(0, 2);
-      letters.forEach((letter, slot) => {
-        result[`${day}-vacation-${slot}`] = letter;
-      });
-      if (extractLetters(body).length > 2) {
-        warnings.push(`${day} 日休假格超過 2 個人，只取前兩個。`);
-      }
-    }
-
-    return result;
-  }
-
-  function readShiftStyleState(worksheet, year, month, days, rosterValues, warnings) {
-    const specialShiftCells = [];
-    const nightShiftOverrides = {};
-
-    for (let shift = 0; shift < LAYOUT.shiftCount; shift += 1) {
-      const row = LAYOUT.shiftStartRow + shift;
-      for (let day = 1; day <= days; day += 1) {
-        const key = `${day}-shift-${shift}`;
-        const cell = worksheet.getCell(row, dayColumn(day));
-        const fill = fillHex(cell);
-        const isPink = fill === COLOR.pink;
-        const isGray = fill === COLOR.gray;
-
-        if (isPink) specialShiftCells.push(key);
-
-        const defaultGray = shift === 3 && new Date(year, month - 1, day).getDay() === 6;
-        if (!isPink && isGray !== defaultGray) {
-          nightShiftOverrides[`${day}-night-${shift}`] = isGray;
-        }
-
-        if (isPink && defaultGray && rosterValues[key]) {
-          warnings.push(`${day} 日 ${shift + 1} 班同時可能涉及粉底特殊班與預設灰底；Excel 外觀無法看出粉底下面是否另有灰底覆寫。`);
-        }
-      }
-    }
-
-    return { specialShiftCells, nightShiftOverrides };
-  }
-
-  function readRecoverableNotes(worksheet, days, rosterValues, styleState, warnings) {
-    const leaveTypeValues = {};
-    const leaveNoteValues = {};
-    const specialShiftTimes = {};
-    const nightShiftTimes = {};
-
-    for (let day = 1; day <= days; day += 1) {
-      const noteCell = worksheet.getCell(LAYOUT.peopleStartRow, dayColumn(day));
-      const tokens = splitNoteTokens(cellText(noteCell));
-      const vacationLetters = [0, 1]
-        .map((slot) => rosterValues[`${day}-vacation-${slot}`])
-        .filter(Boolean);
-
-      for (let slot = 0; slot < 2; slot += 1) {
-        const key = `${day}-vacation-${slot}`;
-        const letter = rosterValues[key];
-        if (!letter) continue;
-
-        if (hasSequence(tokens, [letter, '特', '休'])) {
-          leaveTypeValues[key] = 'annual';
-          continue;
-        }
-
-        const leaveNote = findLeaveNote(tokens, letter);
-        if (leaveNote) {
-          leaveTypeValues[key] = 'leave';
-          leaveNoteValues[key] = leaveNote;
-          continue;
-        }
-
-        const vacationCell = worksheet.getCell(LAYOUT.vacationBodyRow, dayColumn(day));
-        if (fontHex(vacationCell) === COLOR.red && vacationLetters.length === 1) {
-          leaveTypeValues[key] = 'leave';
-          leaveNoteValues[key] = '請假';
-          warnings.push(`${day} 日 ${letter} 的休假格為紅字，但備註無法完整還原請假文字；暫以「請假」輸出。`);
-        }
-      }
-
-      const timeNotes = findTimeNotes(tokens);
-      for (const timeNote of timeNotes) {
-        const candidates = [];
-        for (let shift = 0; shift < LAYOUT.shiftCount; shift += 1) {
-          const shiftKey = `${day}-shift-${shift}`;
-          if (rosterValues[shiftKey] === timeNote.letter) candidates.push(shift);
-        }
-
-        const pinkCandidates = candidates.filter((shift) => styleState.specialShiftCells.includes(`${day}-shift-${shift}`));
-        const grayCandidates = candidates.filter((shift) => {
-          const cell = worksheet.getCell(LAYOUT.shiftStartRow + shift, dayColumn(day));
-          return fillHex(cell) === COLOR.gray;
-        });
-
-        if (pinkCandidates.length === 1) {
-          specialShiftTimes[`${day}-shift-${pinkCandidates[0]}`] = timeNote.range;
-        } else if (grayCandidates.length === 1) {
-          nightShiftTimes[`${day}-night-${grayCandidates[0]}`] = timeNote.range;
-        } else {
-          warnings.push(`${day} 日 ${timeNote.letter} 的 ${timeNote.range} 時間備註找不到唯一對應班格，未寫入特殊／夜班時間。`);
-        }
-      }
-    }
-
-    return { leaveTypeValues, leaveNoteValues, specialShiftTimes, nightShiftTimes };
-  }
-
-  function buildEmployees(worksheet, peopleInfo, rosterValues, warnings) {
-    const employees = {};
-    const hireDates = readHireDates(worksheet, Object.values(peopleInfo).map((item) => item.displayName));
-
-    for (const [letter, person] of Object.entries(peopleInfo)) {
-      const employeeId = `emp_excel_${letter.toLowerCase()}`;
-      employees[employeeId] = {
-        name: person.displayName,
-        role: 'staff',
-        active: true
-      };
-      if (hireDates[person.displayName]) employees[employeeId].hireDate = hireDates[person.displayName];
-    }
-
-    const missingHireDates = Object.values(peopleInfo)
-      .map((item) => item.displayName)
-      .filter((name) => !hireDates[name]);
-    if (missingHireDates.length) {
-      warnings.push(`年資區無法取得到職日：${missingHireDates.join('、')}。員工仍可建立，但特休判斷不會完整。`);
-    }
-
-    return employees;
-  }
-
-  function buildMonthPeople(peopleInfo, rosterValues, employees, warnings) {
-    const result = {};
-
-    for (const [letter, person] of Object.entries(peopleInfo)) {
-      const employeeId = `emp_excel_${letter.toLowerCase()}`;
-      let shiftGroups = [];
-
-      if (letter === 'A') {
-        shiftGroups = ['early', 'middle', 'night'];
-      } else {
-        const counts = { early: 0, middle: 0, night: 0 };
-        for (const [key, value] of Object.entries(rosterValues)) {
-          if (value !== letter || !/-shift-/.test(key)) continue;
-          const shift = Number(key.match(/-shift-(\d)$/)?.[1]);
-          if (shift === 0) counts.early += 1;
-          else if (shift === 1 || shift === 2) counts.middle += 1;
-          else if (shift === 3 || shift === 4) counts.night += 1;
-        }
-
-        const usedGroups = Object.entries(counts).filter(([, count]) => count > 0);
-        if (usedGroups.length === 1) {
-          shiftGroups = [usedGroups[0][0]];
-        } else if (usedGroups.length > 1) {
-          usedGroups.sort((a, b) => b[1] - a[1]);
-          shiftGroups = [usedGroups[0][0]];
-          warnings.push(`${letter}.${person.displayName} 在 Excel 本月出現在多個班別群組；固定班別暫以出現次數最多的「${groupLabel(shiftGroups[0])}」推定。`);
-        } else {
-          warnings.push(`${letter}.${person.displayName} 本月沒有排班紀錄，Excel 沒有固定班別欄位，因此 shiftGroups 暫留空。`);
-        }
-      }
-
-      result[letter] = { employeeId, displayName: person.displayName, shiftGroups };
-      if (!employees[employeeId]) throw new Error(`內部轉換錯誤：找不到 ${letter} 的 employee。`);
-    }
-
-    return result;
-  }
-
-  function readHireDates(worksheet, names) {
-    const result = {};
-    const known = new Set(names);
-
-    for (let row = LAYOUT.seniorityStartRow; row <= worksheet.rowCount + 2; row += 1) {
-      const text = cellText(worksheet.getCell(row, 1)).trim();
-      if (!text) continue;
-      const name = [...known].find((item) => text.startsWith(`${item} `));
-      if (!name) continue;
-      const match = text.match(/\b(\d{4})\.(\d{2})\.(\d{2})\b/);
-      if (!match) continue;
-      result[name] = `${match[1]}-${match[2]}-${match[3]}`;
-    }
-
-    return result;
-  }
-
-  function detectUnrecoverableVisualConditions(worksheet, year, month, days, warnings) {
-    const blockedDays = [];
-    const holidayDays = [];
-
-    for (let day = 1; day <= days; day += 1) {
-      const vacationCell = worksheet.getCell(LAYOUT.vacationBodyRow, dayColumn(day));
-      const diagonal = vacationCell.border?.diagonal;
-      if (diagonal?.up || diagonal?.down) blockedDays.push(day);
-
-      const dateCell = worksheet.getCell(LAYOUT.dateRow, dayColumn(day));
-      if (fontHex(dateCell) === COLOR.red) holidayDays.push(day);
-    }
-
-    if (blockedDays.length) {
-      warnings.push(`Excel 有 ${blockedDays.length} 個禁休斜線日，但斜線只代表「最後結果」，無法分辨是預設星期、年度特殊日、主管休假或手動例外；測試 JSON 不重建 blockedVacationOverrides / supervisorLeaveDays。`);
-    }
-    if (holidayDays.length) {
-      warnings.push(`Excel 有特殊日期紅字（${holidayDays.join('、')} 日），但單月 Excel 沒有整年度 specialDays 原始設定；測試 JSON 不覆寫年度特殊日期。`);
-    }
-
-    warnings.push('Excel 沒有保存：連勤上限、轉班最低時數、禁休假別、特休級距等完整 settings；本工具為了讓現行 v3 JSON 匯入器可測試，這些欄位使用程式預設值。');
-    warnings.push('Excel 沒有保存 annualGrantDecisions / annualBalanceCalibrations 的完整原始狀態；測試 JSON 以空資料輸出。');
-    warnings.push('下方長條的開會備註、一般手動備註、主管特休事件可能共用同一視覺區，無法百分之百無歧義反推；v1 不猜測。');
-  }
-
-  function countStats(monthData) {
-    let shift = 0;
-    let vacation = 0;
-    for (const key of Object.keys(monthData.rosterValues)) {
-      if (/-shift-/.test(key)) shift += 1;
-      if (/-vacation-/.test(key)) vacation += 1;
-    }
-    return {
-      people: Object.keys(monthData.people).length,
-      shift,
-      vacation
-    };
-  }
-
-  function renderResult(parsed) {
-    resultCard.hidden = false;
-    monthLabel.textContent = `${parsed.monthId} 班表`;
-    peopleCount.textContent = String(parsed.stats.people);
-    shiftCount.textContent = String(parsed.stats.shift);
-    vacationCount.textContent = String(parsed.stats.vacation);
-    warningCount.textContent = String(parsed.warnings.length);
-    const jsonText = `${JSON.stringify(parsed.payload, null, 2)}\n`;
-    jsonPreview.textContent = jsonText;
-    prepareExport(jsonText, parsed.monthId);
-
-    warningList.replaceChildren();
-    warningBox.hidden = parsed.warnings.length === 0;
-    parsed.warnings.forEach((message) => {
-      const li = document.createElement('li');
-      li.textContent = message;
-      warningList.appendChild(li);
-    });
-  }
-
-  function resetResult() {
-    currentPayload = null;
-    currentMonthId = '';
-    resultCard.hidden = true;
-    clearExport();
-    jsonPreview.textContent = '';
-    warningList.replaceChildren();
-  }
-
-
-  function prepareExport(text, monthId) {
-    currentJsonText = text;
-    currentFileName = `EliteHotel_${monthId}_from_excel_test.json`;
-
-    // Native browser download link. No click handler, no async export API.
-    // Because the whole app JS is inline in this HTML, GitHub Pages cannot serve
-    // a new HTML together with an older cached app JS file.
-    const dataUrl = `data:application/json;charset=utf-8,${encodeURIComponent(text)}`;
-    downloadJsonLink.href = dataUrl;
-    downloadJsonLink.download = currentFileName;
-    downloadJsonLink.classList.remove('is-disabled');
-    downloadJsonLink.setAttribute('aria-disabled', 'false');
-    copyJsonButton.disabled = false;
-    exportStatus.textContent = 'JSON 已準備完成，按「匯出 JSON」即可下載。';
-  }
-
-  function clearExport() {
-    currentJsonText = '';
-    currentFileName = '';
-    downloadJsonLink.removeAttribute('href');
-    downloadJsonLink.removeAttribute('download');
-    downloadJsonLink.classList.add('is-disabled');
-    downloadJsonLink.setAttribute('aria-disabled', 'true');
-    copyJsonButton.disabled = true;
-    exportStatus.textContent = '';
-  }
-
-  async function copyText(text) {
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch (error) {
-        console.warn('Clipboard API failed, trying textarea fallback.', error);
-      }
-    }
-
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    textarea.setSelectionRange(0, textarea.value.length);
-    let success = false;
-    try {
-      success = document.execCommand('copy');
-    } catch (error) {
-      console.warn('execCommand copy failed.', error);
-    }
-    textarea.remove();
-    return success;
-  }
-
-  function cellText(cell) {
-    if (!cell) return '';
-    if (typeof cell.text === 'string') return cell.text.replace(/\r\n/g, '\n');
-    if (cell.value == null) return '';
-    return String(cell.value).replace(/\r\n/g, '\n');
-  }
-
-  function dayColumn(day) {
-    return LAYOUT.dayStartCol + day - 1;
-  }
-
-  function normalizeLetter(value) {
-    const match = String(value || '').trim().toUpperCase().match(/^[A-F]$/);
-    return match ? match[0] : '';
-  }
-
-  function extractLetters(value) {
-    return String(value || '').toUpperCase().match(/[A-F]/g) || [];
-  }
-
-  function normalizeTimeRange(value) {
-    const text = String(value || '').replace(/\s+/g, '').replace(/[～－–—-]/g, '~');
-    const match = text.match(/^(\d{1,2}(?::\d{2})?)~(\d{1,2}(?::\d{2})?)$/);
-    return match ? `${match[1]}~${match[2]}` : '';
-  }
-
-  function splitNoteTokens(value) {
-    return String(value || '')
-      .replace(/\r\n/g, '\n')
-      .split('\n')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  function hasSequence(tokens, sequence) {
-    for (let index = 0; index <= tokens.length - sequence.length; index += 1) {
-      if (sequence.every((item, offset) => tokens[index + offset] === item)) return true;
-    }
-    return false;
-  }
-
-  function findLeaveNote(tokens, letter) {
-    for (let index = 0; index < tokens.length; index += 1) {
-      if (tokens[index] !== letter) continue;
-      if (tokens[index + 1] === '特' && tokens[index + 2] === '休') continue;
-      if (tokens[index + 1] === '公' && tokens[index + 2] === '休') continue;
-      if (isTimeToken(tokens[index + 1]) && tokens[index + 2] === '│' && isTimeToken(tokens[index + 3])) continue;
-
-      const chars = [];
-      for (let cursor = index + 1; cursor < tokens.length && chars.length < 4; cursor += 1) {
-        const token = tokens[cursor];
-        if (/^[A-F]$/.test(token)) break;
-        if (token === '│' || /^\d{1,2}$/.test(token)) break;
-        if (isTimeToken(token)) break;
-        chars.push(token);
-      }
-      const note = chars.join('').slice(0, 4);
-      if (note) return note;
-    }
-    return '';
-  }
-
-  function findTimeNotes(tokens) {
-    const result = [];
-    for (let index = 0; index <= tokens.length - 4; index += 1) {
-      const letter = tokens[index];
-      const start = tokens[index + 1];
-      const bar = tokens[index + 2];
-      const end = tokens[index + 3];
-      if (!/^[A-F]$/.test(letter) || bar !== '│' || !isTimeToken(start) || !isTimeToken(end)) continue;
-      result.push({ letter, range: `${start}~${end}` });
-      index += 3;
-    }
-    return result;
-  }
-
-  function isTimeToken(value) {
-    return /^\d{1,2}(?::\d{2})?$/.test(String(value || ''));
-  }
-
-  function fillHex(cell) {
-    const argb = cell?.fill?.fgColor?.argb;
-    return normalizeColor(argb);
-  }
-
-  function fontHex(cell) {
-    const argb = cell?.font?.color?.argb;
-    return normalizeColor(argb);
-  }
-
-  function normalizeColor(value) {
-    const text = String(value || '').replace(/[^0-9A-F]/gi, '').toUpperCase();
-    return text.length >= 6 ? text.slice(-6) : '';
-  }
-
-  function groupLabel(group) {
-    return ({ early: '早班', middle: '中班', night: '大夜' })[group] || group;
-  }
-
-  function pad2(value) {
-    return String(value).padStart(2, '0');
-  }
-
-  function unique(values) {
-    return [...new Set(values)];
-  }
+});
+
+downloadButton.addEventListener('click',()=>{
+  if(!jsonText) return;
+  const blob=new Blob([jsonText],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=downloadName; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+});
+copyButton.addEventListener('click',async()=>{if(!jsonText)return; try{await navigator.clipboard.writeText(jsonText);setStatus('JSON 已複製。','ok')}catch{const t=document.createElement('textarea');t.value=jsonText;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();setStatus('JSON 已複製。','ok')}});
+
+function reset(){jsonText='';downloadName='';downloadButton.disabled=true;copyButton.disabled=true;resultCard.hidden=true;jsonPreview.textContent='';warningList.replaceChildren();warningBox.hidden=true;errorDetail.textContent='';setStatus('已選檔，準備解析。');[...steps.children].forEach(li=>li.className='')}
+function setStatus(text,state=''){progress.textContent=text;progress.dataset.state=state}
+function setStep(name,state){const li=steps.querySelector(`[data-step="${name}"]`);if(li)li.className=state}
+function markCurrentError(){const li=steps.querySelector('.active');if(li)li.className=''}
+function frame(){return new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)))}
+function showFatal(err){console.error(err);setStatus('頁面發生錯誤：'+(err?.message||err),'error');errorDetail.textContent=err?.stack||String(err)}
+
+async function loadXlsx(buffer){
+  if(typeof DecompressionStream==='undefined') throw new Error('這個瀏覽器缺少 XLSX 解壓縮能力，請用目前版 Chrome / Edge / Safari。');
+  const zip=new ZipReader(buffer);
+  const [sheetXml,workbookXml,stringsXml,stylesXml]=await Promise.all([
+    zip.text('xl/worksheets/sheet1.xml'),zip.text('xl/workbook.xml'),zip.textOptional('xl/sharedStrings.xml'),zip.textOptional('xl/styles.xml')
+  ]);
+  const strings=stringsXml?parseSharedStrings(xml(stringsXml)):[];
+  const sheet=parseSheet(xml(sheetXml),strings);
+  const styles=stylesXml?parseStyles(xml(stylesXml)):emptyStyles();
+  const wb=xml(workbookXml); const sheetEl=firstByLocal(wb,'sheet'); const sheetName=sheetEl?.getAttribute('name')||'';
+  return {sheet,sheetName,styles};
+}
+
+class ZipReader{
+  constructor(buffer){this.bytes=new Uint8Array(buffer);this.view=new DataView(buffer);this.entries=this.readCentral()}
+  u16(o){return this.view.getUint16(o,true)} u32(o){return this.view.getUint32(o,true)}
+  readCentral(){const b=this.bytes;let e=-1;for(let i=b.length-22;i>=Math.max(0,b.length-65557);i--){if(this.u32(i)===0x06054b50){e=i;break}}if(e<0)throw new Error('不是有效的 .xlsx ZIP。');const count=this.u16(e+10),off=this.u32(e+16),m=new Map();let p=off;for(let n=0;n<count;n++){if(this.u32(p)!==0x02014b50)throw new Error('XLSX ZIP 目錄損壞。');const method=this.u16(p+10),csize=this.u32(p+20),usize=this.u32(p+24),nl=this.u16(p+28),el=this.u16(p+30),cl=this.u16(p+32),local=this.u32(p+42),name=new TextDecoder().decode(this.bytes.slice(p+46,p+46+nl));m.set(name,{method,csize,usize,local});p+=46+nl+el+cl}return m}
+  async raw(name){const e=this.entries.get(name);if(!e)throw new Error(`XLSX 缺少 ${name}`);const p=e.local;if(this.u32(p)!==0x04034b50)throw new Error('XLSX ZIP 檔頭損壞。');const nl=this.u16(p+26),el=this.u16(p+28),start=p+30+nl+el,part=this.bytes.slice(start,start+e.csize);if(e.method===0)return part;if(e.method===8){const ds=new DecompressionStream('deflate-raw');const ab=await new Response(new Blob([part]).stream().pipeThrough(ds)).arrayBuffer();return new Uint8Array(ab)}throw new Error(`不支援 ZIP 壓縮方法 ${e.method}`)}
+  async text(name){return new TextDecoder('utf-8').decode(await this.raw(name))}
+  async textOptional(name){if(!this.entries.has(name))return '';return this.text(name)}
+}
+
+function xml(text){const d=new DOMParser().parseFromString(text,'application/xml');const pe=d.getElementsByTagName('parsererror')[0];if(pe)throw new Error('XLSX 內部 XML 解析失敗。');return d}
+function byLocal(root,name){return [...root.getElementsByTagNameNS('*',name)]}
+function firstByLocal(root,name){return root.getElementsByTagNameNS('*',name)[0]||null}
+function direct(root,name){return [...root.children].filter(x=>x.localName===name)}
+function parseSharedStrings(doc){return byLocal(doc,'si').map(si=>byLocal(si,'t').map(t=>t.textContent||'').join(''))}
+function parseSheet(doc,strings){const cells=new Map();for(const c of byLocal(doc,'c')){const ref=c.getAttribute('r');if(!ref)continue;const type=c.getAttribute('t')||'';const styleIndex=Number(c.getAttribute('s')||0);let value='';if(type==='s'){const v=firstByLocal(c,'v')?.textContent;value=strings[Number(v)]??''}else if(type==='inlineStr'){value=byLocal(c,'t').map(t=>t.textContent||'').join('')}else{value=firstByLocal(c,'v')?.textContent??''}cells.set(ref,{value:String(value),styleIndex})}return {cells,get(r,c){return cells.get(cellRef(r,c))||{value:'',styleIndex:0}}}}
+function emptyStyles(){return {xfs:[{fontId:0,fillId:0,borderId:0}],fonts:[null],fills:[null],borders:[null]}}
+function parseStyles(doc){
+  const fontsNode=firstByLocal(doc,'fonts'),fillsNode=firstByLocal(doc,'fills'),bordersNode=firstByLocal(doc,'borders'),xfsNode=firstByLocal(doc,'cellXfs');
+  const fonts=fontsNode?direct(fontsNode,'font').map(n=>({color:normalizeColor(firstByLocal(n,'color')?.getAttribute('rgb'))})):[];
+  const fills=fillsNode?direct(fillsNode,'fill').map(n=>({color:normalizeColor(firstByLocal(firstByLocal(n,'patternFill')||n,'fgColor')?.getAttribute('rgb'))})):[];
+  const borders=bordersNode?direct(bordersNode,'border').map(n=>({diagonalUp:n.getAttribute('diagonalUp')==='1',diagonalDown:n.getAttribute('diagonalDown')==='1',color:normalizeColor(firstByLocal(firstByLocal(n,'diagonal')||n,'color')?.getAttribute('rgb'))})):[];
+  const xfs=xfsNode?direct(xfsNode,'xf').map(n=>({fontId:Number(n.getAttribute('fontId')||0),fillId:Number(n.getAttribute('fillId')||0),borderId:Number(n.getAttribute('borderId')||0)})):[];
+  return {fonts,fills,borders,xfs};
+}
+function styleOf(book,r,c){const cell=book.sheet.get(r,c),xf=book.styles.xfs[cell.styleIndex]||{};return {font:book.styles.fonts[xf.fontId]||{},fill:book.styles.fills[xf.fillId]||{},border:book.styles.borders[xf.borderId]||{}}}
+function normalizeColor(v){const s=String(v||'').replace(/[^0-9A-F]/gi,'').toUpperCase();return s.length>=6?s.slice(-6):''}
+
+function parseBook(book){
+  const nameMatch=book.sheetName.match(/(\d{4})-(0[1-9]|1[0-2])\s*班表/);const title=book.sheet.get(1,1).value;const titleMatch=title.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/);if(!nameMatch&&!titleMatch)throw new Error('找不到班表月份。');const year=Number((nameMatch||titleMatch)[1]),month=Number((nameMatch||titleMatch)[2]),days=new Date(year,month,0).getDate();
+  if(Number(book.sheet.get(2,5).value)!==1||Number(book.sheet.get(2,4+days).value)!==days)throw new Error('日期列與目前班表匯出格式不一致。');
+  const expected=['早','中','中','夜','夜'];for(let i=0;i<5;i++){if(book.sheet.get(4+i,4).value!==expected[i])throw new Error('五個班別列位置與目前班表格式不一致。')}
+  return {book,year,month,days,monthId:`${year}-${String(month).padStart(2,'0')}`};
+}
+
+function buildPayload(ctx){
+  const {book,year,month,days,monthId}=ctx,warnings=[];
+  const shiftRanges=Array.from({length:5},(_,i)=>normalizeTimeRange(book.sheet.get(4+i,1).value)||DEFAULT_SHIFT_RANGES[i]);
+  const noteText=book.sheet.get(2,5+days).value;const leaveMatch=noteText.match(/各排\s*(\d{1,2})\s*天/);const publicLeaveCount=leaveMatch?Number(leaveMatch[1]):8;
+  const peopleInfo={};for(let i=0;i<6;i++){const letter=String.fromCharCode(65+i),name=book.sheet.get(11+i,2).value.trim();if(name)peopleInfo[letter]={displayName:name,row:11+i}}
+  const specialLeaveValues=Array.from({length:6},(_,i)=>{const v=book.sheet.get(11+i,3).value.trim();return /^\d{1,2}$/.test(v)?v:''});
+  const rosterValues={};for(let s=0;s<5;s++)for(let d=1;d<=days;d++){const l=normLetter(book.sheet.get(4+s,4+d).value);if(l)rosterValues[`${d}-shift-${s}`]=l}for(let d=1;d<=days;d++){const ls=letters(book.sheet.get(10,4+d).value);ls.slice(0,2).forEach((l,i)=>rosterValues[`${d}-vacation-${i}`]=l);if(ls.length>2)warnings.push(`${d} 日休假格超過 2 個人，只取前兩個。`)}
+  const specialShiftCells=[],nightShiftOverrides={};for(let s=0;s<5;s++)for(let d=1;d<=days;d++){const st=styleOf(book,4+s,4+d),pink=st.fill.color===COLOR.pink,gray=st.fill.color===COLOR.gray,key=`${d}-shift-${s}`;if(pink)specialShiftCells.push(key);const defaultGray=s===3&&new Date(year,month-1,d).getDay()===6;if(!pink&&gray!==defaultGray)nightShiftOverrides[`${d}-night-${s}`]=gray}
+  const notes=recoverNotes(book,days,rosterValues,specialShiftCells,warnings);
+  const hireDates=readHireDates(book,Object.values(peopleInfo).map(x=>x.displayName));
+  const employees={};for(const [letter,p] of Object.entries(peopleInfo)){const id=`emp_excel_${letter.toLowerCase()}`;employees[id]={name:p.displayName,role:'staff',active:true};if(hireDates[p.displayName])employees[id].hireDate=hireDates[p.displayName]}
+  const unmatched=Object.entries(hireDates).filter(([name])=>!Object.values(peopleInfo).some(p=>p.displayName===name));if(unmatched.length===1){const [name,date]=unmatched[0];employees.emp_supervisor={name,role:'supervisor',code:'',displayChar:'',active:true,hireDate:date};warnings.push('主管姓名／到職日可從年資區讀回，但 Excel 沒有保存主管代號與班表顯示字；測試 JSON 先留空。')}
+  const missing=Object.values(peopleInfo).map(x=>x.displayName).filter(n=>!hireDates[n]);if(missing.length)warnings.push(`年資區找不到到職日：${missing.join('、')}。`)
+  const people={};for(const [letter,p] of Object.entries(peopleInfo)){let groups=[];if(letter==='A')groups=['early','middle','night'];else{const counts={early:0,middle:0,night:0};for(const [k,v] of Object.entries(rosterValues)){if(v!==letter||!/-shift-/.test(k))continue;const s=Number(k.match(/-shift-(\d)$/)?.[1]);if(s===0)counts.early++;else if(s===1||s===2)counts.middle++;else if(s===3||s===4)counts.night++}const used=Object.entries(counts).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);if(used.length)groups=[used[0][0]];if(used.length>1)warnings.push(`${letter}.${p.displayName} 本月出現在多個班別群組；固定班別暫以出現次數最多者推定。`)}people[letter]={employeeId:`emp_excel_${letter.toLowerCase()}`,displayName:p.displayName,shiftGroups:groups}}
+  const blockedDays=[],holidayDays=[];for(let d=1;d<=days;d++){const vac=styleOf(book,10,4+d);if(vac.border.diagonalUp||vac.border.diagonalDown)blockedDays.push(d);const dateStyle=styleOf(book,2,4+d);if(dateStyle.font.color===COLOR.red)holidayDays.push(d)}
+  if(blockedDays.length)warnings.push(`Excel 有 ${blockedDays.length} 個禁休斜線日，但斜線只保存最後畫面結果，無法判斷來源，所以不重建禁休設定。`);if(holidayDays.length)warnings.push(`Excel 有特殊日期紅字（${holidayDays.join('、')} 日），但沒有保存整年度 specialDays 原始設定，所以不重建年度特殊日期。`);
+  warnings.push('Excel 沒有保存連勤上限、轉班最低時數、禁休假別、完整禁休星期、特休級距等 settings；測試 JSON 使用目前程式預設值。');warnings.push('正式 Excel 匯入不應走 replaceAll；之後應只把解析結果寫入該月 monthData，原 settings 不動。');
+  const monthData={month:monthId,people,specialLeaveValues,rosterValues,blockedVacationOverrides:{},specialShiftCells,nightShiftOverrides,leaveTypeValues:notes.leaveTypeValues,leaveNoteValues:notes.leaveNoteValues,manualNotes:{},extraLeaves:{},annualGrantDecisions:{},annualBalanceCalibrations:{},specialShiftTimes:notes.specialShiftTimes,nightShiftTimes:notes.nightShiftTimes,meetingDays:[],meetingNoteValues:{},supervisorLeaveDays:[]};
+  const now=new Date().toISOString();const payload={format:FORMAT,schemaVersion:3,exportedAt:now,meta:{schemaVersion:3,createdAt:now,source:'excel-to-json-native-v2'},settings:{...DEFAULT_SETTINGS,publicLeaveCount,shiftRanges},employees,months:{[monthId]:monthData},specialDays:{}};
+  const stats={people:Object.keys(people).length,shift:Object.keys(rosterValues).filter(k=>/-shift-/.test(k)).length,vacation:Object.keys(rosterValues).filter(k=>/-vacation-/.test(k)).length};return {payload,monthId,warnings:[...new Set(warnings)],stats};
+}
+
+function recoverNotes(book,days,rosterValues,specialShiftCells,warnings){const leaveTypeValues={},leaveNoteValues={},specialShiftTimes={},nightShiftTimes={};for(let d=1;d<=days;d++){const tokens=splitTokens(book.sheet.get(11,4+d).value);const vacLetters=[0,1].map(i=>rosterValues[`${d}-vacation-${i}`]).filter(Boolean);for(let slot=0;slot<2;slot++){const key=`${d}-vacation-${slot}`,letter=rosterValues[key];if(!letter)continue;if(hasSeq(tokens,[letter,'特','休'])){leaveTypeValues[key]='annual';continue}const n=findLeaveNote(tokens,letter);if(n){leaveTypeValues[key]='leave';leaveNoteValues[key]=n;continue}const st=styleOf(book,10,4+d);if(st.font.color===COLOR.red&&vacLetters.length===1){leaveTypeValues[key]='leave';leaveNoteValues[key]='請假'}}for(const tn of findTimeNotes(tokens)){const cand=[];for(let s=0;s<5;s++)if(rosterValues[`${d}-shift-${s}`]===tn.letter)cand.push(s);const pink=cand.filter(s=>specialShiftCells.includes(`${d}-shift-${s}`));const gray=cand.filter(s=>styleOf(book,4+s,4+d).fill.color===COLOR.gray);if(pink.length===1)specialShiftTimes[`${d}-shift-${pink[0]}`]=tn.range;else if(gray.length===1)nightShiftTimes[`${d}-night-${gray[0]}`]=tn.range;else warnings.push(`${d} 日 ${tn.letter} 的 ${tn.range} 時間備註找不到唯一對應班格，未還原。`)}}return {leaveTypeValues,leaveNoteValues,specialShiftTimes,nightShiftTimes}}
+function readHireDates(book,knownNames){const out={};for(let r=21;r<=80;r++){const t=book.sheet.get(r,1).value.trim();if(!t||!t.includes('｜'))continue;const m=t.match(/^([^\s｜]+)\s+.*?\b(\d{4})\.(\d{2})\.(\d{2})\b/);if(m)out[m[1]]=`${m[2]}-${m[3]}-${m[4]}`}return out}
+
+function validatePayload(p){if(!p||p.format!==FORMAT||p.schemaVersion!==3)throw new Error('JSON 外層格式自檢失敗。');if(!plain(p.settings)||!plain(p.employees)||!plain(p.months)||!plain(p.specialDays))throw new Error('JSON 主要區塊自檢失敗。');for(const [id,e] of Object.entries(p.employees)){if(!/^emp_[A-Za-z0-9_]+$/.test(id)||typeof e.name!=='string')throw new Error(`員工 ${id} 格式錯誤。`);if(e.hireDate&&!/^\d{4}-\d{2}-\d{2}$/.test(e.hireDate))throw new Error(`員工 ${id} 到職日格式錯誤。`)}for(const [mid,m] of Object.entries(p.months)){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(mid)||m.month!==mid||!plain(m.people)||!plain(m.rosterValues))throw new Error(`月份 ${mid} 格式錯誤。`);for(const [k,v] of Object.entries(m.rosterValues))if(!/^\d{1,2}-(?:shift-[0-4]|vacation-[01])$/.test(k)||!/^[A-F]?$/.test(String(v)))throw new Error(`班表格 ${k} 格式錯誤。`)}return true}
+
+function render(b){jsonText=JSON.stringify(b.payload,null,2)+'\n';downloadName=`EliteHotel_${b.monthId}_from_excel_test.json`;downloadButton.disabled=false;copyButton.disabled=false;resultCard.hidden=false;$('monthLabel').textContent=`${b.monthId} 班表`;$('peopleCount').textContent=b.stats.people;$('shiftCount').textContent=b.stats.shift;$('vacationCount').textContent=b.stats.vacation;$('warningCount').textContent=b.warnings.length;jsonPreview.textContent=jsonText;warningList.replaceChildren();warningBox.hidden=!b.warnings.length;for(const w of b.warnings){const li=document.createElement('li');li.textContent=w;warningList.appendChild(li)}}
+function cellRef(row,col){let c='';for(let n=col;n>0;n=Math.floor((n-1)/26))c=String.fromCharCode(65+(n-1)%26)+c;return c+row}
+function normLetter(v){const m=String(v||'').trim().toUpperCase().match(/^[A-F]$/);return m?m[0]:''}function letters(v){return String(v||'').toUpperCase().match(/[A-F]/g)||[]}function normalizeTimeRange(v){const s=String(v||'').replace(/\s+/g,'').replace(/[～－–—-]/g,'~');const m=s.match(/^(\d{1,2}(?::\d{2})?)~(\d{1,2}(?::\d{2})?)$/);return m?`${m[1]}~${m[2]}`:''}function splitTokens(v){return String(v||'').replace(/\r\n/g,'\n').split('\n').map(x=>x.trim()).filter(Boolean)}function hasSeq(t,s){for(let i=0;i<=t.length-s.length;i++)if(s.every((x,j)=>t[i+j]===x))return true;return false}function isTime(v){return /^\d{1,2}(?::\d{2})?$/.test(String(v||''))}function findTimeNotes(t){const out=[];for(let i=0;i<=t.length-4;i++){if(/^[A-F]$/.test(t[i])&&isTime(t[i+1])&&t[i+2]==='│'&&isTime(t[i+3])){out.push({letter:t[i],range:`${t[i+1]}~${t[i+3]}`});i+=3}}return out}function findLeaveNote(t,l){for(let i=0;i<t.length;i++){if(t[i]!==l)continue;if(t[i+1]==='特'&&t[i+2]==='休')continue;if(t[i+1]==='公'&&t[i+2]==='休')continue;if(isTime(t[i+1])&&t[i+2]==='│'&&isTime(t[i+3]))continue;const a=[];for(let j=i+1;j<t.length&&a.length<4;j++){const x=t[j];if(/^[A-F]$/.test(x)||x==='│'||/^\d{1,2}$/.test(x)||isTime(x))break;a.push(x)}const n=a.join('').slice(0,4);if(n)return n}return ''}function plain(v){return !!v&&typeof v==='object'&&!Array.isArray(v)}
 })();
-
 </script>
-</body>
-</html>
+</body></html>
