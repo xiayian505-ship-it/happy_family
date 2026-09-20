@@ -135,7 +135,6 @@
     const rect = getRect(element, rootRect);
     const style = applyFont(context, element, options.fallbackSize || 14);
     const letterSpacing = parsePx(style.letterSpacing, 0);
-    const lineHeight = parsePx(style.lineHeight, parsePx(style.fontSize, 14) * 1.2);
 
     context.save();
     applyFont(context, element, options.fallbackSize || 14);

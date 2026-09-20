@@ -2048,10 +2048,6 @@ function closeShiftConfigPanel() {
   if (shiftConfigGrid) shiftConfigGrid.hidden = true;
   shiftPeopleButton?.classList.remove('is-active');
 }
-function toggleShiftConfigPanel() {
-  if (shiftConfigPanel.hidden) openShiftConfigPanel();
-  else closeShiftConfigPanel();
-}
 function openSupervisorConfigPanel() {
   commitAllVisibleNames();
   closeRowFillPanel();
@@ -2071,10 +2067,6 @@ function closeSupervisorConfigPanel() {
   collapseSeniorityInfo(supervisorSeniorityButton, supervisorSeniorityInfo);
   if (supervisorConfigBody) supervisorConfigBody.hidden = true;
   supervisorPeopleButton?.classList.remove('is-active');
-}
-function toggleSupervisorConfigPanel() {
-  if (supervisorConfigPanel.hidden) openSupervisorConfigPanel();
-  else closeSupervisorConfigPanel();
 }
 function getAnnualBalanceSnapshot(index, year, month) {
   const balanceText = String(specialLeaveValues[index] || '').trim();

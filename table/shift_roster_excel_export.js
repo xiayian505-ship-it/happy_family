@@ -249,32 +249,31 @@
     for (let i=0;i<6;i+=1) {
       ws.getRow(r+i).height = rowHeight;
       const letter = String.fromCharCode(65+i);
-      const rowTop = i === 0 ? {top:thin} : {};
-
       const lc = ws.getCell(r+i,1);
       lc.value = `${letter}.`;
       lc.font = {name:sans,size:12};
       lc.alignment = {horizontal:'center',vertical:'middle'};
-      lc.border = {...rowTop,left:thin,bottom:thin};
+      lc.border = baseBorder;
 
       const nc = ws.getCell(r+i,2);
       nc.value = people[letter]?.displayName || '';
       nc.font = {name:serif,size:12};
       nc.alignment = {horizontal:'left',vertical:'middle'};
-      nc.border = {...rowTop,bottom:thin};
+      nc.border = baseBorder;
 
       const ac = ws.getCell(r+i,3);
       ac.value = specialLeave[i];
       ac.font = {name:sans,size:11};
       ac.alignment = {horizontal:'center',vertical:'middle'};
-      ac.border = {...rowTop,left:thin,right:thin,bottom:thin};
+      ac.border = baseBorder;
+
+      const blank = ws.getCell(r+i,4);
+      blank.border = baseBorder;
     }
-    ws.mergeCells(lowerStart,4,lowerStart+5,4);
-    ws.getCell(lowerStart,4).border = baseBorder;
     for (let day=1; day<=days; day+=1) {
       ws.mergeCells(lowerStart,4+day,lowerStart+5,4+day);
       const cell = ws.getCell(lowerStart,4+day);
-      const notes = buildNotes(data,year,month,day,people);
+      const notes = buildNotes(data,day,people);
       cell.value = notes.join('\n');
       cell.font = {name:serif,size:8};
       cell.alignment = {horizontal:'center',vertical:'top',wrapText:true};
@@ -581,7 +580,7 @@
     return {publicCount,annualCount};
   }
 
-  function buildNotes(data,year,month,day,people) {
+  function buildNotes(data,day,people) {
     const groups = [];
     for (let shift=0;shift<5;shift+=1) {
       const letter = String(data.rosterValues?.[`${day}-shift-${shift}`] || '');
