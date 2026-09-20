@@ -136,6 +136,7 @@
       const cell = ws.getCell(r,4+day);
       cell.value = day;
       cell.font = {name:sans,size:9};
+      if (getAnnualSpecialDayType(year,month,day) === 'holiday') cell.font = {name:sans,size:9,bold:true,color:{argb:RED}};
       cell.alignment = {horizontal:'center',vertical:'middle'};
       cell.fill = solidFill(getDateBandDark(year,month,day) ? GRAY : WHITE);
       cell.border = baseBorder;
@@ -149,9 +150,12 @@
       const d = new Date(year,month-1,day).getDay();
       const cell = ws.getCell(r,4+day);
       cell.value = WEEKDAYS[d];
-      cell.font = {name:serif,size:9};
+      const specialType = getAnnualSpecialDayType(year,month,day);
+      cell.font = specialType === 'holiday'
+        ? {name:serif,size:9,bold:true,color:{argb:RED}}
+        : {name:serif,size:9};
       cell.alignment = {horizontal:'center',vertical:'middle'};
-      if (d === 0 || d === 6) cell.fill = solidFill(PINK);
+      if ((d === 0 || d === 6) && specialType !== 'workday') cell.fill = solidFill(PINK);
       cell.border = baseBorder;
     }
     r += 1;
@@ -197,10 +201,13 @@
       const dow = new Date(year,month-1,day).getDay();
       const top = ws.getCell(vacWeekRow,4+day);
       top.value = WEEKDAYS[dow];
-      top.font = {name:serif,size:9};
+      const specialType = getAnnualSpecialDayType(year,month,day);
+      top.font = specialType === 'holiday'
+        ? {name:serif,size:9,bold:true,color:{argb:RED}}
+        : {name:serif,size:9};
       top.alignment = {horizontal:'center',vertical:'middle'};
       top.border = baseBorder;
-      if (dow === 0 || dow === 6) top.fill = solidFill(PINK);
+      if ((dow === 0 || dow === 6) && specialType !== 'workday') top.fill = solidFill(PINK);
 
       const v0 = String(data.rosterValues?.[`${day}-vacation-0`] || '');
       const v1 = String(data.rosterValues?.[`${day}-vacation-1`] || '');
@@ -210,7 +217,7 @@
       body.alignment = {horizontal:'center',vertical:'middle',wrapText:true};
       body.border = baseBorder;
       if (isBlocked(data,blockedWeekdays,year,month,day)) {
-        body.border = {...baseBorder, diagonal:{up:true,down:false,style:'thin',color:{argb:BLACK}}};
+        body.border = {...baseBorder, diagonal:{up:true,down:false,style:'thin',color:{argb:RED}}};
       }
       // 請假紅字：若兩格其中一格是請假，Excel 單一 cell 無法分行套兩種字色，因此整格改紅。
       const t0 = data.leaveTypeValues?.[`${day}-vacation-0`] || 'public';
@@ -505,9 +512,21 @@
     return Math.abs(pair % 2) === 1;
   }
 
+  function getAnnualSpecialDayType(year,month,day) {
+    const specialDays = payload?.specialDays?.[String(year)];
+    if (!specialDays) return '';
+    const key = `${Number(year)}-${pad2(Number(month))}-${pad2(Number(day))}`;
+    if (Array.isArray(specialDays.holidays) && specialDays.holidays.includes(key)) return 'holiday';
+    if (Array.isArray(specialDays.workdays) && specialDays.workdays.includes(key)) return 'workday';
+    return '';
+  }
+
   function isBlocked(data,blockedWeekdays,year,month,day) {
     const override = data.blockedVacationOverrides?.[String(day)];
     if (typeof override === 'boolean') return override;
+    const specialType = getAnnualSpecialDayType(year,month,day);
+    if (specialType === 'holiday') return true;
+    if (specialType === 'workday') return false;
     const dow = new Date(year,month-1,day).getDay();
     return blockedWeekdays.has(dow);
   }
