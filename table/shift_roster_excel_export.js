@@ -522,6 +522,7 @@
   }
 
   function isBlocked(data,blockedWeekdays,year,month,day) {
+    if (Array.isArray(data.supervisorLeaveDays) && data.supervisorLeaveDays.includes(Number(day))) return true;
     const override = data.blockedVacationOverrides?.[String(day)];
     if (typeof override === 'boolean') return override;
     const specialType = getAnnualSpecialDayType(year,month,day);
