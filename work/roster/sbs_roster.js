@@ -3930,7 +3930,7 @@ function changeMonth(offset) {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  if (window.ShiftRosterIntegration?.navigateMonth) {
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) {
     window.ShiftRosterIntegration.navigateMonth(year, month);
   } else {
     loadMonth(year, month);
@@ -3968,7 +3968,7 @@ yearInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  if (window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
   else {
     loadMonth(year, month);
     render();
@@ -3980,7 +3980,7 @@ monthInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  if (window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
   else {
     loadMonth(year, month);
     render();
@@ -4203,7 +4203,7 @@ window.ShiftRosterApp = Object.freeze({
   }
 });
 
-if (!window.ShiftRosterIntegration) {
+if (!window.ShiftRosterIntegration || window.ShiftRosterIntegration.getMode?.() === 'standalone') {
   window.ShiftRosterApp.initialize({ mode: 'standalone' });
   persistGlobalSettings();
 }

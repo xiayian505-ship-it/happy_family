@@ -10,9 +10,9 @@
 <body>
 <header class="roster-mode-bar" id="rosterModeBar">
 <div class="roster-mode-picker" aria-label="班表模式">
-<button data-roster-mode="standalone" type="button">本機模式</button>
-<button data-roster-mode="public" type="button">公開班表</button>
-<button data-roster-mode="editor" type="button">遠端編輯</button>
+<a data-roster-mode="standalone" href="sbs_roster.html">本機模式</a>
+<a data-roster-mode="public" href="?mode=public">公開班表</a>
+<a data-roster-mode="editor" href="?mode=editor">遠端編輯</a>
 </div>
 <div class="roster-remote-actions">
 <span aria-live="polite" id="rosterRemoteStatus">準備中…</span>
@@ -588,7 +588,7 @@
 <strong>遠端 Editor 登入</strong>
 <label class="dialog-field">共用 Editor 密碼<input autocomplete="current-password" id="rosterLoginPassword" required type="password"/></label>
 <p aria-live="polite" class="dialog-subnote" id="rosterLoginMessage"></p>
-<div class="app-dialog-actions"><button data-roster-mode="standalone" type="button">返回本機</button><button type="submit">登入</button></div>
+<div class="app-dialog-actions"><a class="button-link" href="sbs_roster.html">返回本機</a><button type="submit">登入</button></div>
 </form>
 </div>
 <div class="app-dialog" hidden id="rosterPasswordDialog">

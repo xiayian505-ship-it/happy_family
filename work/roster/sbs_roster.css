@@ -5300,10 +5300,34 @@ textarea,
   gap: 8px;
 }
 
-.roster-mode-picker button.is-active {
+.roster-mode-picker a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid #aeb8c1;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.roster-mode-picker a.is-active {
   color: #fff;
   border-color: #315b78;
   background: #315b78;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  background: #fff;
 }
 
 #rosterRemoteStatus {

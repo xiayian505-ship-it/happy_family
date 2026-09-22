@@ -21,13 +21,6 @@
     element.dataset.kind = kind;
   };
 
-  function setModeUrl(nextMode) {
-    const url = new URL(window.location.href);
-    if (nextMode === 'standalone') url.searchParams.delete('mode');
-    else url.searchParams.set('mode', nextMode);
-    window.location.assign(url.toString());
-  }
-
   function clearSession() {
     token = '';
     sessionStorage.removeItem(SESSION_KEY);
@@ -59,9 +52,10 @@
 
   function applyModeUi() {
     document.body.dataset.rosterMode = mode;
-    document.querySelectorAll('[data-roster-mode]').forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.rosterMode === mode);
-      button.addEventListener('click', () => setModeUrl(button.dataset.rosterMode));
+    document.querySelectorAll('[data-roster-mode]').forEach((link) => {
+      const active = link.dataset.rosterMode === mode;
+      link.classList.toggle('is-active', active);
+      link.setAttribute('aria-current', active ? 'page' : 'false');
     });
 
     const editor = mode === 'editor';
@@ -446,9 +440,6 @@
     if (mode === 'public') await initializePublic();
     else if (mode === 'editor') await initializeEditor();
     else {
-      window.ShiftRosterStorage.setMode('standalone');
-      window.ShiftRosterApp.initialize({ mode: 'standalone' });
-      window.ShiftRosterApp.saveCurrentMonth();
       status('本機模式｜資料只保存在這個瀏覽器', 'success');
     }
   }

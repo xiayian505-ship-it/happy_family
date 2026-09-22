@@ -98,6 +98,25 @@ test('public mode removes private control surfaces instead of relying on CSS', a
   assert.match(integration, /\.remove\(\)/);
 });
 
+test('mode navigation is native and does not depend on DOMContentLoaded handlers', async () => {
+  const html = await readFile(new URL('sbs_roster.html', root), 'utf8');
+  const integration = await readFile(new URL('sbs_roster_integration.js', root), 'utf8');
+  assert.match(html, /<a data-roster-mode="standalone" href="sbs_roster\.html">/);
+  assert.match(html, /<a data-roster-mode="public" href="\?mode=public">/);
+  assert.match(html, /<a data-roster-mode="editor" href="\?mode=editor">/);
+  assert.doesNotMatch(integration, /location\.assign/);
+  assert.doesNotMatch(integration, /\[data-roster-mode\][\s\S]{0,250}addEventListener\('click'/);
+});
+
+test('standalone keeps legacy initialization and month navigation ownership', async () => {
+  const roster = await readFile(new URL('sbs_roster.js', root), 'utf8');
+  const integration = await readFile(new URL('sbs_roster_integration.js', root), 'utf8');
+  assert.match(roster, /getMode\?\.\(\) !== 'standalone'/);
+  assert.match(roster, /!window\.ShiftRosterIntegration \|\| window\.ShiftRosterIntegration\.getMode\?\.\(\) === 'standalone'/);
+  const standaloneBranch = integration.slice(integration.indexOf("else if (mode === 'editor')"), integration.indexOf('window.ShiftRosterIntegration ='));
+  assert.doesNotMatch(standaloneBranch, /ShiftRosterApp\.initialize|ShiftRosterApp\.saveCurrentMonth/);
+});
+
 test('complete rule check remains wired', async () => {
   const roster = await readFile(new URL('sbs_roster.js', root), 'utf8');
   assert.match(roster, /ruleCheckButton\.addEventListener\('click', startRuleCheck\)/);
