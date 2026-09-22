@@ -1,0 +1,7 @@
+project_id = "kscbrnmhqugcwfohczve"
+
+[functions.blog-admin]
+# The bearer token is issued by the separate, shared Auth project, so the
+# platform gateway cannot verify it against the blog project's JWT secret.
+# The function performs issuer-side validation before every operation.
+verify_jwt = false
