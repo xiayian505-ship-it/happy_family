@@ -230,6 +230,8 @@ const DEFAULT_ANNUAL_LEAVE_RULES = Object.freeze({
 });
 
 const storage = window.ShiftRosterStorage || null;
+let rosterReadOnly = false;
+let rosterInitialized = false;
 const DEFAULT_SETTINGS = Object.freeze({
   publicLeaveCount: 8,
   maxConsecutiveWorkDays: 6,
@@ -1223,14 +1225,14 @@ function buildCurrentMonthSnapshot() {
 }
 
 function persistCurrentMonth() {
-  if (!storage) return;
+  if (!storage || rosterReadOnly) return;
   const { year, month } = getCurrentYearMonth();
   if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return;
   storage.saveMonth(buildCurrentMonthSnapshot());
 }
 
 function persistGlobalSettings() {
-  if (!storage) return;
+  if (!storage || rosterReadOnly) return;
   storage.saveSettings({
     publicLeaveCount: Number.parseInt(publicLeaveCount || '8', 10) || 8,
     maxConsecutiveWorkDays,
@@ -3909,8 +3911,10 @@ function render() {
   if (!supervisorConfigPanel.hidden) renderSupervisorConfigPanel(year, month);
 }
 function changeMonth(offset) {
-  commitAllVisibleNames();
-  persistCurrentMonth();
+  if (!rosterReadOnly) {
+    commitAllVisibleNames();
+    persistCurrentMonth();
+  }
   let year = Number(yearInput.value);
   let month = Number(monthInput.value) + offset;
   if (month < 1) {
@@ -3926,8 +3930,12 @@ function changeMonth(offset) {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.navigateMonth) {
+    window.ShiftRosterIntegration.navigateMonth(year, month);
+  } else {
+    loadMonth(year, month);
+    render();
+  }
 }
 
 // ===== 事件 =====
@@ -3960,8 +3968,11 @@ yearInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  else {
+    loadMonth(year, month);
+    render();
+  }
 });
 monthInput.addEventListener('input', syncMonthInputWidth);
 monthInput.addEventListener('change', () => {
@@ -3969,8 +3980,11 @@ monthInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  else {
+    loadMonth(year, month);
+    render();
+  }
 });
 [yearInput, monthInput].forEach((input) => {
   input.addEventListener('keydown', (event) => {
@@ -4151,20 +4165,48 @@ window.ShiftRosterApp = Object.freeze({
     renderRuleSettingsPage();
   },
   getSupervisorLeaveDays: () => [...supervisorLeaveDays].sort((a, b) => a - b),
-  getCurrentYearMonth
+  getCurrentYearMonth,
+  buildCurrentMonthSnapshot,
+  setReadOnly: (value) => {
+    rosterReadOnly = Boolean(value);
+    document.body.classList.toggle('roster-read-only', rosterReadOnly);
+    scheduleTable?.querySelectorAll('input, button, [contenteditable="true"]').forEach((element) => {
+      if ('disabled' in element) element.disabled = rosterReadOnly;
+      if (rosterReadOnly && element.hasAttribute('contenteditable')) element.setAttribute('contenteditable', 'false');
+    });
+  },
+  loadSnapshot: (year, month, snapshot) => {
+    yearInput.value = String(year);
+    monthInput.value = String(month);
+    syncMonthInputWidth();
+    loadMonthIntoMemory(year, month, snapshot || { month: storage?.makeMonthId(year, month), people: {}, rosterValues: {} });
+    render();
+    window.ShiftRosterApp.setReadOnly(rosterReadOnly);
+  },
+  initialize: ({ mode = 'standalone', snapshot = null, year = null, month = null } = {}) => {
+    if (rosterInitialized) return;
+    rosterInitialized = true;
+    rosterReadOnly = mode === 'public';
+    if (mode !== 'public') loadGlobalSettings();
+    const initialMonth = year && month ? { year, month } : getDefaultNextYearMonth();
+    yearInput.value = initialMonth.year;
+    monthInput.value = String(initialMonth.month);
+    syncMonthInputWidth();
+    publicLeaveInput.textContent = publicLeaveCount;
+    if (snapshot) loadMonthIntoMemory(initialMonth.year, initialMonth.month, snapshot);
+    else if (mode !== 'public') loadMonth(initialMonth.year, initialMonth.month);
+    else loadMonthIntoMemory(initialMonth.year, initialMonth.month, { month: storage?.makeMonthId(initialMonth.year, initialMonth.month), people: {}, rosterValues: {} });
+    buildRowFillQuickLetters();
+    render();
+    renderRuleSettingsPage();
+    window.ShiftRosterApp.setReadOnly(rosterReadOnly);
+  }
 });
 
-loadGlobalSettings();
-persistGlobalSettings();
-const initialMonth = getDefaultNextYearMonth();
-yearInput.value = initialMonth.year;
-monthInput.value = String(initialMonth.month);
-syncMonthInputWidth();
-publicLeaveInput.textContent = publicLeaveCount;
-loadMonth(initialMonth.year, initialMonth.month);
-buildRowFillQuickLetters();
-render();
-renderRuleSettingsPage();
+if (!window.ShiftRosterIntegration) {
+  window.ShiftRosterApp.initialize({ mode: 'standalone' });
+  persistGlobalSettings();
+}
 
 if (storage && !storage.isPersistent()) {
   window.setTimeout(() => {

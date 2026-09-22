@@ -99,6 +99,13 @@
 
   function applyImport() {
     if (!pendingImport) return closeImportConfirm();
+    if (window.ShiftRosterIntegration?.isEditor?.()) {
+      const payload = pendingImport;
+      pendingImport = null;
+      importConfirmDialog.hidden = true;
+      window.ShiftRosterIntegration.remoteReplaceAll(payload);
+      return;
+    }
     try {
       storage.replaceAll(pendingImport);
       pendingImport = null;
@@ -126,11 +133,25 @@
     cleanupDialog.hidden = true;
   }
 
-  function confirmCleanup() {
+  async function confirmCleanup() {
     const cutoff = cleanupBeforeMonth.value;
     if (!storage.parseMonthId(cutoff)) {
       cleanupMessage.textContent = '請先選擇有效月份。';
       cleanupBeforeMonth.focus();
+      return;
+    }
+
+    if (window.ShiftRosterIntegration?.isEditor?.()) {
+      cleanupConfirm.disabled = true;
+      try {
+        const response = await window.ShiftRosterIntegration.remoteCleanup(cutoff);
+        cleanupDialog.hidden = true;
+        window.alert(`已清除 ${response.removed} 個遠端歷史月份。`);
+      } catch (_error) {
+        // The integration controller already displayed the contract error.
+      } finally {
+        cleanupConfirm.disabled = false;
+      }
       return;
     }
 

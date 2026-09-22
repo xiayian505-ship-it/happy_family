@@ -41,6 +41,9 @@
       const monthData = mergeWithExistingMonth(imported);
 
       storage.saveMonth(monthData);
+      if (window.ShiftRosterIntegration?.isEditor?.()) {
+        await window.ShiftRosterIntegration.saveRemoteSnapshot(monthData);
+      }
 
       const current = app.getCurrentYearMonth?.();
       if (current && Number(current.year) === parsed.year && Number(current.month) === parsed.month) {

@@ -5281,3 +5281,59 @@ textarea,
     right: auto;
   }
 }
+/* ===== Local / Public / Remote Editor mode boundary ===== */
+.roster-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #d7d7d7;
+  background: #f8fafc;
+}
+
+.roster-mode-picker,
+.roster-remote-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roster-mode-picker button.is-active {
+  color: #fff;
+  border-color: #315b78;
+  background: #315b78;
+}
+
+#rosterRemoteStatus {
+  font-size: 13px;
+  color: #405363;
+}
+
+#rosterRemoteStatus[data-kind="success"] { color: #1d6b3a; }
+#rosterRemoteStatus[data-kind="notice"] { color: #8a5b00; }
+#rosterRemoteStatus[data-kind="error"] { color: #a12622; }
+
+.roster-auth-panel {
+  display: grid;
+  gap: 14px;
+  width: min(420px, calc(100vw - 32px));
+}
+
+body[data-roster-mode="public"] .name-input,
+body[data-roster-mode="public"] .schedule-input,
+body[data-roster-mode="public"] .vacation-input,
+body[data-roster-mode="public"] [contenteditable] {
+  pointer-events: none;
+  caret-color: transparent;
+}
+
+@media (max-width: 720px) {
+  .roster-mode-bar { align-items: stretch; flex-direction: column; }
+  .roster-remote-actions { justify-content: space-between; }
+}
+
+@media print {
+  .roster-mode-bar { display: none !important; }
+}
