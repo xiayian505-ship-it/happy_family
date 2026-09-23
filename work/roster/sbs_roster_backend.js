@@ -5,29 +5,44 @@
   const API_URL = `${PROJECT_URL}/functions/v1/roster-admin`;
 
   class RosterApiError extends Error {
-    constructor(message, { status = 0, code = 'network_error', response = null } = {}) {
+    constructor(message, { status = 0, code = 'network_error', response = null, diagnostic = null } = {}) {
       super(message);
       this.name = 'RosterApiError';
       this.status = status;
       this.code = code;
       this.response = response;
+      this.diagnostic = diagnostic;
     }
   }
 
-  async function request(path, { method = 'GET', sessionToken = '', body } = {}) {
+  async function request(path, { method = 'GET', sessionToken = '', body, diagnostic = {} } = {}) {
     const headers = { Accept: 'application/json' };
     if (sessionToken) headers['x-roster-session'] = sessionToken;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
 
+    const endpoint = `${API_URL}${path}`;
+    const safeDiagnostic = { endpoint, method, ...diagnostic };
+    let serializedBody;
+    try {
+      serializedBody = body === undefined ? undefined : JSON.stringify(body);
+    } catch (error) {
+      throw new RosterApiError(error?.message || '遠端 request 無法序列化。', {
+        code: 'serialization_error',
+        diagnostic: safeDiagnostic
+      });
+    }
+
     let response;
     try {
-      response = await fetch(`${API_URL}${path}`, {
+      response = await fetch(endpoint, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body)
+        body: serializedBody
       });
     } catch (error) {
-      throw new RosterApiError(error?.message || '無法連線至班表服務。');
+      throw new RosterApiError(error?.message || '無法連線至班表服務。', {
+        diagnostic: safeDiagnostic
+      });
     }
 
     let payload = null;
@@ -40,13 +55,19 @@
       throw new RosterApiError(payload?.error?.message || `班表服務回應錯誤（${response.status}）。`, {
         status: response.status,
         code: payload?.error?.code || 'server_error',
-        response: payload
+        response: payload,
+        diagnostic: { ...safeDiagnostic, status: response.status }
       });
     }
     return payload;
   }
 
-  const authenticated = (path, method, sessionToken, body) => request(path, { method, sessionToken, body });
+  const authenticated = (path, method, sessionToken, body, diagnostic) => request(path, {
+    method,
+    sessionToken,
+    body,
+    diagnostic
+  });
 
   window.ShiftRosterBackend = Object.freeze({
     PROJECT_URL,
@@ -60,7 +81,13 @@
       `/months/${encodeURIComponent(monthId)}`,
       'PUT',
       token,
-      { snapshot, expected_revision: expectedRevision, publish: Boolean(publish) }
+      { snapshot, expected_revision: expectedRevision, publish: Boolean(publish) },
+      {
+        monthId,
+        expectedRevision,
+        publish: Boolean(publish),
+        snapshotMonth: snapshot?.month
+      }
     ),
     saveSettings: (token, settings) => authenticated('/settings', 'PUT', token, { data: settings }),
     saveEmployees: (token, employees) => authenticated('/employees', 'PUT', token, { data: employees }),

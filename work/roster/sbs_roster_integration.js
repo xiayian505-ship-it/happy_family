@@ -278,6 +278,16 @@
       status(`${snapshot.month} 已儲存 revision ${response.revision}`, 'success');
       return response;
     } catch (error) {
+      error.remoteSave = {
+        ...(error.diagnostic || {}),
+        status: error.status || error.diagnostic?.status || 0,
+        code: error.code || 'unknown_error',
+        message: error.message || '遠端月份儲存失敗。',
+        monthId: snapshot.month,
+        expectedRevision: metadata.revision,
+        publish: requestedPublish,
+        snapshotMonth: snapshot.month
+      };
       if (error?.status === 409 && error?.code === 'revision_conflict') {
         status(`${snapshot.month} 儲存衝突；未覆蓋遠端資料`, 'error');
       }

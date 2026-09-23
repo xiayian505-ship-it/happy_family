@@ -58,6 +58,48 @@ test('backend adapter preserves 409 contract details without retrying', async ()
   assert.equal(count, 1);
 });
 
+test('month save errors expose only safe request diagnostics', async () => {
+  const fetch = async () => jsonResponse(500, {
+    ok: false,
+    error: { code: 'server_error', message: 'Roster backend error.' }
+  });
+  const { window } = await loadBrowserScript('sbs_roster_backend.js', { fetch });
+  await assert.rejects(
+    window.ShiftRosterBackend.saveMonth('secret-session', '2026-10', { month: '2026-10', people: { A: { displayName: 'private' } } }, 0, false),
+    (error) => {
+      assert.equal(error.status, 500);
+      assert.equal(error.code, 'server_error');
+      assert.deepEqual(JSON.parse(JSON.stringify(error.diagnostic)), {
+        endpoint: 'https://kscbrnmhqugcwfohczve.supabase.co/functions/v1/roster-admin/months/2026-10',
+        method: 'PUT',
+        monthId: '2026-10',
+        expectedRevision: 0,
+        publish: false,
+        snapshotMonth: '2026-10',
+        status: 500
+      });
+      assert.doesNotMatch(JSON.stringify(error.diagnostic), /secret-session|private/);
+      return true;
+    }
+  );
+});
+
+test('request serialization failures are identified before fetch', async () => {
+  let called = false;
+  const fetch = async () => {
+    called = true;
+    return jsonResponse(200, { ok: true });
+  };
+  const { window } = await loadBrowserScript('sbs_roster_backend.js', { fetch });
+  const snapshot = { month: '2026-10' };
+  snapshot.circular = snapshot;
+  await assert.rejects(
+    window.ShiftRosterBackend.saveMonth('secret-session', '2026-10', snapshot, 0, false),
+    (error) => error.code === 'serialization_error' && error.diagnostic.monthId === '2026-10'
+  );
+  assert.equal(called, false);
+});
+
 test('public adapter selects only the sanitized projection', async () => {
   const calls = [];
   const fetch = async (url, options) => {
