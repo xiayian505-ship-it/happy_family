@@ -159,6 +159,28 @@ test('standalone keeps legacy initialization and month navigation ownership', as
   assert.doesNotMatch(standaloneBranch, /ShiftRosterApp\.initialize|ShiftRosterApp\.saveCurrentMonth/);
 });
 
+test('editor bootstrap defaults to next month instead of the latest remote month', async () => {
+  const integration = await readFile(new URL('sbs_roster_integration.js', root), 'utf8');
+  const helperSource = integration.match(/function getDefaultNextMonthId\(date = new Date\(\)\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(helperSource, 'next-month helper must exist');
+  const getDefaultNextMonthId = vm.runInNewContext(`(() => { ${helperSource}; return getDefaultNextMonthId; })()`, { Date, String });
+
+  const remoteMonths = ['2026-09', '2026-10', '2026-11', '2026-12', '2027-01', '2027-02'];
+  assert.equal(getDefaultNextMonthId(new Date(2026, 8, 15)), '2026-10');
+  assert.notEqual(getDefaultNextMonthId(new Date(2026, 8, 15)), remoteMonths.at(-1));
+  assert.equal(getDefaultNextMonthId(new Date(2026, 11, 15)), '2027-01');
+
+  const applyBootstrap = integration.slice(integration.indexOf('function applyBootstrap'), integration.indexOf('async function bootstrapEditor'));
+  assert.match(applyBootstrap, /const initialId = getDefaultNextMonthId\(\)/);
+  assert.doesNotMatch(applyBootstrap, /revisions\.keys\(\)|sort\(\)\.reverse\(\)/);
+  assert.match(applyBootstrap, /currentPublished = revisions\.get\(initialId\)\?\.published === true/);
+  assert.match(applyBootstrap, /revisions\.get\(initialId\)\?\.revision \|\| 0/);
+
+  const remoteMonthsWithoutNext = ['2026-09', '2026-11', '2027-02'];
+  assert.equal(getDefaultNextMonthId(new Date(2026, 8, 15)), '2026-10');
+  assert.equal(remoteMonthsWithoutNext.includes('2026-10'), false);
+});
+
 test('complete rule check remains wired', async () => {
   const roster = await readFile(new URL('sbs_roster.js', root), 'utf8');
   assert.match(roster, /ruleCheckButton\.addEventListener\('click', startRuleCheck\)/);

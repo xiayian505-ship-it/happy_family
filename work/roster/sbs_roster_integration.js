@@ -175,6 +175,11 @@
     });
   }
 
+  function getDefaultNextMonthId(date = new Date()) {
+    const next = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+  }
+
   function applyBootstrap(payload) {
     const data = payload?.data;
     if (!payload?.ok || data?.schemaVersion !== 3 || !data.months || Array.isArray(data.months)) {
@@ -182,11 +187,7 @@
     }
     window.ShiftRosterStorage.setMode('editor');
     window.ShiftRosterStorage.hydrateRemote(makeRemoteBackup(data));
-    const ids = [...revisions.keys()].sort().reverse();
-    const initialId = ids[0] || (() => {
-      const date = new Date();
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    })();
+    const initialId = getDefaultNextMonthId();
     const parsed = parseMonthId(initialId);
     window.ShiftRosterApp.initialize({ mode: 'editor', year: parsed.year, month: parsed.month });
     currentPublished = revisions.get(initialId)?.published === true;
