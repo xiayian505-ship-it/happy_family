@@ -449,45 +449,54 @@
 </html>`);
     printWindow.document.close();
 
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      if (typeof options.cleanup === 'function') options.cleanup();
-      if (!printWindow.closed) printWindow.close();
+    let cleanupTimer = 0;
+    const finishLater = (delay = 120000) => {
+      if (cleanupTimer) printWindow.clearTimeout(cleanupTimer);
+      // Android may emit afterprint before its print service has finished reading
+      // the document. Keep the self-contained image document alive briefly.
+      cleanupTimer = printWindow.setTimeout(() => {
+        if (typeof options.cleanup === 'function') options.cleanup();
+        if (!printWindow.closed) printWindow.close();
+      }, delay);
     };
-    printWindow.addEventListener('afterprint', finish, { once: true });
-    printWindow.addEventListener('pagehide', finish, { once: true });
+    printWindow.addEventListener('afterprint', () => finishLater(), { once: true });
 
     const image = printWindow.document.getElementById('printImage');
     const startPrint = () => {
       try {
         printWindow.focus();
         printWindow.print();
+        // Fallback cleanup for browsers that never dispatch afterprint.
+        finishLater(600000);
       } catch (error) {
         console.error(error);
-        finish();
+        if (typeof options.cleanup === 'function') options.cleanup();
+        if (!printWindow.closed) printWindow.close();
       }
     };
     if (image.complete && image.naturalWidth) startPrint();
     else image.addEventListener('load', startPrint, { once: true });
-    image.addEventListener('error', finish, { once: true });
+    image.addEventListener('error', () => {
+      if (typeof options.cleanup === 'function') options.cleanup();
+      if (!printWindow.closed) printWindow.close();
+    }, { once: true });
     return true;
   }
 
-  function printBlob(blob, printWindow = null) {
-    const url = URL.createObjectURL(blob);
-    try {
-      const opened = printPreviewUrl(url, {
-        printWindow,
-        cleanup: () => URL.revokeObjectURL(url)
-      });
-      if (!opened) URL.revokeObjectURL(url);
-      return opened;
-    } catch (error) {
-      URL.revokeObjectURL(url);
-      throw error;
-    }
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => resolve(reader.result), { once: true });
+      reader.addEventListener('error', () => reject(reader.error || new Error('無法讀取列印圖片。')), { once: true });
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function printBlob(blob, printWindow = null) {
+    // Embed the PNG in the print document. Android's print service can then read
+    // it without depending on the lifetime of a revocable blob URL.
+    const dataUrl = await blobToDataUrl(blob);
+    return printPreviewUrl(dataUrl, { printWindow });
   }
 
   let currentPreviewUrl = '';

@@ -174,12 +174,18 @@ test('standalone print pre-opens a window then reuses the PNG rendering source',
     roster.indexOf('function setSpecialDatesMode')
   );
   assert.ok(printFlow.indexOf('openPrintWindow') < printFlow.indexOf('await window.ShiftRosterExport.createPngBlob'));
-  assert.match(printFlow, /ShiftRosterExport\.printBlob\(blob, printWindow\)/);
+  assert.match(printFlow, /await window\.ShiftRosterExport\.printBlob\(blob, printWindow\)/);
   assert.doesNotMatch(printFlow, /window\.print\(\)/);
   assert.match(exporter, /async function createPngBlob\(\) \{\s*const canvas = await drawRosterToCanvas\(\);/);
   assert.match(exporter, /image\.addEventListener\('load', startPrint/);
-  assert.match(exporter, /printWindow\.addEventListener\('afterprint', finish/);
-  assert.match(exporter, /URL\.revokeObjectURL\(url\)/);
+  assert.match(exporter, /reader\.readAsDataURL\(blob\)/);
+  assert.match(exporter, /const dataUrl = await blobToDataUrl\(blob\)/);
+  assert.doesNotMatch(exporter, /printWindow\.addEventListener\('pagehide'/);
+  assert.match(exporter, /printWindow\.addEventListener\('afterprint', \(\) => finishLater\(\)/);
+  assert.match(exporter, /finishLater\(600000\)/);
+  assert.match(exporter, /const finishLater = \(delay = 120000\)/);
+  const printBlobFlow = exporter.slice(exporter.indexOf('async function printBlob'), exporter.indexOf('let currentPreviewUrl'));
+  assert.doesNotMatch(printBlobFlow, /createObjectURL|revokeObjectURL/);
   assert.match(exporter, /max-height: 198mm/);
   assert.match(exporter, /if \(currentPreviewBlob\) downloadBlob\(currentPreviewBlob\)/);
 });

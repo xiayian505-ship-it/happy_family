@@ -3765,7 +3765,7 @@ async function printWithOutputTimestamp(includeTime) {
   try {
     const blob = await window.ShiftRosterExport.createPngBlob();
     cleanup();
-    window.ShiftRosterExport.printBlob(blob, printWindow);
+    await window.ShiftRosterExport.printBlob(blob, printWindow);
   } catch (error) {
     cleanup();
     if (!printWindow.closed) printWindow.close();
