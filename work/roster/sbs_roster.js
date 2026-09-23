@@ -3755,17 +3755,22 @@ async function prepareOutputTimestamp() {
   await new Promise((resolve) => requestAnimationFrame(resolve));
   return cleanup;
 }
-function printWithOutputTimestamp(includeTime) {
+async function printWithOutputTimestamp(includeTime) {
   const cleanup = applyOutputTimestamp(includeTime);
-  window.addEventListener('afterprint', cleanup, { once: true });
-  try {
-    // Keep print in the Yes/No click call stack. Android browsers may reject
-    // print after the previous Promise + requestAnimationFrame boundary.
-    window.print();
-  } catch (error) {
-    window.removeEventListener('afterprint', cleanup);
+  const printWindow = window.ShiftRosterExport?.openPrintWindow?.();
+  if (!printWindow) {
     cleanup();
-    throw error;
+    return;
+  }
+  try {
+    const blob = await window.ShiftRosterExport.createPngBlob();
+    cleanup();
+    window.ShiftRosterExport.printBlob(blob, printWindow);
+  } catch (error) {
+    cleanup();
+    if (!printWindow.closed) printWindow.close();
+    console.error(error);
+    window.alert(`列印內容產生失敗：${error?.message || '未知錯誤'}`);
   }
 }
 

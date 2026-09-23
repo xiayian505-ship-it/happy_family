@@ -165,21 +165,23 @@ test('complete rule check remains wired', async () => {
   assert.match(roster, /ShiftRosterRules\.collectIssuesByKind\(buildRuleModel\(\), kind\)/);
 });
 
-test('standalone print stays in the output choice click call stack', async () => {
+test('standalone print pre-opens a window then reuses the PNG rendering source', async () => {
   const roster = await readFile(new URL('sbs_roster.js', root), 'utf8');
+  const exporter = await readFile(new URL('sbs_roster_export.js', root), 'utf8');
   assert.match(roster, /printButton\.addEventListener\('click', \(\) => \{\s*requestOutputTimeAction\(printWithOutputTimestamp\);\s*\}\);/);
-  const directPrint = roster.slice(
+  const printFlow = roster.slice(
     roster.indexOf('function printWithOutputTimestamp'),
     roster.indexOf('function setSpecialDatesMode')
   );
-  assert.match(directPrint, /window\.print\(\)/);
-  assert.doesNotMatch(directPrint, /\bawait\s/);
-  assert.doesNotMatch(directPrint, /requestAnimationFrame\s*\(/);
-  const preparedOutput = roster.slice(
-    roster.indexOf('async function prepareOutputTimestamp'),
-    roster.indexOf('function printWithOutputTimestamp')
-  );
-  assert.match(preparedOutput, /requestAnimationFrame/);
+  assert.ok(printFlow.indexOf('openPrintWindow') < printFlow.indexOf('await window.ShiftRosterExport.createPngBlob'));
+  assert.match(printFlow, /ShiftRosterExport\.printBlob\(blob, printWindow\)/);
+  assert.doesNotMatch(printFlow, /window\.print\(\)/);
+  assert.match(exporter, /async function createPngBlob\(\) \{\s*const canvas = await drawRosterToCanvas\(\);/);
+  assert.match(exporter, /image\.addEventListener\('load', startPrint/);
+  assert.match(exporter, /printWindow\.addEventListener\('afterprint', finish/);
+  assert.match(exporter, /URL\.revokeObjectURL\(url\)/);
+  assert.match(exporter, /max-height: 198mm/);
+  assert.match(exporter, /if \(currentPreviewBlob\) downloadBlob\(currentPreviewBlob\)/);
 });
 
 test('remote working store never overwrites standalone localStorage', async () => {

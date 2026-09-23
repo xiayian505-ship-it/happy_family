@@ -413,12 +413,21 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function printPreviewUrl(url) {
+  function openPrintWindow() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       window.alert('瀏覽器阻擋了列印視窗，請允許彈出視窗後再試一次。');
-      return;
+      return null;
     }
+    printWindow.document.open();
+    printWindow.document.write('<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><title>準備列印</title></head><body>正在準備完整班表…</body></html>');
+    printWindow.document.close();
+    return printWindow;
+  }
+
+  function printPreviewUrl(url, options = {}) {
+    const printWindow = options.printWindow || openPrintWindow();
+    if (!printWindow) return false;
 
     const safeTitle = getFileName().replace(/</g, '&lt;').replace(/>/g, '&gt;');
     printWindow.document.open();
@@ -430,21 +439,55 @@
 <style>
   @page { size: A4 landscape; margin: 6mm; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { display: flex; align-items: flex-start; justify-content: center; }
-  img { width: 100%; height: auto; display: block; }
+  body { display: flex; align-items: flex-start; justify-content: center; overflow: hidden; }
+  img { display: block; max-width: 100%; max-height: 198mm; width: auto; height: auto; object-fit: contain; }
 </style>
 </head>
 <body>
 <img id="printImage" src="${url}" alt="排班表 PNG">
-<script>
-  const image = document.getElementById('printImage');
-  image.addEventListener('load', () => {
-    setTimeout(() => { window.focus(); window.print(); }, 50);
-  });
-<\/script>
 </body>
 </html>`);
     printWindow.document.close();
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (typeof options.cleanup === 'function') options.cleanup();
+      if (!printWindow.closed) printWindow.close();
+    };
+    printWindow.addEventListener('afterprint', finish, { once: true });
+    printWindow.addEventListener('pagehide', finish, { once: true });
+
+    const image = printWindow.document.getElementById('printImage');
+    const startPrint = () => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (error) {
+        console.error(error);
+        finish();
+      }
+    };
+    if (image.complete && image.naturalWidth) startPrint();
+    else image.addEventListener('load', startPrint, { once: true });
+    image.addEventListener('error', finish, { once: true });
+    return true;
+  }
+
+  function printBlob(blob, printWindow = null) {
+    const url = URL.createObjectURL(blob);
+    try {
+      const opened = printPreviewUrl(url, {
+        printWindow,
+        cleanup: () => URL.revokeObjectURL(url)
+      });
+      if (!opened) URL.revokeObjectURL(url);
+      return opened;
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      throw error;
+    }
   }
 
   let currentPreviewUrl = '';
@@ -553,6 +596,8 @@
   window.ShiftRosterExport = Object.freeze({
     drawRosterToCanvas,
     createPngBlob,
+    openPrintWindow,
+    printBlob,
     previewPng,
     closePreview
   });
