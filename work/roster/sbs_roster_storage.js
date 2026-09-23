@@ -11,7 +11,10 @@
   const SPECIAL_DAYS_PREFIX = `${NAMESPACE}:special-days:`;
 
   const memoryStore = new Map();
+  const remoteStore = new Map();
   let persistent = true;
+  let activeMode = 'standalone';
+  let changeListener = null;
 
   function testLocalStorage() {
     const probe = `${NAMESPACE}:__probe__`;
@@ -28,6 +31,7 @@
   persistent = testLocalStorage();
 
   function backendGet(key) {
+    if (activeMode !== 'standalone') return remoteStore.has(key) ? remoteStore.get(key) : null;
     if (persistent) {
       try {
         return window.localStorage.getItem(key);
@@ -40,6 +44,10 @@
 
   function backendSet(key, value) {
     const text = String(value);
+    if (activeMode !== 'standalone') {
+      remoteStore.set(key, text);
+      return;
+    }
     if (persistent) {
       try {
         window.localStorage.setItem(key, text);
@@ -52,6 +60,10 @@
   }
 
   function backendRemove(key) {
+    if (activeMode !== 'standalone') {
+      remoteStore.delete(key);
+      return;
+    }
     if (persistent) {
       try {
         window.localStorage.removeItem(key);
@@ -63,6 +75,7 @@
   }
 
   function backendKeys() {
+    if (activeMode !== 'standalone') return [...remoteStore.keys()];
     if (persistent) {
       try {
         const keys = [];
@@ -177,6 +190,7 @@
       updatedAt: new Date().toISOString()
     };
     writeObject(makeSpecialDaysKey(targetYear), normalized);
+    changeListener?.('specialDays', { year: targetYear, data: structuredCloneSafe(normalized) });
     return normalized;
   }
 
@@ -279,6 +293,7 @@
       throw new Error('月份資料格式不正確');
     }
     backendSet(`${MONTH_PREFIX}${monthData.month}`, JSON.stringify(monthData));
+    changeListener?.('month', { monthId: monthData.month, data: structuredCloneSafe(monthData) });
   }
 
   function listMonthIds() {
@@ -308,6 +323,7 @@
 
   function saveSettings(settings) {
     writeObject(SETTINGS_KEY, settings || {});
+    changeListener?.('settings', structuredCloneSafe(settings || {}));
   }
 
   function getEmployees() {
@@ -316,6 +332,7 @@
 
   function saveEmployees(employees) {
     writeObject(EMPLOYEES_KEY, employees || {});
+    changeListener?.('employees', structuredCloneSafe(employees || {}));
   }
 
   function normalizeEmployeeName(value) {
@@ -650,6 +667,26 @@
     }
   }
 
+  function setMode(mode) {
+    activeMode = mode === 'editor' || mode === 'public' ? mode : 'standalone';
+    remoteStore.clear();
+  }
+
+  function hydrateRemote(payload) {
+    if (activeMode === 'standalone') throw new Error('本機模式不能載入遠端工作資料');
+    const previousListener = changeListener;
+    changeListener = null;
+    try {
+      replaceAll(payload);
+    } finally {
+      changeListener = previousListener;
+    }
+  }
+
+  function setChangeListener(listener) {
+    changeListener = typeof listener === 'function' ? listener : null;
+  }
+
   getMeta();
 
   window.ShiftRosterStorage = Object.freeze({
@@ -672,6 +709,10 @@
     removeMonthsBefore,
     exportPayload,
     validateBackup,
-    replaceAll
+    replaceAll,
+    setMode,
+    getMode: () => activeMode,
+    hydrateRemote,
+    setChangeListener
   });
 })();

@@ -8,6 +8,22 @@
 <link href="sbs_roster.css" rel="stylesheet"/>
 </head>
 <body>
+<header class="roster-mode-bar" id="rosterModeBar">
+<div class="roster-mode-picker" aria-label="班表模式">
+<a data-roster-mode="standalone" href="sbs_roster.html">本機模式</a>
+<a data-roster-mode="public" href="?mode=public">公開班表</a>
+<a data-roster-mode="editor" href="?mode=editor">遠端編輯</a>
+</div>
+<div class="roster-remote-actions">
+<span aria-live="polite" id="rosterRemoteStatus">準備中…</span>
+<button hidden id="rosterPublicPng" type="button">PNG</button>
+<button hidden id="rosterPublicPrint" type="button">列印</button>
+<button hidden id="rosterRemoteSave" type="button">儲存遠端</button>
+<button hidden id="rosterPublishToggle" type="button">發布</button>
+<button hidden id="rosterPasswordButton" type="button">變更密碼</button>
+<button hidden id="rosterLogoutButton" type="button">登出</button>
+</div>
+</header>
 <nav aria-label="排班工具頁面" class="page-tabs"><button aria-controls="rosterView" aria-selected="true" class="page-tab is-active" id="rosterViewTab" type="button">班表</button><button aria-controls="settingsView" aria-selected="false" class="page-tab" id="settingsViewTab" type="button">設定</button><button aria-controls="rulesView" aria-selected="false" class="page-tab" id="rulesViewTab" type="button">說明</button></nav>
 <div class="page-view" id="rosterView">
 <div aria-label="排班表操作" class="controls roster-controls">
@@ -567,6 +583,41 @@
 </details>
 </section>
 </section>
+<div class="app-dialog" hidden id="rosterLoginDialog">
+<form class="app-dialog-panel roster-auth-panel" id="rosterLoginForm">
+<strong>遠端 Editor 登入</strong>
+<label class="dialog-field">共用 Editor 密碼<input autocomplete="current-password" id="rosterLoginPassword" required type="password"/></label>
+<p aria-live="polite" class="dialog-subnote" id="rosterLoginMessage"></p>
+<div class="app-dialog-actions"><a class="button-link" href="sbs_roster.html">返回本機</a><button type="submit">登入</button></div>
+</form>
+</div>
+<div class="app-dialog" hidden id="rosterPasswordDialog">
+<form class="app-dialog-panel roster-auth-panel" id="rosterPasswordForm">
+<strong>變更 Editor 密碼</strong>
+<label class="dialog-field">目前密碼<input autocomplete="current-password" id="rosterCurrentPassword" required type="password"/></label>
+<label class="dialog-field">新密碼<input autocomplete="new-password" id="rosterNewPassword" required type="password"/></label>
+<p aria-live="polite" class="dialog-subnote" id="rosterPasswordMessage"></p>
+<div class="app-dialog-actions"><button id="rosterPasswordCancel" type="button">取消</button><button type="submit">變更密碼</button></div>
+</form>
+</div>
+<div class="app-dialog" hidden id="rosterRevisionDialog">
+<div class="app-dialog-panel roster-auth-panel" role="dialog" aria-modal="true">
+<strong>遠端班表已有較新版本</strong>
+<p class="app-dialog-message" id="rosterRevisionMessage"></p>
+<p class="dialog-subnote">目前畫面尚未成功儲存；系統不會自動覆蓋或重試。</p>
+<div class="app-dialog-actions"><button id="rosterRevisionKeep" type="button">保留目前畫面</button><button id="rosterRevisionReload" type="button">重新載入 Server 版本</button></div>
+</div>
+</div>
+<div class="app-dialog" hidden id="rosterRemoteImportDialog">
+<div class="app-dialog-panel roster-auth-panel" role="dialog" aria-modal="true">
+<strong>套用遠端完整備份</strong>
+<p class="app-dialog-message">這會取代遠端全部班表、設定、人員與特殊日期，並取消所有發布月份。</p>
+<div class="app-dialog-actions"><button id="rosterRemoteImportCancel" type="button">取消</button><button id="rosterRemoteImportApply" type="button">確認取代</button></div>
+</div>
+</div>
+<script src="sbs_roster_backend.js"></script>
+<script src="sbs_roster_public.js"></script>
+<script src="sbs_roster_integration.js"></script>
 <script src="sbs_roster_storage.js"></script>
 <script src="sbs_roster_rules.js"></script>
 <script src="sbs_roster.js"></script>
