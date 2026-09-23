@@ -1,0 +1,815 @@
+{
+  "format": "elitehotel-shift-roster-v3",
+  "schemaVersion": 3,
+  "meta": {
+    "schemaVersion": 3
+  },
+  "settings": {
+    "publicLeaveCount": 8,
+    "maxConsecutiveWorkDays": 6,
+    "minTurnaroundHours": 12,
+    "normalNightRange": "22~06",
+    "shiftRanges": [
+      "07~15",
+      "15~23",
+      "16~24",
+      "23~07",
+      "00~08"
+    ],
+    "blockedWeekdays": [
+      6
+    ],
+    "blockedLeaveTypes": [
+      "public",
+      "annual"
+    ],
+    "meetingDefaultText": "8點櫃檯開會",
+    "annualLeaveRules": {
+      "sixMonths": 3,
+      "year1": 7,
+      "year2": 10,
+      "years3to4": 14,
+      "years5to9": 15,
+      "year10Base": 16,
+      "after10Increment": 1,
+      "maxDays": 30
+    }
+  },
+  "employees": {
+    "emp_test_01": {
+      "name": "員工A",
+      "active": true
+    },
+    "emp_test_02": {
+      "name": "員工B",
+      "active": true
+    },
+    "emp_test_03": {
+      "name": "員工C",
+      "active": true
+    },
+    "emp_test_04": {
+      "name": "員工D",
+      "active": true
+    },
+    "emp_test_05": {
+      "name": "員工E",
+      "active": true
+    },
+    "emp_supervisor": {
+      "name": "主管",
+      "role": "supervisor",
+      "active": true,
+      "displayChar": "",
+      "code": "L"
+    }
+  },
+  "months": {
+    "2026-09": {
+      "month": "2026-09",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": [
+            "middle"
+          ]
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": [
+            "early"
+          ]
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": [
+            "night"
+          ]
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": [
+            "night"
+          ]
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "7",
+        "7",
+        "7",
+        ""
+      ],
+      "rosterValues": {
+        "1-vacation-0": "B",
+        "7-vacation-0": "B",
+        "8-vacation-0": "B",
+        "9-vacation-0": "B",
+        "13-vacation-0": "B",
+        "20-vacation-0": "B",
+        "24-vacation-0": "B",
+        "30-vacation-0": "B",
+        "3-vacation-0": "A",
+        "4-vacation-0": "A",
+        "10-vacation-0": "A",
+        "14-vacation-0": "A",
+        "21-vacation-0": "A",
+        "22-vacation-0": "A",
+        "28-vacation-0": "A",
+        "6-vacation-0": "C",
+        "11-vacation-0": "C",
+        "15-vacation-0": "C",
+        "16-vacation-0": "C",
+        "17-vacation-0": "C",
+        "18-vacation-0": "C",
+        "29-vacation-0": "C",
+        "3-vacation-1": "D",
+        "7-vacation-1": "D",
+        "13-vacation-1": "D",
+        "14-vacation-1": "D",
+        "17-vacation-1": "D",
+        "23-vacation-0": "D",
+        "29-vacation-1": "D",
+        "24-vacation-1": "D",
+        "1-vacation-1": "E",
+        "4-vacation-1": "E",
+        "9-vacation-1": "E",
+        "10-vacation-1": "E",
+        "15-vacation-1": "E",
+        "20-vacation-1": "E",
+        "21-vacation-1": "E",
+        "19-vacation-0": "C",
+        "1-shift-0": "C",
+        "2-shift-0": "C",
+        "3-shift-0": "C",
+        "4-shift-0": "C",
+        "5-shift-0": "C",
+        "7-shift-0": "C",
+        "8-shift-0": "C",
+        "9-shift-0": "C",
+        "10-shift-0": "C",
+        "12-shift-0": "C",
+        "13-shift-0": "C",
+        "14-shift-0": "C",
+        "20-shift-0": "C",
+        "21-shift-0": "C",
+        "22-shift-0": "C",
+        "24-shift-0": "C",
+        "25-shift-0": "C",
+        "26-shift-0": "C",
+        "27-shift-0": "C",
+        "28-shift-0": "C",
+        "30-shift-0": "C",
+        "2-shift-1": "B",
+        "3-shift-1": "B",
+        "4-shift-1": "B",
+        "5-shift-1": "B",
+        "6-shift-1": "B",
+        "10-shift-1": "B",
+        "11-shift-1": "B",
+        "12-shift-1": "B",
+        "14-shift-1": "B",
+        "15-shift-1": "B",
+        "16-shift-1": "B",
+        "17-shift-1": "B",
+        "18-shift-1": "B",
+        "19-shift-1": "B",
+        "21-shift-1": "B",
+        "22-shift-1": "B",
+        "23-shift-1": "B",
+        "25-shift-1": "B",
+        "26-shift-1": "B",
+        "27-shift-1": "B",
+        "28-shift-1": "B",
+        "29-shift-1": "B",
+        "2-shift-3": "E",
+        "5-shift-3": "E",
+        "6-shift-3": "E",
+        "8-shift-3": "E",
+        "11-shift-3": "E",
+        "12-shift-3": "E",
+        "16-shift-3": "E",
+        "18-shift-3": "E",
+        "19-shift-3": "E",
+        "22-shift-3": "E",
+        "25-shift-3": "E",
+        "26-shift-3": "E",
+        "27-shift-3": "E",
+        "30-shift-3": "E",
+        "3-shift-3": "E",
+        "7-shift-3": "E",
+        "13-shift-3": "E",
+        "14-shift-3": "E",
+        "17-shift-3": "E",
+        "23-shift-3": "E",
+        "24-shift-3": "E",
+        "29-shift-3": "E",
+        "28-vacation-1": "E",
+        "1-shift-3": "D",
+        "4-shift-3": "D",
+        "9-shift-3": "D",
+        "10-shift-3": "D",
+        "15-shift-3": "D",
+        "20-shift-3": "D",
+        "21-shift-3": "D",
+        "2-shift-4": "D",
+        "5-shift-4": "D",
+        "6-shift-4": "D",
+        "8-shift-4": "D",
+        "11-shift-4": "D",
+        "12-shift-4": "D",
+        "16-shift-4": "D",
+        "18-shift-4": "D",
+        "19-shift-4": "D",
+        "22-shift-4": "D",
+        "25-shift-4": "D",
+        "26-shift-4": "D",
+        "27-shift-4": "D",
+        "28-shift-4": "D",
+        "30-shift-4": "D",
+        "23-vacation-1": "C"
+      },
+      "blockedVacationOverrides": {
+        "27": true,
+        "28": false
+      },
+      "specialShiftCells": [],
+      "nightShiftOverrides": {},
+      "leaveTypeValues": {
+        "19-vacation-0": "leave"
+      },
+      "leaveNoteValues": {
+        "19-vacation-0": "事假"
+      },
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {},
+      "specialShiftTimes": {},
+      "nightShiftTimes": {},
+      "meetingDays": [
+        1
+      ],
+      "meetingNoteValues": {
+        "1": "8點櫃檯開會"
+      },
+      "supervisorLeaveDays": [
+        2
+      ]
+    },
+    "2026-10": {
+      "month": "2026-10",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": [
+            "middle"
+          ]
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": [
+            "early"
+          ]
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": [
+            "night"
+          ]
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": [
+            "night"
+          ]
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "6",
+        "16",
+        "7",
+        ""
+      ],
+      "rosterValues": {
+        "2-vacation-0": "A",
+        "6-vacation-0": "A",
+        "7-vacation-0": "A",
+        "12-vacation-0": "A",
+        "18-vacation-0": "A",
+        "22-vacation-0": "A",
+        "1-vacation-0": "B",
+        "5-vacation-0": "B",
+        "11-vacation-0": "B",
+        "15-vacation-0": "B",
+        "16-vacation-0": "B",
+        "21-vacation-0": "B",
+        "26-vacation-0": "B",
+        "4-vacation-0": "C",
+        "8-vacation-0": "C",
+        "13-vacation-0": "C",
+        "19-vacation-0": "C",
+        "20-vacation-0": "C",
+        "23-vacation-0": "C",
+        "30-vacation-0": "C",
+        "5-vacation-1": "D",
+        "11-vacation-1": "D",
+        "12-vacation-1": "D",
+        "16-vacation-1": "D",
+        "20-vacation-1": "D",
+        "21-vacation-1": "D",
+        "26-vacation-1": "D",
+        "30-vacation-1": "D",
+        "2-vacation-1": "E",
+        "7-vacation-1": "E",
+        "8-vacation-1": "E",
+        "13-vacation-1": "E",
+        "18-vacation-1": "E",
+        "19-vacation-1": "E",
+        "23-vacation-1": "E",
+        "29-vacation-1": "E",
+        "14-vacation-0": "B",
+        "1-shift-0": "C",
+        "3-shift-0": "C",
+        "5-shift-0": "C",
+        "9-shift-0": "C",
+        "10-shift-0": "C",
+        "11-shift-0": "C",
+        "14-shift-0": "C",
+        "15-shift-0": "C",
+        "16-shift-0": "C",
+        "17-shift-0": "C",
+        "21-shift-0": "C",
+        "24-shift-0": "C",
+        "25-shift-0": "C",
+        "26-shift-0": "C",
+        "27-shift-0": "C",
+        "28-shift-0": "C",
+        "31-shift-0": "C",
+        "2-shift-0": "C",
+        "6-shift-0": "C",
+        "7-shift-0": "C",
+        "12-shift-0": "C",
+        "18-shift-0": "C",
+        "22-shift-0": "C",
+        "29-shift-0": "C",
+        "2-shift-1": "B",
+        "4-shift-1": "B",
+        "6-shift-1": "B",
+        "7-shift-1": "B",
+        "8-shift-1": "B",
+        "10-shift-1": "B",
+        "12-shift-1": "B",
+        "13-shift-1": "B",
+        "18-shift-1": "B",
+        "19-shift-1": "B",
+        "20-shift-1": "B",
+        "22-shift-1": "B",
+        "23-shift-1": "B",
+        "27-shift-1": "B",
+        "28-shift-1": "B",
+        "30-shift-1": "B",
+        "3-shift-1": "A",
+        "3-shift-2": "B",
+        "1-shift-1": "A",
+        "5-shift-1": "A",
+        "4-shift-0": "A",
+        "8-shift-0": "A",
+        "11-shift-1": "A",
+        "13-shift-0": "A",
+        "31-shift-1": "A",
+        "31-shift-2": "B",
+        "30-shift-0": "A",
+        "25-shift-1": "A",
+        "24-shift-1": "A",
+        "24-shift-2": "B",
+        "25-shift-2": "B",
+        "26-shift-1": "A",
+        "23-shift-0": "A",
+        "21-shift-1": "A",
+        "19-shift-0": "A",
+        "20-shift-0": "A",
+        "14-shift-1": "A",
+        "15-shift-1": "A",
+        "16-shift-1": "A",
+        "17-shift-1": "A",
+        "29-shift-1": "B",
+        "29-vacation-0": "A",
+        "17-shift-2": "B",
+        "1-shift-3": "E",
+        "5-shift-3": "E",
+        "6-shift-3": "E",
+        "11-shift-3": "E",
+        "12-shift-3": "E",
+        "16-shift-3": "E",
+        "17-shift-3": "E",
+        "20-shift-3": "E",
+        "21-shift-3": "E",
+        "22-shift-3": "E",
+        "24-shift-3": "E",
+        "25-shift-3": "E",
+        "26-shift-3": "E",
+        "27-shift-3": "E",
+        "30-shift-3": "E",
+        "31-shift-3": "E",
+        "1-shift-4": "D",
+        "6-shift-4": "D",
+        "17-shift-4": "D",
+        "22-shift-4": "D",
+        "24-shift-4": "D",
+        "25-shift-4": "D",
+        "27-shift-4": "D",
+        "31-shift-4": "D",
+        "2-shift-3": "D",
+        "7-shift-3": "D",
+        "8-shift-3": "D",
+        "13-shift-3": "D",
+        "18-shift-3": "D",
+        "19-shift-3": "D",
+        "23-shift-3": "D",
+        "3-shift-3": "D",
+        "3-shift-4": "E",
+        "4-shift-3": "D",
+        "4-shift-4": "E",
+        "29-shift-3": "D",
+        "14-shift-3": "D",
+        "14-shift-4": "E",
+        "9-shift-1": "A",
+        "9-shift-2": "B",
+        "9-shift-3": "D",
+        "9-shift-4": "E",
+        "10-shift-2": "B",
+        "10-shift-3": "D",
+        "10-shift-4": "E",
+        "15-shift-3": "D",
+        "15-shift-4": "E",
+        "28-shift-3": "D",
+        "28-shift-4": "E"
+      },
+      "blockedVacationOverrides": {
+        "26": false
+      },
+      "specialShiftCells": [
+        "3-shift-1"
+      ],
+      "nightShiftOverrides": {
+        "25-night-3": true,
+        "11-night-3": true
+      },
+      "leaveTypeValues": {},
+      "leaveNoteValues": {},
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {
+        "emp_test_03": {
+          "value": 6
+        },
+        "emp_test_04": {
+          "value": 16
+        }
+      },
+      "specialShiftTimes": {
+        "3-shift-1": "12~20"
+      },
+      "nightShiftTimes": {},
+      "meetingDays": [
+        5
+      ],
+      "meetingNoteValues": {
+        "5": "8點櫃檯開會"
+      },
+      "supervisorLeaveDays": [
+        27,
+        28
+      ]
+    },
+    "2026-11": {
+      "month": "2026-11",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": [
+            "middle"
+          ]
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": [
+            "early"
+          ]
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": [
+            "night"
+          ]
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": [
+            "night"
+          ]
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "6",
+        "16",
+        "7",
+        ""
+      ],
+      "rosterValues": {},
+      "blockedVacationOverrides": {},
+      "specialShiftCells": [],
+      "nightShiftOverrides": {},
+      "leaveTypeValues": {},
+      "leaveNoteValues": {},
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {},
+      "specialShiftTimes": {},
+      "nightShiftTimes": {},
+      "meetingDays": [],
+      "meetingNoteValues": {},
+      "supervisorLeaveDays": []
+    },
+    "2026-12": {
+      "month": "2026-12",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": [
+            "middle"
+          ]
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": [
+            "early"
+          ]
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": [
+            "night"
+          ]
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": [
+            "night"
+          ]
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "6",
+        "16",
+        "7",
+        ""
+      ],
+      "rosterValues": {},
+      "blockedVacationOverrides": {},
+      "specialShiftCells": [],
+      "nightShiftOverrides": {},
+      "leaveTypeValues": {},
+      "leaveNoteValues": {},
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {},
+      "specialShiftTimes": {},
+      "nightShiftTimes": {},
+      "meetingDays": [],
+      "meetingNoteValues": {},
+      "supervisorLeaveDays": []
+    },
+    "2027-01": {
+      "month": "2027-01",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": [
+            "middle"
+          ]
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": [
+            "early"
+          ]
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": [
+            "night"
+          ]
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": [
+            "night"
+          ]
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "6",
+        "16",
+        "7",
+        ""
+      ],
+      "rosterValues": {},
+      "blockedVacationOverrides": {},
+      "specialShiftCells": [],
+      "nightShiftOverrides": {},
+      "leaveTypeValues": {},
+      "leaveNoteValues": {},
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {},
+      "specialShiftTimes": {},
+      "nightShiftTimes": {},
+      "meetingDays": [],
+      "meetingNoteValues": {},
+      "supervisorLeaveDays": []
+    },
+    "2027-02": {
+      "month": "2027-02",
+      "people": {
+        "A": {
+          "employeeId": "emp_test_02",
+          "displayName": "員工B",
+          "shiftGroups": [
+            "early",
+            "middle",
+            "night"
+          ]
+        },
+        "B": {
+          "employeeId": "emp_test_01",
+          "displayName": "員工A",
+          "shiftGroups": []
+        },
+        "C": {
+          "employeeId": "emp_test_03",
+          "displayName": "員工C",
+          "shiftGroups": []
+        },
+        "D": {
+          "employeeId": "emp_test_04",
+          "displayName": "員工D",
+          "shiftGroups": []
+        },
+        "E": {
+          "employeeId": "emp_test_05",
+          "displayName": "員工E",
+          "shiftGroups": []
+        }
+      },
+      "specialLeaveValues": [
+        "19",
+        "14",
+        "6",
+        "16",
+        "7",
+        ""
+      ],
+      "rosterValues": {},
+      "blockedVacationOverrides": {},
+      "specialShiftCells": [],
+      "nightShiftOverrides": {},
+      "leaveTypeValues": {},
+      "leaveNoteValues": {},
+      "manualNotes": {},
+      "extraLeaves": {},
+      "annualGrantDecisions": {},
+      "annualBalanceCalibrations": {},
+      "specialShiftTimes": {},
+      "nightShiftTimes": {},
+      "meetingDays": [],
+      "meetingNoteValues": {},
+      "supervisorLeaveDays": [
+        27,
+        28
+      ]
+    }
+  },
+  "specialDays": {
+    "2026": {
+      "year": 2026,
+      "configured": true,
+      "holidays": [
+        "2026-09-25",
+        "2026-09-28",
+        "2026-10-09",
+        "2026-10-10",
+        "2026-10-25",
+        "2026-12-25"
+      ],
+      "workdays": []
+    },
+    "2027": {
+      "year": 2027,
+      "configured": true,
+      "holidays": [
+        "2027-01-01",
+        "2027-02-04",
+        "2027-02-05",
+        "2027-02-06",
+        "2027-02-07",
+        "2027-02-08",
+        "2027-02-09",
+        "2027-02-10",
+        "2027-02-28",
+        "2027-04-04",
+        "2027-04-05",
+        "2027-04-30",
+        "2027-05-01",
+        "2027-06-09",
+        "2027-09-15",
+        "2027-09-28",
+        "2027-10-10",
+        "2027-10-25",
+        "2027-12-24",
+        "2027-12-25",
+        "2027-12-31"
+      ],
+      "workdays": []
+    }
+  }
+}
