@@ -165,6 +165,23 @@ test('complete rule check remains wired', async () => {
   assert.match(roster, /ShiftRosterRules\.collectIssuesByKind\(buildRuleModel\(\), kind\)/);
 });
 
+test('standalone print stays in the output choice click call stack', async () => {
+  const roster = await readFile(new URL('sbs_roster.js', root), 'utf8');
+  assert.match(roster, /printButton\.addEventListener\('click', \(\) => \{\s*requestOutputTimeAction\(printWithOutputTimestamp\);\s*\}\);/);
+  const directPrint = roster.slice(
+    roster.indexOf('function printWithOutputTimestamp'),
+    roster.indexOf('function setSpecialDatesMode')
+  );
+  assert.match(directPrint, /window\.print\(\)/);
+  assert.doesNotMatch(directPrint, /\bawait\s/);
+  assert.doesNotMatch(directPrint, /requestAnimationFrame\s*\(/);
+  const preparedOutput = roster.slice(
+    roster.indexOf('async function prepareOutputTimestamp'),
+    roster.indexOf('function printWithOutputTimestamp')
+  );
+  assert.match(preparedOutput, /requestAnimationFrame/);
+});
+
 test('remote working store never overwrites standalone localStorage', async () => {
   const values = new Map();
   const localStorage = {

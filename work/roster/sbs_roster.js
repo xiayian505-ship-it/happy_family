@@ -289,6 +289,7 @@ let blockedLeaveResolver = null;
 let leaveTypeResolver = null;
 let leaveNoteResolver = null;
 let outputTimeResolver = null;
+let outputTimeDirectAction = null;
 let specialTimeContext = null;
 let nightTimeContext = null;
 let dayNoteContext = null;
@@ -3704,6 +3705,7 @@ function formatOutputTimestamp(date = new Date()) {
   return `${y}/${m}/${d} ${hh}:${mm}`;
 }
 function requestOutputTimeChoice() {
+  outputTimeDirectAction = null;
   if (outputTimeResolver) outputTimeResolver(false);
   outputTimeDialog.hidden = false;
   return new Promise((resolve) => {
@@ -3711,15 +3713,30 @@ function requestOutputTimeChoice() {
     requestAnimationFrame(() => outputTimeYes.focus());
   });
 }
+function requestOutputTimeAction(action) {
+  if (outputTimeResolver) {
+    outputTimeResolver(false);
+    outputTimeResolver = null;
+  }
+  outputTimeDirectAction = action;
+  outputTimeDialog.hidden = false;
+  requestAnimationFrame(() => outputTimeYes.focus());
+}
 function resolveOutputTimeChoice(includeTime) {
+  if (outputTimeDirectAction) {
+    const action = outputTimeDirectAction;
+    outputTimeDirectAction = null;
+    outputTimeDialog.hidden = true;
+    action(Boolean(includeTime));
+    return;
+  }
   if (!outputTimeResolver) return;
   const resolve = outputTimeResolver;
   outputTimeResolver = null;
   outputTimeDialog.hidden = true;
   resolve(Boolean(includeTime));
 }
-async function prepareOutputTimestamp() {
-  const includeTime = await requestOutputTimeChoice();
+function applyOutputTimestamp(includeTime) {
   if (includeTime) {
     outputTimestamp.textContent = formatOutputTimestamp();
     outputTimestamp.hidden = false;
@@ -3727,11 +3744,29 @@ async function prepareOutputTimestamp() {
     outputTimestamp.textContent = '';
     outputTimestamp.hidden = true;
   }
-  await new Promise((resolve) => requestAnimationFrame(resolve));
   return () => {
     outputTimestamp.textContent = '';
     outputTimestamp.hidden = true;
   };
+}
+async function prepareOutputTimestamp() {
+  const includeTime = await requestOutputTimeChoice();
+  const cleanup = applyOutputTimestamp(includeTime);
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  return cleanup;
+}
+function printWithOutputTimestamp(includeTime) {
+  const cleanup = applyOutputTimestamp(includeTime);
+  window.addEventListener('afterprint', cleanup, { once: true });
+  try {
+    // Keep print in the Yes/No click call stack. Android browsers may reject
+    // print after the previous Promise + requestAnimationFrame boundary.
+    window.print();
+  } catch (error) {
+    window.removeEventListener('afterprint', cleanup);
+    cleanup();
+    throw error;
+  }
 }
 
 function setSpecialDatesMode(mode) {
@@ -4047,13 +4082,8 @@ batchLeaveApply.addEventListener('click', applyBatchLeave);
 batchLeaveCancel.addEventListener('click', closeBatchLeaveDialog);
 batchLeaveResultClose.addEventListener('click', closeBatchLeaveResult);
 clearMonthButton.addEventListener('click', openClearMonthDialog);
-printButton.addEventListener('click', async () => {
-  const cleanup = await prepareOutputTimestamp();
-  try {
-    window.print();
-  } finally {
-    cleanup();
-  }
+printButton.addEventListener('click', () => {
+  requestOutputTimeAction(printWithOutputTimestamp);
 });
 
 conflictChooseSchedule.addEventListener('click', () => resolveConflictChoice('schedule'));
