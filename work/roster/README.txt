@@ -95,3 +95,11 @@ Excel 匯出暫緩同步：
 本次介面補正：
 - 「櫃檯人員資料」與「主管人員資料」拆成兩個獨立按鈕／面板，避免主管資料跟高流動的櫃檯資料混在一起。
 - 主管到職週年若本月取得特休，下方長條依主管代號顯示「代號／折半後天數」，例如 L / 15；主管面板會同步提示本月取得日與長條預覽。
+
+Supabase frontend integration：
+- 預設仍是完整本機模式，不需網路或 Supabase；原 v3 localStorage namespace 與 JSON／Excel／PNG／列印功能保留。
+- `?mode=public` 只讀取 `public.roster_public_months` 的公開欄位，只提供月份瀏覽、PNG 與列印，不載入 Editor private state。
+- `?mode=editor` 使用 roster-admin shared-password session；raw token 只存於 sessionStorage，密碼不保存。
+- 遠端月份的 revision／published 狀態與 v3 snapshot 分離；儲存一律帶 expected_revision，409 不會自動重試或覆蓋。
+- Editor JSON replace-all 仍先執行既有 `validateBackup()`；完整 v3 backup 的 months 仍直接保存 snapshot，不加入 remote metadata。
+- 正式密碼變更 E2E 必須由使用者本人操作驗證；不要將正式密碼提供給開發或測試工具。

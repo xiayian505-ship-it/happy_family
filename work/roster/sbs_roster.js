@@ -230,6 +230,21 @@ const DEFAULT_ANNUAL_LEAVE_RULES = Object.freeze({
 });
 
 const storage = window.ShiftRosterStorage || null;
+let rosterReadOnly = false;
+let rosterInitialized = false;
+const rosterMutationEvents = ['beforeinput', 'input', 'change', 'click', 'dblclick', 'contextmenu', 'keydown', 'keypress', 'keyup', 'paste', 'cut', 'drop'];
+
+function blockReadOnlyRosterMutation(event) {
+  if (!rosterReadOnly) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
+
+for (const table of [scheduleTable, lowerTable]) {
+  for (const eventName of rosterMutationEvents) {
+    table?.addEventListener(eventName, blockReadOnlyRosterMutation, true);
+  }
+}
 const DEFAULT_SETTINGS = Object.freeze({
   publicLeaveCount: 8,
   maxConsecutiveWorkDays: 6,
@@ -287,6 +302,7 @@ let blockedLeaveResolver = null;
 let leaveTypeResolver = null;
 let leaveNoteResolver = null;
 let outputTimeResolver = null;
+let outputTimeDirectAction = null;
 let specialTimeContext = null;
 let nightTimeContext = null;
 let dayNoteContext = null;
@@ -1223,14 +1239,14 @@ function buildCurrentMonthSnapshot() {
 }
 
 function persistCurrentMonth() {
-  if (!storage) return;
+  if (!storage || rosterReadOnly) return;
   const { year, month } = getCurrentYearMonth();
   if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return;
   storage.saveMonth(buildCurrentMonthSnapshot());
 }
 
 function persistGlobalSettings() {
-  if (!storage) return;
+  if (!storage || rosterReadOnly) return;
   storage.saveSettings({
     publicLeaveCount: Number.parseInt(publicLeaveCount || '8', 10) || 8,
     maxConsecutiveWorkDays,
@@ -3702,6 +3718,7 @@ function formatOutputTimestamp(date = new Date()) {
   return `${y}/${m}/${d} ${hh}:${mm}`;
 }
 function requestOutputTimeChoice() {
+  outputTimeDirectAction = null;
   if (outputTimeResolver) outputTimeResolver(false);
   outputTimeDialog.hidden = false;
   return new Promise((resolve) => {
@@ -3709,15 +3726,30 @@ function requestOutputTimeChoice() {
     requestAnimationFrame(() => outputTimeYes.focus());
   });
 }
+function requestOutputTimeAction(action) {
+  if (outputTimeResolver) {
+    outputTimeResolver(false);
+    outputTimeResolver = null;
+  }
+  outputTimeDirectAction = action;
+  outputTimeDialog.hidden = false;
+  requestAnimationFrame(() => outputTimeYes.focus());
+}
 function resolveOutputTimeChoice(includeTime) {
+  if (outputTimeDirectAction) {
+    const action = outputTimeDirectAction;
+    outputTimeDirectAction = null;
+    outputTimeDialog.hidden = true;
+    action(Boolean(includeTime));
+    return;
+  }
   if (!outputTimeResolver) return;
   const resolve = outputTimeResolver;
   outputTimeResolver = null;
   outputTimeDialog.hidden = true;
   resolve(Boolean(includeTime));
 }
-async function prepareOutputTimestamp() {
-  const includeTime = await requestOutputTimeChoice();
+function applyOutputTimestamp(includeTime) {
   if (includeTime) {
     outputTimestamp.textContent = formatOutputTimestamp();
     outputTimestamp.hidden = false;
@@ -3725,11 +3757,34 @@ async function prepareOutputTimestamp() {
     outputTimestamp.textContent = '';
     outputTimestamp.hidden = true;
   }
-  await new Promise((resolve) => requestAnimationFrame(resolve));
   return () => {
     outputTimestamp.textContent = '';
     outputTimestamp.hidden = true;
   };
+}
+async function prepareOutputTimestamp() {
+  const includeTime = await requestOutputTimeChoice();
+  const cleanup = applyOutputTimestamp(includeTime);
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  return cleanup;
+}
+async function printWithOutputTimestamp(includeTime) {
+  const cleanup = applyOutputTimestamp(includeTime);
+  const printWindow = window.ShiftRosterExport?.openPrintWindow?.();
+  if (!printWindow) {
+    cleanup();
+    return;
+  }
+  try {
+    const blob = await window.ShiftRosterExport.createPngBlob();
+    cleanup();
+    await window.ShiftRosterExport.printBlob(blob, printWindow);
+  } catch (error) {
+    cleanup();
+    if (!printWindow.closed) printWindow.close();
+    console.error(error);
+    window.alert(`列印內容產生失敗：${error?.message || '未知錯誤'}`);
+  }
 }
 
 function setSpecialDatesMode(mode) {
@@ -3909,8 +3964,10 @@ function render() {
   if (!supervisorConfigPanel.hidden) renderSupervisorConfigPanel(year, month);
 }
 function changeMonth(offset) {
-  commitAllVisibleNames();
-  persistCurrentMonth();
+  if (!rosterReadOnly) {
+    commitAllVisibleNames();
+    persistCurrentMonth();
+  }
   let year = Number(yearInput.value);
   let month = Number(monthInput.value) + offset;
   if (month < 1) {
@@ -3926,8 +3983,12 @@ function changeMonth(offset) {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) {
+    window.ShiftRosterIntegration.navigateMonth(year, month);
+  } else {
+    loadMonth(year, month);
+    render();
+  }
 }
 
 // ===== 事件 =====
@@ -3960,8 +4021,11 @@ yearInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  else {
+    loadMonth(year, month);
+    render();
+  }
 });
 monthInput.addEventListener('input', syncMonthInputWidth);
 monthInput.addEventListener('change', () => {
@@ -3969,8 +4033,11 @@ monthInput.addEventListener('change', () => {
   closeRowFillPanel();
   closeShiftConfigPanel();
   closeSupervisorConfigPanel();
-  loadMonth(year, month);
-  render();
+  if (window.ShiftRosterIntegration?.getMode?.() !== 'standalone' && window.ShiftRosterIntegration?.navigateMonth) window.ShiftRosterIntegration.navigateMonth(year, month);
+  else {
+    loadMonth(year, month);
+    render();
+  }
 });
 [yearInput, monthInput].forEach((input) => {
   input.addEventListener('keydown', (event) => {
@@ -4033,13 +4100,8 @@ batchLeaveApply.addEventListener('click', applyBatchLeave);
 batchLeaveCancel.addEventListener('click', closeBatchLeaveDialog);
 batchLeaveResultClose.addEventListener('click', closeBatchLeaveResult);
 clearMonthButton.addEventListener('click', openClearMonthDialog);
-printButton.addEventListener('click', async () => {
-  const cleanup = await prepareOutputTimestamp();
-  try {
-    window.print();
-  } finally {
-    cleanup();
-  }
+printButton.addEventListener('click', () => {
+  requestOutputTimeAction(printWithOutputTimestamp);
 });
 
 conflictChooseSchedule.addEventListener('click', () => resolveConflictChoice('schedule'));
@@ -4151,20 +4213,50 @@ window.ShiftRosterApp = Object.freeze({
     renderRuleSettingsPage();
   },
   getSupervisorLeaveDays: () => [...supervisorLeaveDays].sort((a, b) => a - b),
-  getCurrentYearMonth
+  getCurrentYearMonth,
+  buildCurrentMonthSnapshot,
+  setReadOnly: (value) => {
+    rosterReadOnly = Boolean(value);
+    document.body.classList.toggle('roster-read-only', rosterReadOnly);
+    for (const table of [scheduleTable, lowerTable]) {
+      table?.querySelectorAll('input, button, [contenteditable="true"]').forEach((element) => {
+        if ('disabled' in element) element.disabled = rosterReadOnly;
+        if (rosterReadOnly && element.hasAttribute('contenteditable')) element.setAttribute('contenteditable', 'false');
+      });
+    }
+  },
+  loadSnapshot: (year, month, snapshot) => {
+    yearInput.value = String(year);
+    monthInput.value = String(month);
+    syncMonthInputWidth();
+    loadMonthIntoMemory(year, month, snapshot || { month: storage?.makeMonthId(year, month), people: {}, rosterValues: {} });
+    render();
+    window.ShiftRosterApp.setReadOnly(rosterReadOnly);
+  },
+  initialize: ({ mode = 'standalone', snapshot = null, year = null, month = null } = {}) => {
+    if (rosterInitialized) return;
+    rosterInitialized = true;
+    rosterReadOnly = mode === 'public';
+    if (mode !== 'public') loadGlobalSettings();
+    const initialMonth = year && month ? { year, month } : getDefaultNextYearMonth();
+    yearInput.value = initialMonth.year;
+    monthInput.value = String(initialMonth.month);
+    syncMonthInputWidth();
+    publicLeaveInput.textContent = publicLeaveCount;
+    if (snapshot) loadMonthIntoMemory(initialMonth.year, initialMonth.month, snapshot);
+    else if (mode !== 'public') loadMonth(initialMonth.year, initialMonth.month);
+    else loadMonthIntoMemory(initialMonth.year, initialMonth.month, { month: storage?.makeMonthId(initialMonth.year, initialMonth.month), people: {}, rosterValues: {} });
+    buildRowFillQuickLetters();
+    render();
+    renderRuleSettingsPage();
+    window.ShiftRosterApp.setReadOnly(rosterReadOnly);
+  }
 });
 
-loadGlobalSettings();
-persistGlobalSettings();
-const initialMonth = getDefaultNextYearMonth();
-yearInput.value = initialMonth.year;
-monthInput.value = String(initialMonth.month);
-syncMonthInputWidth();
-publicLeaveInput.textContent = publicLeaveCount;
-loadMonth(initialMonth.year, initialMonth.month);
-buildRowFillQuickLetters();
-render();
-renderRuleSettingsPage();
+if (!window.ShiftRosterIntegration || window.ShiftRosterIntegration.getMode?.() === 'standalone') {
+  window.ShiftRosterApp.initialize({ mode: 'standalone' });
+  persistGlobalSettings();
+}
 
 if (storage && !storage.isPersistent()) {
   window.setTimeout(() => {

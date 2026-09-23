@@ -35,12 +35,18 @@
     const originalText = importButton.textContent;
     importButton.textContent = '匯入中…';
 
+    let importStage = 'parse';
     try {
       const parsed = parseBook(await loadXlsx(await file.arrayBuffer()));
       const imported = buildImportedMonth(parsed);
       const monthData = mergeWithExistingMonth(imported);
 
+      importStage = 'local-save';
       storage.saveMonth(monthData);
+      if (window.ShiftRosterIntegration?.isEditor?.()) {
+        importStage = 'remote-save';
+        await window.ShiftRosterIntegration.saveRemoteSnapshot(monthData);
+      }
 
       const current = app.getCurrentYearMonth?.();
       if (current && Number(current.year) === parsed.year && Number(current.month) === parsed.month) {
@@ -54,9 +60,11 @@
       }
     } catch (error) {
       console.error(error);
-      const message = isFormatError(error)
-        ? '這不是本程式輸出的 Excel 班表，無法匯入。'
-        : `Excel 匯入失敗。\n${error?.message || '未知錯誤'}`;
+      const message = importStage === 'remote-save'
+        ? formatRemoteSaveError(error)
+        : (isFormatError(error)
+          ? '這不是本程式輸出的 Excel 班表，無法匯入。'
+          : `${importStage === 'local-save' ? 'Excel 已解析，但本機儲存失敗。' : 'Excel 匯入解析失敗。'}\n${error?.message || '未知錯誤'}`);
       window.alert(message);
     } finally {
       importInput.value = '';
@@ -64,6 +72,23 @@
       importButton.textContent = originalText;
     }
   });
+
+  function formatRemoteSaveError(error) {
+    const detail = error?.remoteSave || error?.diagnostic || {};
+    const lines = [
+      'Excel 已解析並完成本機儲存，但遠端儲存失敗。',
+      `Endpoint：${detail.endpoint || '未知'}`,
+      `Method：${detail.method || 'PUT'}`,
+      `HTTP status：${detail.status || error?.status || 0}`,
+      `Backend code：${detail.code || error?.code || 'unknown_error'}`,
+      `Backend message：${detail.message || error?.message || '未知錯誤'}`,
+      `monthId：${detail.monthId || '未知'}`,
+      `expectedRevision：${detail.expectedRevision ?? '未知'}`,
+      `publish：${detail.publish ?? '未知'}`,
+      `snapshot.month：${detail.snapshotMonth || '未知'}`
+    ];
+    return lines.join('\n');
+  }
 
   function isFormatError(error) {
     return Boolean(error?.isRosterFormatError);
