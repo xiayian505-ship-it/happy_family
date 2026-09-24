@@ -12,19 +12,22 @@
   const PAINS = ["", "無", "輕微", "中等", "嚴重"];
 
   function todayISO(date = new Date()) {
-    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+    return typeof DateTime !== "undefined" ? DateTime.dateKey(date) : [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
   }
   function isDate(value) {
     if (!ISO_DATE.test(value || "")) return false;
     const [y, m, d] = value.split("-").map(Number);
+    if (typeof DateTime !== "undefined") return DateTime.parseDateKey(value) !== null;
     const parsed = new Date(Date.UTC(y, m - 1, d));
     return parsed.getUTCFullYear() === y && parsed.getUTCMonth() === m - 1 && parsed.getUTCDate() === d;
   }
   function dayNumber(value) {
     const [y, m, d] = value.split("-").map(Number);
+    if (typeof DateTime !== "undefined") return DateTime.diffDays("1970-01-01", value);
     return Date.UTC(y, m - 1, d) / 86400000;
   }
   function addDays(value, amount) {
+    if (typeof DateTime !== "undefined") return DateTime.addDays(value, amount);
     const date = new Date((dayNumber(value) + amount) * 86400000);
     return date.toISOString().slice(0, 10);
   }

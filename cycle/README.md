@@ -11,7 +11,7 @@
 - `cycle_style.js`：畫面渲染、對話框、下載／選檔等純 UI 串接。
 - `cycle.test.js`：Node 內建 test runner 的核心回歸測試。
 
-所有 runtime 資源皆使用 `./` 相對路徑，沒有 CDN、套件、建置步驟或對 repository 名稱的依賴。
+所有 runtime 資源皆使用 `./` 相對路徑，沒有 CDN、套件、建置步驟或對 repository 名稱的依賴。`arsenal/` 是從使用者軍火庫唯讀複製的本地副本。
 
 ## 使用方式
 
@@ -45,9 +45,19 @@ UI 僅透過具有非同步 `load()` / `save(data)` 的 adapter 存取資料，�
 - 匯入需符合完整 schema、唯一 id、每日紀錄與日期規則。驗證在寫入前完成。
 - 程式不把紀錄輸出到 console，也不傳送至任何伺服器。
 
-## 軍火庫盤點
+## 軍火庫整合（本地副本，不回寫原庫）
 
-原定唯讀盤點 `stillnessbyslowly_data_core` 的 calendar、date、backup/import、snapshot/sync 與 UI 實作，但本執行環境連線 GitHub 時收到 HTTP 403，且 workspace 沒有該 repository 副本，因此無法檢視實際內容或確認授權，**沒有直接複製任何軍火庫程式碼，也不宣稱已完成原始碼層級盤點**。本工具的月格、日期運算、JSON 安全匯入、localStorage adapter、備份與提示 UI 均獨立實作，沒有載入順序以外的第三方相依；載入順序須保持 `cycle.js` 在 `cycle_style.js` 之前。
+已從 `stillnessbyslowly_data_core` 唯讀複製五個模組至 `cycle/arsenal/`：
+
+- `date/datetime.js` → `arsenal/datetime.js`：瀏覽器日期鍵、嚴格日期解析、日期加減、日期差。Cycle 核心在瀏覽器使用軍火庫 DateTime；Node 核心測試保留相同語意的 fallback。
+- `calendar/month_grid_view.js` → `arsenal/month_grid_view.js`：實際產生月份 DOM 格線，Cycle 在 `renderDay` callback 放入可點擊日期按鈕和週期標記。
+- `calendar/month_sequence.js` → `arsenal/month_sequence.js`：上／下月份切換。
+- `data/Data_backup.js` → `arsenal/Data_backup.js`：JSON 下載及檔案讀取；備份資料格式仍維持原 Cycle v1 schema，舊備份可匯入。
+- `data/json/json_safe_import.js` → `arsenal/json_safe_import.js`：匯入的 prepare／validate／commit／rollback 流程；Cycle 專用 schema 驗證和使用者覆蓋確認保留。
+
+Cycle 專有的月經區間、週期預估、身體紀錄及本機 adapter 保留在 `cycle.js`。`snapshot_mirror.js` 與 `Realtime_sync.js` 涉及雲端同步，第一版沒有後端，不載入。軍火庫原始 repo 未修改。
+
+載入順序：五個 `arsenal/` 模組 → `cycle.js` → `cycle_style.js`。請搬移**完整** `cycle/`（包含 `arsenal/`）。
 
 ## 測試
 
@@ -60,7 +70,7 @@ node --test cycle/cycle.test.js
 ## 搬移與驗收
 
 1. 將整個 `happy_family/cycle/` 複製成目標 repository 的 `cycle/`，不要只複製 HTML。
-2. 確認六個 runtime/文件檔與測試檔均存在；不需改任何絕對路徑。
+2. 確認所有檔案（包含 `arsenal/` 五個本地副本）均存在；不需改任何絕對路徑。
 3. 以靜態伺服器在目標 repository 根目錄預覽 `/cycle/`，再部署。
 4. 開啟 `https://xiayian505.stillnessbyslowly.com/cycle/`，確認 Network 中 `cycle.css`、`cycle_style.css`、`cycle.js`、`cycle_style.js` 均為 200。
 5. 依序驗收新增未結束紀錄、補結束、當日選填、重新整理留存、下載備份、修改資料、還原覆蓋，以及窄螢幕無水平捲動。
