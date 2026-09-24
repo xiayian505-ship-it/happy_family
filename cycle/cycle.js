@@ -6,7 +6,6 @@
   "use strict";
 
   const SCHEMA_VERSION = 1;
-  const STORAGE_KEY = "slowly-cycle:v1";
   const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
   const FLOWS = ["", "少量", "中等", "大量"];
   const PAINS = ["", "無", "輕微", "中等", "嚴重"];
@@ -117,25 +116,5 @@
     const ovulation = nextPeriod ? addDays(nextPeriod, -14) : null;
     return { intervals, average, chosen, source: data.settings.manualCycleLength ? "manual" : "average", nextPeriod, ovulation, fertileStart: ovulation ? addDays(ovulation, -5) : null, fertileEnd: ovulation ? addDays(ovulation, 1) : null, irregular: spread !== null && spread > 7, insufficient: intervals.length < 2 };
   }
-  class LocalStorageAdapter {
-    constructor(storage, key = STORAGE_KEY) { this.storage = storage; this.key = key; }
-    async load() {
-      const raw = this.storage.getItem(this.key);
-      if (!raw) return emptyData();
-      const parsed = JSON.parse(raw); const checked = validate(parsed);
-      if (!checked.ok) throw new Error("本機資料無法讀取：" + checked.errors.join(" "));
-      return normalized(parsed);
-    }
-    async save(data) {
-      const checked = validate(data); if (!checked.ok) throw new Error(checked.errors.join("\n"));
-      const next = normalized(data); this.storage.setItem(this.key, JSON.stringify(next)); return next;
-    }
-  }
-  function parseBackup(text) {
-    let parsed; try { parsed = JSON.parse(text); } catch (_) { throw new Error("不是有效的 JSON 檔案。"); }
-    const checked = validate(parsed); if (!checked.ok) throw new Error(checked.errors.join("\n"));
-    return normalized(parsed);
-  }
-  function exportBackup(data) { return JSON.stringify(normalized(data), null, 2); }
-  return { SCHEMA_VERSION, STORAGE_KEY, FLOWS, PAINS, todayISO, isDate, addDays, dayNumber, emptyData, validate, normalized, upsertPeriod, removePeriod, saveDaily, cycleStats, LocalStorageAdapter, parseBackup, exportBackup };
+  return { SCHEMA_VERSION, FLOWS, PAINS, todayISO, isDate, addDays, dayNumber, emptyData, validate, normalized, upsertPeriod, removePeriod, saveDaily, cycleStats };
 });

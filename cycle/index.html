@@ -3,26 +3,32 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#fbf7f4"><title>慢慢週期｜Cycle</title>
-  <link rel="stylesheet" href="./cycle.css"><link rel="stylesheet" href="./cycle_style.css">
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.css"><link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css"><link rel="stylesheet" href="./cycle.css"><link rel="stylesheet" href="./cycle_style.css"><link rel="stylesheet" href="./cycle_backend.css">
 </head>
 <body>
 <header class="topbar"><div><p class="eyebrow">給自己的溫柔記錄</p><h1>慢慢週期 <small>Cycle</small></h1></div><button id="backup-open" class="ghost" type="button">備份與還原</button></header>
 <main>
   <section class="card calendar-card" aria-labelledby="calendar-title">
-    <div class="calendar-head"><button id="prev-month" aria-label="上個月">‹</button><h2 id="calendar-title"></h2><button id="next-month" aria-label="下個月">›</button></div>
-    <button id="today-button" class="text-button" type="button">回到今天</button>
-    <div class="weekdays" aria-hidden="true"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
-    <div id="calendar" class="calendar" role="grid" aria-label="月曆"></div>
+    <div id="calendar" aria-label="週期月曆"></div>
     <ul class="legend"><li><i class="actual"></i>已記錄月經</li><li><i class="forecast"></i>預估月經</li><li><i class="fertile"></i>粗略易孕期</li></ul>
   </section>
   <aside class="side">
     <section class="card summary" aria-labelledby="summary-title"><h2 id="summary-title">週期小覽</h2><div id="summary-content"></div><label>手動預估週期（15–90 天）<input id="manual-cycle" type="number" min="15" max="90" inputmode="numeric" placeholder="依歷史平均"></label><button id="save-setting" type="button">儲存設定</button><p class="disclaimer">排卵日與易孕期僅為日曆推算，可能與實際情況不同，不可用作可靠避孕依據。</p></section>
     <section class="card history"><div class="section-head"><h2>月經紀錄</h2><button id="new-period" type="button">＋ 新增</button></div><div id="period-list"></div></section>
+    <section class="backend-shell" aria-labelledby="backend-title"><p class="eyebrow">FUTURE / CLOUD</p><h2 id="backend-title">雲端管理</h2><span id="backend-status" class="backend-state">尚未啟用</span><p>帳號、權限及同步功能尚未開放。此處僅保留管理介面位置，不會連線或模擬同步。</p><button type="button" disabled>登入與同步（尚未開放）</button></section>
   </aside>
 </main>
 <dialog id="day-dialog"><form id="day-form" method="dialog"><div class="dialog-head"><div><p class="eyebrow">當日身體紀錄（選填）</p><h2 id="day-title"></h2></div><button class="icon-close" value="cancel" aria-label="關閉">×</button></div><label>經血量<select id="day-flow"><option value="">不記錄</option><option>少量</option><option>中等</option><option>大量</option></select></label><label>疼痛程度<select id="day-pain"><option value="">不記錄</option><option>無</option><option>輕微</option><option>中等</option><option>嚴重</option></select></label><label>備註<textarea id="day-note" maxlength="1000" rows="4" placeholder="任何想留下的感受…"></textarea></label><div class="actions"><button value="cancel" class="ghost">取消</button><button id="clear-day" type="button" class="danger ghost">清除</button><button id="save-day" type="submit" value="default">儲存</button></div></form></dialog>
 <dialog id="period-dialog"><form id="period-form" method="dialog"><div class="dialog-head"><h2 id="period-title">新增月經紀錄</h2><button class="icon-close" value="cancel" aria-label="關閉">×</button></div><input id="period-id" type="hidden"><label>開始日期<input id="period-start" type="date" required></label><label>結束日期（可稍後補）<input id="period-end" type="date"></label><p class="form-help">歷史月經區間不可重複或重疊。</p><div class="actions"><button value="cancel" class="ghost">取消</button><button id="delete-period" type="button" class="danger">刪除</button><button type="submit" value="default">儲存</button></div></form></dialog>
-<dialog id="backup-dialog"><div class="dialog-head"><h2>備份與還原</h2><button class="icon-close" data-close="backup" aria-label="關閉">×</button></div><p>資料只存在這個瀏覽器。清除網站資料或更換裝置可能造成遺失，請定期下載備份。</p><button id="export-button" type="button">下載 JSON 備份</button><hr><label>選擇 JSON 備份檔<input id="import-file" type="file" accept="application/json,.json"></label><button id="import-button" type="button">驗證並還原</button></dialog>
+<dialog id="backup-dialog"><div class="dialog-head"><h2>備份與還原</h2><button id="backup-close" type="button" class="icon-close" aria-label="關閉">×</button></div><p>目前資料只儲存在這個瀏覽器。更換裝置或清除網站資料前，請先下載備份。</p><button id="export-button" type="button">下載 JSON 備份</button><hr><label>選擇 Cycle v1 JSON 備份檔<input id="import-file" type="file" accept="application/json,.json"></label><button id="validate-import" type="button" class="ghost">驗證備份</button><p id="backup-preview" hidden></p><p id="backup-status" role="status" aria-live="polite"></p><button id="import-button" type="button" disabled>確認還原</button></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="https://lib.stillnessbyslowly.com/date/datetime.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/month_sequence.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/month_grid_view.js"></script><script src="https://lib.stillnessbyslowly.com/data/Data_backup.js"></script><script src="https://lib.stillnessbyslowly.com/data/json/json_safe_import.js"></script><script src="./cycle.js"></script><script src="./cycle_style.js"></script>
+<script src="https://lib.stillnessbyslowly.com/date/datetime.js"></script>
+<script src="https://lib.stillnessbyslowly.com/date/timestamp.js"></script>
+<script src="https://lib.stillnessbyslowly.com/calendar/lunar_data.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/lunar.js"></script>
+<script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals_data.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/lunar_festivals.js"></script>
+<script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals_data.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/solar_festivals.js"></script>
+<script src="https://lib.stillnessbyslowly.com/calendar/solar_terms_data.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/solar_terms.js"></script>
+<script src="https://lib.stillnessbyslowly.com/calendar/calendar.js"></script><script src="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.js"></script><script src="https://lib.stillnessbyslowly.com/calendar/calendar_interaction.js"></script>
+<script src="https://lib.stillnessbyslowly.com/data/Data_backup.js"></script><script src="https://lib.stillnessbyslowly.com/data/json/json_safe_import.js"></script><script src="https://lib.stillnessbyslowly.com/ui/toast.js"></script><script src="https://lib.stillnessbyslowly.com/ui/confirm/confirm.js"></script>
+<script src="./cycle.js"></script><script src="./cycle_storage.js"></script><script src="./cycle_calendar.js"></script><script src="./cycle_backup.js"></script><script src="./cycle_backend.js"></script><script src="./cycle_style.js"></script>
 </body></html>

@@ -1,0 +1,6 @@
+/* Backend management shell; intentionally no connected-state styling. */
+.backend-shell{border-top:1px solid var(--line);padding:1.2rem 0;margin-top:1.6rem}
+.backend-shell h2{margin:.2rem 0 .5rem;font-size:1rem}
+.backend-shell p{color:var(--muted);font-size:.85rem;line-height:1.7;margin:.4rem 0}
+.backend-shell .backend-state{display:inline-block;border:1px solid var(--line);padding:.35rem .6rem;font-size:.75rem;letter-spacing:.03em}
+.backend-shell button:disabled{opacity:.55;cursor:not-allowed}
