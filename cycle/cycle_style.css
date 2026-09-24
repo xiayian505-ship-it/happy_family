@@ -22,3 +22,7 @@
 #panel-forecast,#panel-records{max-width:640px;margin:auto}
 .site-footer{max-width:920px;margin:auto;border-top:1px solid var(--line);padding:1.4rem 1.2rem calc(1.8rem + env(safe-area-inset-bottom));text-align:center;font-size:.76rem;letter-spacing:.09em;color:var(--muted)}
 @media(max-width:760px){.topbar{padding:1.35rem .85rem 1.15rem;min-height:84px}.cycle-main{padding:0 .85rem 2rem}.manage-panel{padding:.8rem .85rem 1.3rem}.tab-content{padding-top:1.35rem}.site-footer{margin:0 .85rem;padding:1.25rem 0 calc(1.5rem + env(safe-area-inset-bottom))}}
+
+/* Shared Confirm component, styled to match Cycle. */
+.slowly-confirm{--confirm-surface:var(--surface);--confirm-text:var(--ink);--confirm-muted:var(--muted);--confirm-border:var(--line);--confirm-button-bg:transparent;--confirm-button-text:var(--accent);--confirm-confirm-bg:var(--accent);--confirm-confirm-text:#fff;--confirm-radius:3px;--confirm-shadow:0 20px 60px #25342a33}
+.slowly-confirm__dialog{border-top:4px solid var(--accent)}

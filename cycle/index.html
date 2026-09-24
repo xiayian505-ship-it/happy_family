@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#fbf7f4"><title>慢慢週期｜Cycle</title>
-  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.css"><link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css"><link rel="stylesheet" href="./cycle.css"><link rel="stylesheet" href="./cycle_style.css"><link rel="stylesheet" href="./cycle_backend.css">
+  <link rel="stylesheet" href="https://lib.stillnessbyslowly.com/component/calendar/calendar_component.css"><link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/responsive.css"><link rel="stylesheet" href="https://lib.stillnessbyslowly.com/ui/confirm/confirm.css"><link rel="stylesheet" href="./cycle.css"><link rel="stylesheet" href="./cycle_style.css"><link rel="stylesheet" href="./cycle_backend.css">
 </head>
 <body>
 <header class="topbar"><p class="eyebrow">給自己的溫柔紀錄</p><button id="manage-open" class="manage-link" type="button" aria-expanded="false" aria-controls="manage-panel">管理</button></header>
@@ -11,7 +11,7 @@
 <main class="cycle-main">
   <nav class="cycle-tabs" aria-label="週期功能分頁"><button class="cycle-tab is-active" id="tab-calendar" type="button" role="tab" aria-selected="true" aria-controls="panel-calendar" data-tab="calendar">月曆</button><span aria-hidden="true">｜</span><button class="cycle-tab" id="tab-forecast" type="button" role="tab" aria-selected="false" aria-controls="panel-forecast" data-tab="forecast">預估</button><span aria-hidden="true">｜</span><button class="cycle-tab" id="tab-records" type="button" role="tab" aria-selected="false" aria-controls="panel-records" data-tab="records">紀錄</button></nav>
   <div class="tab-content">
-    <section id="panel-calendar" class="tab-panel" role="tabpanel" aria-labelledby="tab-calendar"><div class="card calendar-card"><div id="calendar" aria-label="週期月曆"></div><ul class="legend"><li><i class="actual"></i>已記錄月經</li><li><i class="forecast"></i>預估月經</li><li><i class="fertile"></i>粗略易孕期</li></ul></div></section>
+    <section id="panel-calendar" class="tab-panel" role="tabpanel" aria-labelledby="tab-calendar"><div class="card calendar-card"><div id="calendar" aria-label="週期月曆"></div><ul class="legend"><li><i class="actual"></i>已記錄月經</li><li><i class="forecast"></i>預估月經</li><li><i class="fertile"></i>粗略易孕期</li></ul><div class="calendar-selection" aria-live="polite"><span id="selected-day-label">尚未選擇日期</span><button id="edit-selected-day" class="ghost" type="button" disabled>新增／編輯當日紀錄</button></div></div></section>
     <section id="panel-forecast" class="tab-panel" role="tabpanel" aria-labelledby="tab-forecast" hidden><div class="card summary"><h2 id="summary-title">週期小覽</h2><div id="summary-content"></div><label>手動預估週期（15–90 天）<input id="manual-cycle" type="number" min="15" max="90" inputmode="numeric" placeholder="依歷史平均"></label><button id="save-setting" type="button">儲存設定</button><p class="disclaimer">排卵日與易孕期僅為日曆推算，可能與實際情況不同，不可用作可靠避孕依據。</p></div></section>
     <section id="panel-records" class="tab-panel" role="tabpanel" aria-labelledby="tab-records" hidden><div class="card history"><div class="section-head"><h2>月經紀錄</h2><button id="new-period" type="button">＋ 新增</button></div><div id="period-list"></div></div></section>
   </div>

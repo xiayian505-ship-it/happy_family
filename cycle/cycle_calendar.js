@@ -8,13 +8,15 @@
       this.interaction=global.CalendarInteraction.create(this.calendar);
       this.calendar.grid.addEventListener("click",event=>{const button=event.target.closest(".sc-day[data-calendar-date]");if(button)onSelect(button.dataset.calendarDate);});
     }
-    render(data){
+    render(data,selected){
       const stats=C.cycleStats(data), marked=[];
       const actual=date=>data.periods.some(p=>date>=p.start&&date<=(p.end||p.start));
       this.interaction.setMarkers([]);
       const original=this.calendar.grid.querySelectorAll(".sc-day[data-calendar-date]");
       original.forEach(button=>{
-        const date=button.dataset.calendarDate;button.classList.remove("cycle-actual","cycle-forecast","cycle-fertile","cycle-note");
+        const date=button.dataset.calendarDate;button.classList.remove("cycle-actual","cycle-forecast","cycle-fertile","cycle-note","is-selected");
+        button.classList.toggle("is-selected",date===selected);
+        if(date===selected)button.setAttribute("aria-pressed","true");else button.removeAttribute("aria-pressed");
         let tag="";
         if(actual(date))tag="actual";
         else if(stats.nextPeriod&&date>=stats.nextPeriod&&date<=C.addDays(stats.nextPeriod,4))tag="forecast";
@@ -26,7 +28,7 @@
       });
       this.interaction.setMarkers(marked);
     }
-    refresh(data){this.calendar.render();this.render(data);}
+    refresh(data,selected){this.calendar.render();this.render(data,selected);}
   }
   global.CycleCalendar=CycleCalendar;
 })(window);
