@@ -27,6 +27,15 @@
   $("period-form").addEventListener("submit",async e=>{e.preventDefault();try{await persist(C.upsertPeriod(data,{id:$("period-id").value||undefined,start:$("period-start").value,end:$("period-end").value||null}),"月經紀錄已儲存");$("period-dialog").close();}catch(err){alert(err.message);}});
   $("delete-period").onclick=async()=>{const id=$("period-id").value;if(id&&confirm("刪除這筆月經紀錄？當日身體紀錄會保留。")){await persist(C.removePeriod(data,id),"月經紀錄已刪除");$("period-dialog").close();}};
   $("save-setting").onclick=async()=>{const raw=$("manual-cycle").value;const n=raw===""?null:Number(raw);if(n!==null&&(!Number.isInteger(n)||n<15||n>90)){alert("請輸入 15–90 的整數，或留空改用歷史平均。");return;}const next=JSON.parse(JSON.stringify(data));next.settings.manualCycleLength=n;await persist(next,"預估設定已更新");};
+  // Layout only: keep existing page contents and feature handlers intact.
+  const tabButtons=[...document.querySelectorAll(".cycle-tab")];
+  function switchTab(name){
+    tabButtons.forEach(button=>{const active=button.dataset.tab===name;button.classList.toggle("is-active",active);button.setAttribute("aria-selected",String(active));$("panel-"+button.dataset.tab).hidden=!active;});
+    if(name==="calendar")renderCalendar();
+  }
+  tabButtons.forEach(button=>button.addEventListener("click",()=>switchTab(button.dataset.tab)));
+  $("manage-open").addEventListener("click",()=>{const panel=$("manage-panel");const opening=panel.hidden;panel.hidden=!opening;$("manage-open").setAttribute("aria-expanded",String(opening));});
+  $("backup-open").addEventListener("click",()=>{$("manage-panel").hidden=true;$("manage-open").setAttribute("aria-expanded","false");});
   try{calendar=new CycleCalendar($("calendar"),date=>{selected=date;openDay(date);});}catch(error){$("calendar").textContent=error.message;}
   CycleBackend.init();
   CycleBackup.init({store,getData:()=>data,onRestored:next=>{data=next;render();},notify:toast});
