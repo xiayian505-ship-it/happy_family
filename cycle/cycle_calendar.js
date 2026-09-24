@@ -1,12 +1,13 @@
 /* Cycle's calendar adapter. Calendar implementation remains in the remote library. */
 (function(global){"use strict";
-  const C=global.CycleCore,pad=n=>String(n).padStart(2,"0");
+  const C=global.CycleCore;
   class CycleCalendar{
     constructor(target,onSelect){
       if(!global.SlowlyCalendar?.mount||!global.CalendarInteraction?.create)throw new Error("軍火庫日曆尚未載入，請確認網路連線。");
       this.calendar=global.SlowlyCalendar.mount(target,{view:"month",gridLines:false,showLunar:true,showFestivals:true,showSolarTerms:true});
       this.interaction=global.CalendarInteraction.create(this.calendar);
-      this.calendar.grid.addEventListener("click",event=>{const button=event.target.closest(".sc-day[data-calendar-date]");if(button)onSelect(button.dataset.calendarDate);});
+      // Calendar Component owns date clicks; the library bridge emits selection changes.
+      this.unsubscribe=this.interaction.subscribe(({dateKey})=>onSelect(dateKey));
     }
     render(data,selected){
       const stats=C.cycleStats(data), marked=[];

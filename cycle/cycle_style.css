@@ -26,3 +26,89 @@
 /* Shared Confirm component, styled to match Cycle. */
 .slowly-confirm{--confirm-surface:var(--surface);--confirm-text:var(--ink);--confirm-muted:var(--muted);--confirm-border:var(--line);--confirm-button-bg:transparent;--confirm-button-text:var(--accent);--confirm-confirm-bg:var(--accent);--confirm-confirm-text:#fff;--confirm-radius:3px;--confirm-shadow:0 20px 60px #25342a33}
 .slowly-confirm__dialog{border-top:4px solid var(--accent)}
+
+
+/* Calendar navigation: use Cycle's existing palette; keep library behavior intact. */
+#calendar .slowly-calendar{
+  --sc-bg:var(--surface);
+  --sc-text:var(--ink);
+  --sc-muted:var(--muted);
+  --sc-soft:var(--paper);
+  --sc-grid-line:var(--line);
+  --sc-selected-bg:var(--fertile);
+  --sc-selected-text:var(--ink);
+  --sc-selected-border:var(--accent);
+}
+#calendar .sc-toolbar{
+  display:grid;
+  grid-template-columns:2.35rem minmax(0,1fr) 2.35rem auto;
+  align-items:center;
+  gap:.4rem;
+  margin-bottom:1rem;
+  padding:0 0 .85rem;
+  border-bottom:1px solid var(--line);
+}
+#calendar .sc-nav,
+#calendar .sc-title,
+#calendar .sc-today,
+#calendar .sc-picker-go{
+  box-shadow:none;
+  border:1px solid var(--line);
+  border-radius:3px;
+  background:transparent;
+  color:var(--ink);
+  min-height:2.35rem;
+  margin:0;
+}
+#calendar .sc-nav{
+  display:grid;
+  place-items:center;
+  min-width:0;
+  width:2.35rem;
+  padding:0;
+  font-size:1.3rem;
+  font-weight:400;
+  line-height:1;
+}
+#calendar .sc-title{
+  min-width:0;
+  padding:.35rem .3rem;
+  justify-content:center;
+  align-items:center;
+  gap:.4em;
+  font-size:.88rem;
+  font-weight:600;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+#calendar .sc-today{
+  grid-column:auto;
+  width:auto;
+  min-width:3.3rem;
+  padding:.35rem .55rem;
+  font-size:.78rem;
+  font-weight:500;
+  letter-spacing:.04em;
+}
+#calendar .sc-nav:hover,
+#calendar .sc-title:hover,
+#calendar .sc-today:hover,
+#calendar .sc-picker-go:hover{background:var(--fertile);border-color:var(--accent)}
+#calendar .sc-picker{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+  gap:.55rem;
+  padding:.7rem;
+  border:1px solid var(--line);
+  border-radius:3px;
+  background:var(--paper);
+}
+#calendar .sc-picker-go{grid-column:auto;padding:.4rem .65rem;font-size:.8rem;white-space:nowrap}
+#calendar .sc-picker input,#calendar .sc-picker select{border-radius:3px}
+@container (max-width:400px){
+  #calendar .sc-toolbar{grid-template-columns:2.15rem minmax(0,1fr) 2.15rem auto;gap:.3rem}
+  #calendar .sc-nav{width:2.15rem;min-height:2.15rem}
+  #calendar .sc-title{min-height:2.15rem;font-size:.8rem;gap:.2em}
+  #calendar .sc-today{grid-column:auto;min-height:2.15rem;min-width:2.9rem;padding:.3rem .4rem;font-size:.73rem}
+  #calendar .sc-picker{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  #calendar .sc-picker-go{grid-column:1/-1}
+}
